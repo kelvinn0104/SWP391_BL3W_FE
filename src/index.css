@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  
+  --color-primary: #006c49;
+  --color-primary-light: #008f61;
+  --color-primary-container: #10b981;
+  --color-on-primary: #ffffff;
+  
+  --color-surface: #fcfcf9;
+  --color-surface-container-low: #f5f5f0;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #ecece4;
+  --color-surface-container-highest: #e2e2d8;
+  
+  --color-on-surface: #1a1c18;
+  --color-on-surface-variant: #43493e;
+  
+  --color-error: #ba1a1a;
+}
+
+@utility eco-glass {
+  background-color: rgba(252, 252, 249, 0.7);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
+@utility botanical-shadow {
+  box-shadow: 0px 30px 60px rgba(0, 108, 73, 0.04), 0px 10px 20px rgba(0, 0, 0, 0.02);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface antialiased selection:bg-primary/20 selection:text-primary;
+  }
+  
+  h1, h2, h3 {
+    @apply font-serif tracking-tight;
+  }
+}
+
+@layer utilities {
+  .mask-oval {
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+  }
+}
