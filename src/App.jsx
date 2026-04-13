@@ -3,20 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, {useEffect, useRef, useState} from 'react';
-import {Bell, ChevronDown, LogIn, LogOut, User} from 'lucide-react';
-import {BrowserRouter as Router, Routes, Route, NavLink, Link} from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Bell, ChevronDown, LogIn, LogOut, User } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, NavLink, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import Rewards from './pages/Rewards';
 import Leaderboard from './pages/Leaderboard';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import Report from './pages/Report';
 
 function readAuth() {
   return localStorage.getItem('ecosort_auth') === '1';
 }
 
-function Layout({children}) {
+function Layout({ children }) {
   const [isAuthed, setIsAuthed] = useState(() => readAuth());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -66,7 +67,7 @@ function Layout({children}) {
             <nav className="hidden md:flex items-center gap-8">
               <NavLink
                 to="/"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -74,7 +75,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/rewards"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -82,7 +83,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/leaderboard"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -93,7 +94,7 @@ function Layout({children}) {
 
           <div className="flex items-center gap-6">
             <Link
-              to="/login?returnTo=/report"
+              to="/report"
               className="hidden sm:inline-flex items-center justify-center bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
               Report Waste
@@ -230,6 +231,7 @@ export default function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/report" element={<Report />} />
         </Routes>
       </Layout>
     </Router>

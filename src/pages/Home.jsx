@@ -1,4 +1,4 @@
-import {motion} from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Leaf,
   Camera,
@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
@@ -28,9 +29,9 @@ export default function Home() {
       <section className="relative pt-12 lg:pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <motion.div
-            initial={{opacity: 0, y: 30}}
-            animate={{opacity: 1, y: 0}}
-            transition={{duration: 0.8, ease: [0.16, 1, 0.3, 1]}}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-6 space-y-8"
           >
             <div className="inline-flex items-center gap-3 bg-primary/5 px-5 py-2 rounded-full border border-primary/10">
@@ -55,16 +56,19 @@ export default function Home() {
                 <span className="relative z-10">Bắt đầu hành trình</span>
                 <ArrowRight className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 opacity-0 group-hover:opacity-100 transition-all" />
               </button>
-              <button className="px-8 sm:px-12 py-4 sm:py-5 rounded-full font-bold text-base sm:text-lg border-2 border-surface-container-highest hover:bg-surface-container-low transition-all">
-                Khám phá thêm
-              </button>
+              <Link
+                to="/report"
+                className="inline-flex items-center justify-center px-8 sm:px-12 py-4 sm:py-5 rounded-full font-bold text-base sm:text-lg border-2 border-surface-container-highest hover:bg-surface-container-low transition-all"
+              >
+                Report Waste
+              </Link>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{opacity: 0, scale: 0.95}}
-            animate={{opacity: 1, scale: 1}}
-            transition={{duration: 1, delay: 0.2}}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
             className="lg:col-span-6 relative"
           >
             <div className="relative aspect-[4/3] rounded-[2rem] sm:rounded-[3rem] overflow-hidden botanical-shadow">
@@ -200,7 +204,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <motion.div whileHover={{y: -10}} className="aspect-square rounded-3xl overflow-hidden">
+            <motion.div whileHover={{ y: -10 }} className="aspect-square rounded-3xl overflow-hidden">
               <img
                 src="/images/waste-4.png"
                 alt="Phân loại rác thải nhựa"
@@ -209,7 +213,7 @@ export default function Home() {
               />
             </motion.div>
             <motion.div
-              whileHover={{y: -10}}
+              whileHover={{ y: -10 }}
               className="aspect-square rounded-3xl overflow-hidden sm:mt-12"
             >
               <img
@@ -333,7 +337,7 @@ export default function Home() {
   );
 }
 
-function ImpactStat({label, value, unit}) {
+function ImpactStat({ label, value, unit }) {
   return (
     <div className="w-full max-w-[16rem] space-y-4 text-center flex flex-col items-center">
       <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-on-surface-variant/50 min-h-[1rem]">
@@ -349,7 +353,7 @@ function ImpactStat({label, value, unit}) {
   );
 }
 
-function StepCard({number, title, description}) {
+function StepCard({ number, title, description }) {
   return (
     <div className="space-y-8 group">
       <div className="text-8xl font-serif italic text-primary/10 group-hover:text-primary/20 transition-colors leading-none">
@@ -363,7 +367,7 @@ function StepCard({number, title, description}) {
   );
 }
 
-function LeaderboardItem({rank, name, points, avatar}) {
+function LeaderboardItem({ rank, name, points, avatar }) {
   return (
     <div className="flex items-center justify-between py-6 group cursor-pointer">
       <div className="flex items-center gap-6">
@@ -399,7 +403,7 @@ function LeaderboardItem({rank, name, points, avatar}) {
   );
 }
 
-function ActivityItem({user, action, time, icon}) {
+function ActivityItem({ user, action, time, icon }) {
   return (
     <div className="flex items-start gap-6 p-6 hover:bg-surface-container-low rounded-[2rem] transition-all cursor-pointer group">
       <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
@@ -417,9 +421,9 @@ function ActivityItem({user, action, time, icon}) {
   );
 }
 
-function HarmfulEffectCard({image, title, description}) {
+function HarmfulEffectCard({ image, title, description }) {
   return (
-    <motion.div whileHover={{y: -10}} className="space-y-6 group">
+    <motion.div whileHover={{ y: -10 }} className="space-y-6 group">
       <div className="aspect-[4/3] rounded-[2.5rem] overflow-hidden botanical-shadow">
         <img
           src={image}
