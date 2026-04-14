@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+    AlertTriangle,
     ArrowLeft,
     CalendarDays,
     FileText,
@@ -10,6 +11,7 @@ import {
     Tag,
 } from 'lucide-react';
 import { getStatusLabel, MY_REPORTS, statusClassName } from './Report';
+import FeedbackModal from '../components/modal/FeedbackModal';
 
 function mapEmbedSrc(lat, lng) {
     const q = `${lat},${lng}`;
@@ -22,6 +24,7 @@ export default function ReportDetail() {
     const report = MY_REPORTS.find((r) => r.id === id);
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [complaintOpen, setComplaintOpen] = useState(false);
 
     useEffect(() => {
         setActiveImageIndex(0);
@@ -52,6 +55,9 @@ export default function ReportDetail() {
         );
     }
 
+    const showComplaintButton = report.status === 'Collected' || report.status === 'Canceled';
+    const statusLabel = getStatusLabel(report.status);
+
     return (
         <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
             <Link
@@ -73,6 +79,16 @@ export default function ReportDetail() {
                             >
                                 {getStatusLabel(report.status)}
                             </span>
+                            {showComplaintButton && (
+                                <button
+                                    type="button"
+                                    onClick={() => setComplaintOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-full bg-rose-600 text-white px-4 py-2 text-xs sm:text-sm font-extrabold shadow-sm shadow-rose-600/25 transition-colors hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
+                                >
+                                    <AlertTriangle className="w-4 h-4" />
+                                    Khiếu nại
+                                </button>
+                            )}
                         </div>
                         <p className="text-sm font-semibold text-on-surface-variant">Mã report: {report.id}</p>
                         <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
@@ -98,9 +114,11 @@ export default function ReportDetail() {
                         </div>
                     </div>
 
-                    <div className="inline-flex items-center gap-2 bg-primary/5 text-primary rounded-xl px-4 py-2.5 text-sm font-bold self-start shrink-0">
-                        <PackageCheck className="w-4 h-4" />
-                        {report.weight}
+                    <div className="self-start shrink-0 w-full lg:w-auto">
+                        <div className="inline-flex w-full lg:w-auto items-center justify-center gap-2 bg-primary/5 text-primary rounded-xl px-4 py-2.5 text-sm font-bold">
+                            <PackageCheck className="w-4 h-4" />
+                            {report.weight}
+                        </div>
                     </div>
                 </div>
 
@@ -166,6 +184,13 @@ export default function ReportDetail() {
                     )}
                 </div>
             </article>
+
+            <FeedbackModal
+                open={complaintOpen}
+                onClose={() => setComplaintOpen(false)}
+                reportId={report.id}
+                reportStatusLabel={statusLabel}
+            />
         </div>
     );
 }
