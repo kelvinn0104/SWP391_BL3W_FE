@@ -6,6 +6,7 @@ import {
     Loader2,
     MapPin,
     PlusCircle,
+    Star,
     Tag,
     Type,
 } from 'lucide-react';
@@ -18,20 +19,17 @@ const CATEGORY_OPTIONS = [
     'Kim loại',
 ];
 
+const POINTS_PER_KG = 100;
+
 export default function CreateReport() {
     const navigate = useNavigate();
     const formId = useId();
 
     const [title, setTitle] = useState('');
-    const [categories, setCategories] = useState([CATEGORY_OPTIONS[0]]);
+    const [categories, setCategories] = useState([]);
     const [address, setAddress] = useState('');
     const [description, setDescription] = useState('');
-    const [categoryDetails, setCategoryDetails] = useState(() => {
-        const initial = CATEGORY_OPTIONS[0];
-        return {
-            [initial]: { quantityKg: '', imagePreviews: [] },
-        };
-    });
+    const [categoryDetails, setCategoryDetails] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -111,6 +109,10 @@ export default function CreateReport() {
     }, 0);
 
     const totalQuantityDisplay = hasAnyQuantity ? String(Math.round(totalQuantityKg * 10) / 10) : '';
+    const estimatedPoints = hasAnyQuantity ? Math.max(0, Math.round(totalQuantityKg * POINTS_PER_KG)) : 0;
+    const estimatedPointsDisplay = hasAnyQuantity
+        ? new Intl.NumberFormat('en-US').format(estimatedPoints)
+        : '';
 
     return (
         <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
@@ -301,6 +303,27 @@ export default function CreateReport() {
                             className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                         />
                         <p className="text-xs text-on-surface-variant">Đơn vị: kg</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label
+                            htmlFor={`${formId}-estimated-points`}
+                            className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                        >
+                            <Star className="w-4 h-4 text-primary" fill="currentColor" />
+                            Điểm thưởng dự kiến
+                        </label>
+                        <input
+                            id={`${formId}-estimated-points`}
+                            type="text"
+                            value={estimatedPointsDisplay}
+                            readOnly
+                            placeholder="Tự động tính từ tổng khối lượng"
+                            className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
+                        />
+                        <p className="text-xs text-on-surface-variant">
+                            Tạm tính theo {POINTS_PER_KG} điểm/kg.
+                        </p>
                     </div>
 
                     <div className="space-y-2">
