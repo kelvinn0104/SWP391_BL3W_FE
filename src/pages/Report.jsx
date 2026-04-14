@@ -1,23 +1,36 @@
-import {useMemo, useState} from 'react';
-import {CalendarDays, Filter, MapPin, PackageCheck, Plus, User} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CalendarDays, FileText, Filter, MapPin, PackageCheck, Plus, Tag, User } from 'lucide-react';
+
+const FILTER_ALL = 'All';
 
 const REPORT_STATUS_OPTIONS = [
-  {value: 'Pending', label: 'Chờ duyệt'},
-  {value: 'Accepted', label: 'Đã chấp nhận'},
-  {value: 'Assigned', label: 'Đã phân công'},
-  {value: 'Collected', label: 'Đã thu gom'},
-  {value: 'Canceled', label: 'Đã hủy'},
+  { value: 'Pending', label: 'Chờ duyệt' },
+  { value: 'Accepted', label: 'Đã chấp nhận' },
+  { value: 'Assigned', label: 'Đã phân công' },
+  { value: 'Collected', label: 'Đã thu gom' },
+  { value: 'Canceled', label: 'Đã hủy' },
 ];
 
-function getStatusLabel(status) {
+const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];
+
+export function getStatusLabel(status) {
   return REPORT_STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status;
 }
 
-const MY_REPORTS = [
+export const MY_REPORTS = [
   {
     id: 'RP-2401',
     title: 'Nhựa và lon tại hẻm 12',
+    category: 'Nhựa & kim loại',
+    description:
+      'Tập kết chai nhựa PET, lon nước ngọt đặt cạnh thùng rác tạm tại hẻm 12. Cần thu gom trong ngày để tránh vỡ vụn và ô nhiễm.',
     location: 'Quận 3, TP.HCM',
+    coordinates: { lat: 10.7829, lng: 106.6881 },
+    images: [
+      'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=1200&q=80',
+      'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80',
+    ],
     createdAt: '2026-04-10',
     weight: '3.2kg',
     status: 'Pending',
@@ -25,7 +38,15 @@ const MY_REPORTS = [
   {
     id: 'RP-2394',
     title: 'Giấy carton trước cổng chung cư',
+    category: 'Giấy',
+    description:
+      'Thùng carton đóng gói đồ đạc, đã dẹp gọn và buộc dây. Đặt sát lề đường trước cổng B, không cản lối đi.',
     location: 'Quận 7, TP.HCM',
+    coordinates: { lat: 10.7314, lng: 106.7181 },
+    images: [
+      'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=1200&q=80',
+      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&q=80',
+    ],
     createdAt: '2026-04-08',
     weight: '5.1kg',
     status: 'Accepted',
@@ -33,7 +54,15 @@ const MY_REPORTS = [
   {
     id: 'RP-2388',
     title: 'Điểm tập kết chai nhựa',
+    category: 'Nhựa',
+    description:
+      'Nhiều chai nhựa đã rửa sơ, gom trong bao rác trong suốt. Khu vực có mái che nhẹ, tránh mưa làm vỡ bao.',
     location: 'Thủ Đức, TP.HCM',
+    coordinates: { lat: 10.8494, lng: 106.7717 },
+    images: [
+      'https://images.unsplash.com/photo-1621451537084-482c73073a2f?w=1200&q=80',
+      'https://images.unsplash.com/photo-1528323273322-d81489248c40?w=1200&q=80',
+    ],
     createdAt: '2026-04-06',
     weight: '2.7kg',
     status: 'Assigned',
@@ -41,7 +70,15 @@ const MY_REPORTS = [
   {
     id: 'RP-2379',
     title: 'Rác tái chế tại công viên',
+    category: 'Hỗn hợp tái chế',
+    description:
+      'Nhựa, giấy và vài mảnh kim loại nhỏ gom chung tại khu vực ghế ngồi gần lối ra. Đã phân loại sơ bộ theo túi.',
     location: 'Bình Thạnh, TP.HCM',
+    coordinates: { lat: 10.8112, lng: 106.7093 },
+    images: [
+      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&q=80',
+      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=1200&q=80',
+    ],
     createdAt: '2026-04-03',
     weight: '4.4kg',
     status: 'Collected',
@@ -49,14 +86,22 @@ const MY_REPORTS = [
   {
     id: 'RP-2371',
     title: 'Kim loại vụn từ hộ gia đình',
+    category: 'Kim loại',
+    description:
+      'Mảnh kim loại mỏng từ đồ gia dụng cũ, có cạnh tù. Người báo cáo đã bọc giấy báo để tránh trầy.',
     location: 'Gò Vấp, TP.HCM',
+    coordinates: { lat: 10.8398, lng: 106.6668 },
+    images: [
+      'https://images.unsplash.com/photo-1581092160562-40aa08c7880a?w=1200&q=80',
+      'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1200&q=80',
+    ],
     createdAt: '2026-04-01',
     weight: '1.8kg',
     status: 'Canceled',
   },
 ];
 
-function statusClassName(status) {
+export function statusClassName(status) {
   switch (status) {
     case 'Pending':
       return 'bg-amber-50 text-amber-700 border-amber-200';
@@ -74,10 +119,13 @@ function statusClassName(status) {
 }
 
 export default function Report() {
-  const [activeStatus, setActiveStatus] = useState('Pending');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
 
   const filteredReports = useMemo(
-    () => MY_REPORTS.filter((report) => report.status === activeStatus),
+    () =>
+      activeStatus === FILTER_ALL
+        ? MY_REPORTS
+        : MY_REPORTS.filter((report) => report.status === activeStatus),
     [activeStatus]
   );
 
@@ -93,20 +141,20 @@ export default function Report() {
             <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
               Quản lý trạng thái <span className="not-italic text-primary">Report Waste</span>
             </h1>
-            <p className="text-on-surface-variant">
-              Theo dõi các report theo trạng thái: Chờ duyệt / Đã chấp nhận / Đã phân công / Đã thu
-              gom / Đã hủy.
+            <p className="text-on-surface-variant max-w-2xl">
+              Xem nhanh báo cáo bạn đã gửi và biết đơn đang ở bước nào trong quy trình xử lý — lọc
+              theo thẻ trạng thái bên dưới.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <button
-              type="button"
+            <Link
+              to="/report/create"
               className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.99] shadow-lg shadow-primary/20"
             >
               <Plus className="w-4 h-4" />
               Tạo báo cáo
-            </button>
+            </Link>
             <div className="inline-flex items-center gap-2 rounded-2xl border border-surface-container-high px-4 py-2.5 text-sm font-semibold text-on-surface-variant">
               <Filter className="w-4 h-4 text-primary" />
               {filteredReports.length} report
@@ -115,18 +163,17 @@ export default function Report() {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {REPORT_STATUS_OPTIONS.map((statusOption) => {
+          {REPORT_FILTER_OPTIONS.map((statusOption) => {
             const isActive = statusOption.value === activeStatus;
             return (
               <button
                 key={statusOption.value}
                 type="button"
                 onClick={() => setActiveStatus(statusOption.value)}
-                className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${
-                  isActive
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
-                    : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
-                }`}
+                className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all ${isActive
+                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                  : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                  }`}
               >
                 {statusOption.label}
               </button>
@@ -138,18 +185,25 @@ export default function Report() {
       <section className="space-y-4">
         {filteredReports.length === 0 ? (
           <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
-            Chưa có report nào ở trạng thái{' '}
-            <span className="font-bold text-primary">{getStatusLabel(activeStatus)}</span>.
+            {activeStatus === FILTER_ALL ? (
+              <>Chưa có report nào.</>
+            ) : (
+              <>
+                Chưa có report nào ở trạng thái{' '}
+                <span className="font-bold text-primary">{getStatusLabel(activeStatus)}</span>.
+              </>
+            )}
           </div>
         ) : (
           filteredReports.map((report) => (
-            <article
+            <Link
               key={report.id}
-              className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 border border-surface-container-high/60 botanical-shadow"
+              to={`/report/${encodeURIComponent(report.id)}`}
+              className="block bg-surface-container-lowest rounded-3xl p-6 sm:p-7 border border-surface-container-high/60 botanical-shadow transition-all hover:border-primary/35 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             >
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface">{report.title}</h2>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-black border ${statusClassName(report.status)}`}
@@ -157,7 +211,17 @@ export default function Report() {
                       {getStatusLabel(report.status)}
                     </span>
                   </div>
+                  <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
+                    <Tag className="w-4 h-4 shrink-0" />
+                    <span>{report.category}</span>
+                  </div>
                   <p className="text-sm font-semibold text-on-surface-variant">Mã report: {report.id}</p>
+                  <p className="text-sm text-on-surface-variant line-clamp-2 leading-relaxed">
+                    <span className="inline-flex items-start gap-2">
+                      <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>{report.description}</span>
+                    </span>
+                  </p>
                 </div>
 
                 <div className="inline-flex items-center gap-2 bg-primary/5 text-primary rounded-xl px-3 py-2 text-sm font-bold">
@@ -176,7 +240,7 @@ export default function Report() {
                   <span>Ngày tạo: {report.createdAt}</span>
                 </div>
               </div>
-            </article>
+            </Link>
           ))
         )}
       </section>
