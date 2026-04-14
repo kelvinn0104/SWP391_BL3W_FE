@@ -1,12 +1,13 @@
 import {LogOut, User} from 'lucide-react';
 import {Link, useNavigate} from 'react-router-dom';
+import {clearAuth, getUser} from '../lib/auth';
 
 export default function Profile() {
   const navigate = useNavigate();
+  const user = getUser();
 
   function onLogout() {
-    localStorage.removeItem('ecosort_auth');
-    window.dispatchEvent(new Event('ecosort_auth_changed'));
+    clearAuth();
     navigate('/', {replace: true});
   }
 
@@ -20,7 +21,9 @@ export default function Profile() {
               <span>Trang cá nhân</span>
             </div>
             <p className="text-on-surface-variant">
-              Trang này hiện là placeholder. Khi nối BE, mình sẽ hiển thị thông tin người dùng thật.
+              {user
+                ? `Xin chào ${user.displayName || user.email}.`
+                : 'Bạn chưa đăng nhập.'}
             </p>
           </div>
 
