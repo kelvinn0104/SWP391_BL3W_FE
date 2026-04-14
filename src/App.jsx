@@ -3,36 +3,53 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Bell, CheckCheck, ChevronDown, Clock, LogIn, LogOut, Trash2, User, History } from 'lucide-react';
-import { BrowserRouter as Router, Routes, Route, NavLink, Link, useNavigate } from 'react-router-dom';
-import Home from './pages/Home';
-import Rewards from './pages/Rewards';
-import Leaderboard from './pages/Leaderboard';
-import Login from './pages/Login';
-import Profile from './pages/Profile';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import VerifyCode from './pages/VerifyCode';
-import ResetPassword from './pages/ResetPassword';
-import { clearAuth, fetchMe, getToken, getUser } from './lib/auth';
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Bell,
+  CheckCheck,
+  ChevronDown,
+  Clock,
+  LogIn,
+  LogOut,
+  User,
+  History,
+} from "lucide-react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  NavLink,
+  Link,
+  useNavigate,
+  Outlet,
+} from "react-router-dom";
+import Home from "./pages/Home";
+import Rewards from "./pages/Rewards";
+import Leaderboard from "./pages/Leaderboard";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyCode from "./pages/VerifyCode";
+import ResetPassword from "./pages/ResetPassword";
+import { clearAuth, fetchMe, getToken, getUser } from "./lib/auth";
 
-import EnterpriseLayout from './pages/enterprise/EnterpriseLayout';
-import EnterpriseDashboard from './pages/enterprise/Dashboard';
-import EnterpriseArea from './pages/enterprise/Area';
-import EnterpriseRequests from './pages/enterprise/Requests';
-import CollectorLayout from './pages/collector/CollectorLayout';
-import AdminLayout from './pages/admin/AdminLayout';
-import Report from './pages/Report';
-import CreateReport from './pages/CreateReport';
-import ReportDetail from './pages/ReportDetail';
-import HistoryPage from './pages/History';
+import EnterpriseLayout from "./pages/enterprise/EnterpriseLayout";
+import EnterpriseDashboard from "./pages/enterprise/Dashboard";
+import EnterpriseArea from "./pages/enterprise/Area";
+import EnterpriseRequests from "./pages/enterprise/Requests";
+import CollectorLayout from "./pages/collector/CollectorLayout";
+import AdminLayout from "./pages/admin/AdminLayout";
+import Report from "./pages/Report";
+import CreateReport from "./pages/CreateReport";
+import ReportDetail from "./pages/ReportDetail";
+import HistoryPage from "./pages/History";
 
 function readAuth() {
-  return Boolean(getToken()) || localStorage.getItem('ecosort_auth') === '1';
+  return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
 }
 
-function Layout({ children }) {
+function Layout() {
   const navigate = useNavigate();
   const [isAuthed, setIsAuthed] = useState(() => readAuth());
   const [user, setUser] = useState(() => getUser());
@@ -45,31 +62,31 @@ function Layout({ children }) {
   const [notifications, setNotifications] = useState([
     {
       id: 1,
-      title: 'Công suất tới hạn',
-      message: 'Khu vực Quận 1 đã đạt 95% công suất xử lý tháng này.',
-      time: '5 phút trước',
-      type: 'warning',
-      isRead: false
+      title: "Công suất tới hạn",
+      message: "Khu vực Quận 1 đã đạt 95% công suất xử lý tháng này.",
+      time: "5 phút trước",
+      type: "warning",
+      isRead: false,
     },
     {
       id: 2,
-      title: 'Đơn hàng hoàn tất',
-      message: 'Yêu cầu thu gom mã #REQ-2024 tại Phường 5 đã xong.',
-      time: '2 giờ trước',
-      type: 'success',
-      isRead: false
+      title: "Đơn hàng hoàn tất",
+      message: "Yêu cầu thu gom mã #REQ-2024 tại Phường 5 đã xong.",
+      time: "2 giờ trước",
+      type: "success",
+      isRead: false,
     },
     {
       id: 3,
-      title: 'Thông báo hệ thống',
-      message: 'Cập nhật chính sách phần thưởng mới cho tháng 4 đã sẵn sàng.',
-      time: '1 ngày trước',
-      type: 'info',
-      isRead: true
-    }
+      title: "Thông báo hệ thống",
+      message: "Cập nhật chính sách phần thưởng mới cho tháng 4 đã sẵn sàng.",
+      time: "1 ngày trước",
+      type: "info",
+      isRead: true,
+    },
   ]);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   useEffect(() => {
     const sync = () => {
@@ -85,22 +102,22 @@ function Layout({ children }) {
       sync();
     };
 
-    window.addEventListener('storage', onStorageEvent);
-    window.addEventListener('ecosort_auth_changed', onAuthEvent);
+    window.addEventListener("storage", onStorageEvent);
+    window.addEventListener("ecosort_auth_changed", onAuthEvent);
 
     // Khởi động đồng bộ ban đầu
     sync();
 
     // Chỉ gọi fetchMe một lần duy nhất khi load trang để lấy dữ liệu mới nhất (như điểm thưởng)
     if (readAuth()) {
-      fetchMe().then(me => {
+      fetchMe().then((me) => {
         if (me) setUser(getUser());
       });
     }
 
     return () => {
-      window.removeEventListener('storage', onStorageEvent);
-      window.removeEventListener('ecosort_auth_changed', onAuthEvent);
+      window.removeEventListener("storage", onStorageEvent);
+      window.removeEventListener("ecosort_auth_changed", onAuthEvent);
     };
   }, []);
 
@@ -116,8 +133,8 @@ function Layout({ children }) {
         setNotifOpen(false);
       }
     };
-    window.addEventListener('pointerdown', onDown);
-    return () => window.removeEventListener('pointerdown', onDown);
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
   }, [menuOpen, notifOpen]);
 
   function logout() {
@@ -126,7 +143,7 @@ function Layout({ children }) {
     setMenuOpen(false);
     setUser(null);
     setIsAuthed(false);
-    navigate('/login', { replace: true });
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -142,13 +159,15 @@ function Layout({ children }) {
                 className="h-10 w-auto"
                 draggable={false}
               />
-              <span className="text-2xl font-extrabold tracking-tight text-primary">EcoSort</span>
+              <span className="text-2xl font-extrabold tracking-tight text-primary">
+                EcoSort
+              </span>
             </Link>
             <nav className="hidden md:flex items-center gap-8">
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
+                  `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
                 Home
@@ -156,7 +175,7 @@ function Layout({ children }) {
               <NavLink
                 to="/rewards"
                 className={({ isActive }) =>
-                  `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
+                  `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
                 Rewards
@@ -164,7 +183,7 @@ function Layout({ children }) {
               <NavLink
                 to="/leaderboard"
                 className={({ isActive }) =>
-                  `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
+                  `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
                 Leaderboard
@@ -183,7 +202,7 @@ function Layout({ children }) {
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className={`p-2 rounded-full transition-all relative ${notifOpen ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-high text-on-surface-variant'}`}
+                className={`p-2 rounded-full transition-all relative ${notifOpen ? "bg-primary/10 text-primary" : "hover:bg-surface-container-high text-on-surface-variant"}`}
               >
                 <Bell className="w-6 h-6" />
                 {unreadCount > 0 && (
@@ -204,7 +223,11 @@ function Layout({ children }) {
                     </h3>
                     {unreadCount > 0 && (
                       <button
-                        onClick={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}
+                        onClick={() =>
+                          setNotifications((prev) =>
+                            prev.map((n) => ({ ...n, isRead: true })),
+                          )
+                        }
                         className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
                       >
                         <CheckCheck className="w-3 h-3" />
@@ -219,24 +242,41 @@ function Layout({ children }) {
                         {notifications.map((notif) => (
                           <div
                             key={notif.id}
-                            className={`p-5 flex gap-4 hover:bg-surface-container-low transition-colors group cursor-pointer relative ${!notif.isRead ? 'bg-primary/[0.02]' : ''}`}
+                            className={`p-5 flex gap-4 hover:bg-surface-container-low transition-colors group cursor-pointer relative ${!notif.isRead ? "bg-primary/[0.02]" : ""}`}
                             onClick={() => {
-                              setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+                              setNotifications((prev) =>
+                                prev.map((n) =>
+                                  n.id === notif.id
+                                    ? { ...n, isRead: true }
+                                    : n,
+                                ),
+                              );
                             }}
                           >
                             {!notif.isRead && (
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                             )}
-                            <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${notif.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                              notif.type === 'success' ? 'bg-emerald-100 text-emerald-600' :
-                                'bg-blue-100 text-blue-600'
-                              }`}>
-                              {notif.type === 'warning' ? <Bell className="w-6 h-6" /> :
-                                notif.type === 'success' ? <CheckCheck className="w-6 h-6" /> :
-                                  <Bell className="w-6 h-6" />}
+                            <div
+                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
+                                notif.type === "warning"
+                                  ? "bg-amber-100 text-amber-600"
+                                  : notif.type === "success"
+                                    ? "bg-emerald-100 text-emerald-600"
+                                    : "bg-blue-100 text-blue-600"
+                              }`}
+                            >
+                              {notif.type === "warning" ? (
+                                <Bell className="w-6 h-6" />
+                              ) : notif.type === "success" ? (
+                                <CheckCheck className="w-6 h-6" />
+                              ) : (
+                                <Bell className="w-6 h-6" />
+                              )}
                             </div>
                             <div className="flex-1 space-y-1">
-                              <p className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                              <p
+                                className={`text-sm font-black leading-tight ${!notif.isRead ? "text-on-surface" : "text-on-surface-variant"}`}
+                              >
                                 {notif.title}
                               </p>
                               <p className="text-xs font-medium text-on-surface-variant/80 line-clamp-2">
@@ -286,10 +326,13 @@ function Layout({ children }) {
                 >
                   <div className="text-right hidden lg:block">
                     <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60">
-                      {user?.displayName || user?.email || 'Cá nhân'}
+                      {user?.displayName || user?.email || "Cá nhân"}
                     </p>
                     <p className="text-sm font-extrabold text-primary">
-                      {typeof user?.points === 'number' ? user.points.toLocaleString() : '0'} Points
+                      {typeof user?.points === "number"
+                        ? user.points.toLocaleString()
+                        : "0"}{" "}
+                      Points
                     </p>
                   </div>
                   <img
@@ -341,7 +384,9 @@ function Layout({ children }) {
         </div>
       </header>
 
-      <main className="flex-grow w-full">{children}</main>
+      <main className="flex-grow w-full">
+        <Outlet />
+      </main>
 
       {/* Footer */}
       <footer className="bg-surface-container-low w-full mt-20 border-t border-surface-container-highest">
@@ -354,7 +399,9 @@ function Layout({ children }) {
                 className="h-9 w-auto"
                 draggable={false}
               />
-              <span className="text-xl font-extrabold text-primary">EcoSort</span>
+              <span className="text-xl font-extrabold text-primary">
+                EcoSort
+              </span>
             </Link>
 
             <p className="text-sm text-on-surface-variant font-medium text-center md:text-left">
@@ -397,44 +444,101 @@ function Layout({ children }) {
 export default function App() {
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/rewards" element={<Rewards />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-code" element={<VerifyCode />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          {/* Enterprise Routes (Nested under EnterpriseLayout bypassing global Layout container but kept inside Router) */}
-          <Route path="/enterprise" element={<EnterpriseLayout />}>
-            <Route index element={<EnterpriseDashboard />} />
-            <Route path="area" element={<EnterpriseArea />} />
-            <Route path="requests" element={<EnterpriseRequests />} />
-          </Route>
+      <Routes>
+        <Route path="login" element={<Login />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="verify-code" element={<VerifyCode />} />
+        <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="register" element={<Register />} />
 
-          <Route path="/collector" element={<CollectorLayout />}>
-            <Route index element={<div className="p-10 text-center font-bold opacity-50">Dashboard Collector đang được phát triển...</div>} />
-            <Route path="tasks" element={<div className="p-10 text-center font-bold opacity-50">Quản lí công việc đang được phát triển...</div>} />
-            <Route path="history" element={<div className="p-10 text-center font-bold opacity-50">Lịch sử công việc đang được phát triển...</div>} />
-          </Route>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="rewards" element={<Rewards />} />
+          <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="profile" element={<Profile />} />
 
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<div className="p-10 text-center font-bold opacity-50">Dashboard Admin đang được phát triển...</div>} />
-            <Route path="system" element={<div className="p-10 text-center font-bold opacity-50">Quản trị hệ thống đang được phát triển...</div>} />
-            <Route path="accounts" element={<div className="p-10 text-center font-bold opacity-50">Quản lí tài khoản đang được phát triển...</div>} />
-            <Route path="feedback" element={<div className="p-10 text-center font-bold opacity-50">Quản lí feedback đang được phát triển...</div>} />
-            <Route path="rewards" element={<div className="p-10 text-center font-bold opacity-50">Quản lí điểm thưởng đang được phát triển...</div>} />
-          </Route>
+          <Route path="report" element={<Report />} />
+          <Route path="report/create" element={<CreateReport />} />
+          <Route path="report/:id" element={<ReportDetail />} />
+          <Route path="history" element={<HistoryPage />} />
+        </Route>
 
-          <Route path="/report" element={<Report />} />
-          <Route path="/report/create" element={<CreateReport />} />
-          <Route path="/report/:id" element={<ReportDetail />} />
-          <Route path="/history" element={<HistoryPage />} />
-        </Routes>
-      </Layout>
+        <Route path="enterprise" element={<EnterpriseLayout />}>
+          <Route index element={<EnterpriseDashboard />} />
+          <Route path="area" element={<EnterpriseArea />} />
+          <Route path="requests" element={<EnterpriseRequests />} />
+        </Route>
+
+        <Route path="collector" element={<CollectorLayout />}>
+          <Route
+            index
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Dashboard Collector đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="tasks"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Quản lí công việc đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="history"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Lịch sử công việc đang được phát triển...
+              </div>
+            }
+          />
+        </Route>
+
+        <Route path="admin" element={<AdminLayout />}>
+          <Route
+            index
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Dashboard Admin đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="system"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Quản trị hệ thống đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="accounts"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Quản lí tài khoản đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="feedback"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Quản lí feedback đang được phát triển...
+              </div>
+            }
+          />
+          <Route
+            path="rewards"
+            element={
+              <div className="p-10 text-center font-bold opacity-50">
+                Quản lí điểm thưởng đang được phát triển...
+              </div>
+            }
+          />
+        </Route>
+      </Routes>
     </Router>
   );
 }
