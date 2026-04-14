@@ -23,6 +23,9 @@ import EnterpriseArea from './pages/enterprise/Area';
 import EnterpriseRequests from './pages/enterprise/Requests';
 import CollectorLayout from './pages/collector/CollectorLayout';
 import AdminLayout from './pages/admin/AdminLayout';
+import Report from './pages/Report';
+import CreateReport from './pages/CreateReport';
+import ReportDetail from './pages/ReportDetail';
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem('ecosort_auth') === '1';
@@ -143,7 +146,7 @@ function Layout({children}) {
             <nav className="hidden md:flex items-center gap-8">
               <NavLink
                 to="/"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -151,7 +154,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/rewards"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -159,7 +162,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/leaderboard"
-                className={({isActive}) =>
+                className={({ isActive }) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -170,7 +173,7 @@ function Layout({children}) {
 
           <div className="flex items-center gap-6">
             <Link
-              to="/login?returnTo=/report"
+              to="/report"
               className="hidden sm:inline-flex items-center justify-center bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
               Report Waste
@@ -396,7 +399,6 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
-          
           {/* Enterprise Routes (Nested under EnterpriseLayout bypassing global Layout container but kept inside Router) */}
           <Route path="/enterprise" element={<EnterpriseLayout />}>
             <Route index element={<EnterpriseDashboard />} />
@@ -417,6 +419,10 @@ export default function App() {
             <Route path="feedback" element={<div className="p-10 text-center font-bold opacity-50">Quản lí feedback đang được phát triển...</div>} />
             <Route path="rewards" element={<div className="p-10 text-center font-bold opacity-50">Quản lí điểm thưởng đang được phát triển...</div>} />
           </Route>
+
+          <Route path="/report" element={<Report />} />
+          <Route path="/report/create" element={<CreateReport />} />
+          <Route path="/report/:id" element={<ReportDetail />} />
         </Routes>
       </Layout>
     </Router>
