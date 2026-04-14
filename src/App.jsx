@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, {useEffect, useRef, useState} from 'react';
-import {Bell, CheckCheck, ChevronDown, Clock, LogIn, LogOut, Trash2, User} from 'lucide-react';
-import {BrowserRouter as Router, Routes, Route, NavLink, Link, useNavigate} from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Bell, CheckCheck, ChevronDown, Clock, LogIn, LogOut, Trash2, User, History } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, NavLink, Link, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Rewards from './pages/Rewards';
 import Leaderboard from './pages/Leaderboard';
@@ -15,7 +15,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import VerifyCode from './pages/VerifyCode';
 import ResetPassword from './pages/ResetPassword';
-import {clearAuth, fetchMe, getToken, getUser} from './lib/auth';
+import { clearAuth, fetchMe, getToken, getUser } from './lib/auth';
 
 import EnterpriseLayout from './pages/enterprise/EnterpriseLayout';
 import EnterpriseDashboard from './pages/enterprise/Dashboard';
@@ -26,12 +26,13 @@ import AdminLayout from './pages/admin/AdminLayout';
 import Report from './pages/Report';
 import CreateReport from './pages/CreateReport';
 import ReportDetail from './pages/ReportDetail';
+import HistoryPage from './pages/History';
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem('ecosort_auth') === '1';
 }
 
-function Layout({children}) {
+function Layout({ children }) {
   const navigate = useNavigate();
   const [isAuthed, setIsAuthed] = useState(() => readAuth());
   const [user, setUser] = useState(() => getUser());
@@ -86,7 +87,7 @@ function Layout({children}) {
 
     window.addEventListener('storage', onStorageEvent);
     window.addEventListener('ecosort_auth_changed', onAuthEvent);
-    
+
     // Khởi động đồng bộ ban đầu
     sync();
 
@@ -125,7 +126,7 @@ function Layout({children}) {
     setMenuOpen(false);
     setUser(null);
     setIsAuthed(false);
-    navigate('/login', {replace: true});
+    navigate('/login', { replace: true });
   }
 
   return (
@@ -202,7 +203,7 @@ function Layout({children}) {
                       )}
                     </h3>
                     {unreadCount > 0 && (
-                      <button 
+                      <button
                         onClick={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}
                         className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
                       >
@@ -216,7 +217,7 @@ function Layout({children}) {
                     {notifications.length > 0 ? (
                       <div className="divide-y divide-surface-container-high">
                         {notifications.map((notif) => (
-                          <div 
+                          <div
                             key={notif.id}
                             className={`p-5 flex gap-4 hover:bg-surface-container-low transition-colors group cursor-pointer relative ${!notif.isRead ? 'bg-primary/[0.02]' : ''}`}
                             onClick={() => {
@@ -226,14 +227,13 @@ function Layout({children}) {
                             {!notif.isRead && (
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                             )}
-                            <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
-                              notif.type === 'warning' ? 'bg-amber-100 text-amber-600' :
+                            <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${notif.type === 'warning' ? 'bg-amber-100 text-amber-600' :
                               notif.type === 'success' ? 'bg-emerald-100 text-emerald-600' :
-                              'bg-blue-100 text-blue-600'
-                            }`}>
+                                'bg-blue-100 text-blue-600'
+                              }`}>
                               {notif.type === 'warning' ? <Bell className="w-6 h-6" /> :
-                               notif.type === 'success' ? <CheckCheck className="w-6 h-6" /> :
-                               <Bell className="w-6 h-6" />}
+                                notif.type === 'success' ? <CheckCheck className="w-6 h-6" /> :
+                                  <Bell className="w-6 h-6" />}
                             </div>
                             <div className="flex-1 space-y-1">
                               <p className={`text-sm font-black leading-tight ${!notif.isRead ? 'text-on-surface' : 'text-on-surface-variant'}`}>
@@ -314,6 +314,15 @@ function Layout({children}) {
                     >
                       <User className="w-4 h-4 text-primary" />
                       Trang cá nhân
+                    </Link>
+                    <Link
+                      to="/history"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container-low transition-colors"
+                    >
+                      <History className="w-4 h-4 text-primary" />
+                      Lịch sử
                     </Link>
                     <button
                       type="button"
@@ -423,6 +432,7 @@ export default function App() {
           <Route path="/report" element={<Report />} />
           <Route path="/report/create" element={<CreateReport />} />
           <Route path="/report/:id" element={<ReportDetail />} />
+          <Route path="/history" element={<HistoryPage />} />
         </Routes>
       </Layout>
     </Router>
