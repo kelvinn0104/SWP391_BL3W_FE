@@ -1,11 +1,44 @@
-import {motion} from 'motion/react';
-import {Star, ArrowRight} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { ArrowRight, Star } from 'lucide-react';
+
+const DEFAULT_POINTS = 0;
+
+function readPoints() {
+  const raw = localStorage.getItem('ecosort_points');
+  if (raw === null) return DEFAULT_POINTS;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : DEFAULT_POINTS;
+}
 
 export default function Rewards() {
+  const [pointsBalance, setPointsBalance] = useState(() => readPoints());
+
+  useEffect(() => {
+    const onChanged = () => setPointsBalance(readPoints());
+    window.addEventListener('storage', onChanged);
+    window.addEventListener('ecosort_points_changed', onChanged);
+    return () => {
+      window.removeEventListener('storage', onChanged);
+      window.removeEventListener('ecosort_points_changed', onChanged);
+    };
+  }, []);
+
+  const pointsText = useMemo(
+    () => new Intl.NumberFormat('en-US').format(pointsBalance),
+    [pointsBalance]
+  );
+
   return (
     <div className="space-y-12">
       <header className="space-y-4">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface">Đổi quà hấp dẫn</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface">Đổi quà hấp dẫn</h1>
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-surface-container-high bg-surface-container-lowest px-4 py-2 text-sm font-extrabold text-primary botanical-shadow">
+            <Star className="w-4 h-4" fill="currentColor" />
+            <span>{pointsText} Points</span>
+          </div>
+        </div>
         <p className="text-on-surface-variant text-lg max-w-2xl">
           Sử dụng điểm EcoSort bạn đã tích lũy được để đổi lấy những phần quà thân thiện với môi
           trường.
@@ -36,10 +69,10 @@ export default function Rewards() {
   );
 }
 
-function RewardCard({image, title, points, category}) {
+function RewardCard({ image, title, points, category }) {
   return (
     <motion.div
-      whileHover={{y: -5}}
+      whileHover={{ y: -5 }}
       className="bg-surface-container-lowest rounded-[2rem] overflow-hidden botanical-shadow border border-surface-container-high/50"
     >
       <img src={image} alt={title} className="w-full h-48 object-cover" referrerPolicy="no-referrer" />
