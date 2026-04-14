@@ -190,15 +190,15 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] w-full px-4 sm:px-6 md:px-16 py-10 sm:py-14">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+    <div className="h-dvh w-full overflow-hidden px-4 sm:px-6 md:px-10 py-4">
+      <div className="mx-auto max-w-6xl h-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center min-h-0">
         {/* Left: brand / value */}
-        <section className="lg:col-span-7 rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-on-surface text-surface relative botanical-shadow">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/35 via-transparent to-primary-container/20" />
+        <section className="lg:col-span-7 rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden bg-on-surface text-surface relative botanical-shadow min-h-0">
+          <div className="absolute inset-0 bg-linear-to-br from-primary/35 via-transparent to-primary-container/20" />
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/25 blur-[120px] rounded-full" />
           <div className="absolute -bottom-28 -left-24 w-96 h-96 bg-primary-container/25 blur-[140px] rounded-full" />
 
-          <div className="relative p-8 sm:p-12 md:p-16 h-full flex flex-col justify-between gap-10">
+          <div className="relative p-6 sm:p-8 md:p-10 h-full flex flex-col justify-between gap-6">
             <div className="space-y-6 max-w-2xl">
               <div className="inline-flex items-center gap-3 bg-white/10 px-5 py-2 rounded-full border border-white/15">
                 <Leaf className="w-4 h-4 text-primary-container" />
@@ -207,14 +207,14 @@ export default function Login() {
                 </span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif italic leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif italic leading-tight tracking-tight">
                 Chào mừng trở lại.
                 <br />
                 <span className="not-italic text-primary-container">Đăng nhập</span> để tiếp tục hành trình
                 xanh.
               </h1>
 
-              <p className="text-base sm:text-lg text-surface/75 leading-relaxed font-light">
+              <p className="text-sm sm:text-base text-surface/75 leading-relaxed font-light">
                 Quản lý điểm thưởng, theo dõi tác động, và báo cáo rác thải chỉ với vài thao tác.
               </p>
             </div>
@@ -239,8 +239,8 @@ export default function Login() {
         </section>
 
         {/* Right: form */}
-        <section className="lg:col-span-5">
-          <div className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow h-full">
+        <section className="lg:col-span-5 min-h-0">
+          <div className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-8 border border-surface-container-high/60 botanical-shadow h-full min-h-0">
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface">Đăng nhập</h2>
               <p className="text-on-surface-variant text-sm sm:text-base">
@@ -248,7 +248,7 @@ export default function Login() {
               </p>
             </div>
 
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            <form onSubmit={onSubmit} className="mt-6 space-y-5">
               {error && (
                 <div className="rounded-2xl border border-error/30 bg-error/5 px-4 py-3">
                   <p className="text-sm font-semibold text-error">{error}</p>
