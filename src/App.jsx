@@ -12,6 +12,8 @@ import Leaderboard from './pages/Leaderboard';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Report from './pages/Report';
+import CreateReport from './pages/CreateReport';
+import ReportDetail from './pages/ReportDetail';
 
 function readAuth() {
   return localStorage.getItem('ecosort_auth') === '1';
@@ -232,6 +234,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/report" element={<Report />} />
+          <Route path="/report/create" element={<CreateReport />} />
+          <Route path="/report/:id" element={<ReportDetail />} />
         </Routes>
       </Layout>
     </Router>
