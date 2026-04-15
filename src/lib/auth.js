@@ -52,14 +52,8 @@ export async function fetchMe() {
   if (getToken() !== token) return null;
   setAuth({
     accessToken: token,
-    user: {
-      userId: data.userId,
-      email: data.email,
-      displayName: data.displayName,
-      role: data.role,
-      points: data.points,
-    },
-  }, false); // Cập nhật im lặng (silent) để tránh vòng lặp vô tận (infinite loop)
+    user: { ...data }, // Lưu toàn bộ trường hồ sơ mới
+  }, false);
 
   return data;
 }
