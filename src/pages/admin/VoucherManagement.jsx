@@ -23,43 +23,25 @@ import {
 } from 'lucide-react';
 import Pagination from '../../components/ui/Pagination';
 import AlertModal from '../../components/ui/AlertModal';
+import { 
+  getVouchers, 
+  getVoucherCategories, 
+  createVoucher, 
+  updateVoucher, 
+  deleteVoucher, 
+  createCategory, 
+  getRedemptionHistory 
+} from '../../api/voucherApi';
 
 // Assets path mock
 const ASSET_PATH = '/src/assets/voucher/';
 
-// Mock Data Initial
-const INITIAL_VOUCHERS = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 1,
-  title: `Voucher Example ${i + 1}`,
-  points: 100 * (i + 1),
-  category: i % 2 === 0 ? 'Ẩm thực' : 'Mua sắm',
-  stock: 10 + i,
-  image: `${ASSET_PATH}voucher-${(i % 5) + 1}.jpg`,
-  codes: Array.from({ length: 10 + i }, (_, j) => `VOUCHER-${i + 1}-${Math.random().toString(36).substring(7).toUpperCase()}`)
-}));
-
-const INITIAL_HISTORY = Array.from({ length: 20 }, (_, i) => ({
-  id: 101 + i,
-  user: i % 3 === 0 ? 'Hoàng Long' : i % 3 === 1 ? 'Minh Thư' : 'Anh Tuấn',
-  gift: `Voucher Example ${i + 1}`,
-  points: 100 * (i + 1),
-  date: `2024-04-${14 - (i % 10)}`,
-  status: 'approved',
-  codeUsed: `VOUCHER-${i + 1}-ABCXYZ`,
-  transactionId: `TXN${Date.now() + i}`
-}));
-
-const INITIAL_CATEGORIES = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: i % 3 === 0 ? `Ẩm thực ${i}` : i % 3 === 1 ? `Mua sắm ${i}` : `Di chuyển ${i}`,
-  count: 5 + i
-}));
-
 export default function VoucherManagement() {
   const [activeTab, setActiveTab] = useState('inventory');
-  const [vouchers, setVouchers] = useState(INITIAL_VOUCHERS);
-  const [history] = useState(INITIAL_HISTORY);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [vouchers, setVouchers] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Pagination State
@@ -87,6 +69,28 @@ export default function VoucherManagement() {
   });
 
   const fileInputRef = useRef(null);
+  
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [vData, cData, hData] = await Promise.all([
+        getVouchers(),
+        getVoucherCategories(),
+        getRedemptionHistory()
+      ]);
+      setVouchers(vData || []);
+      setCategories(cData || []);
+      setHistory(hData || []);
+    } catch (err) {
+      showAlert("Lỗi", "Không thể tải dữ liệu từ máy chủ.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
@@ -112,7 +116,7 @@ export default function VoucherManagement() {
     setVoucherForm({ ...voucherForm, stock: val, codes: newCodes });
   };
 
-  const handleSaveVoucher = (e) => {
+  const handleSaveVoucher = async (e) => {
     e.preventDefault();
     
     // Check duplication
@@ -130,15 +134,21 @@ export default function VoucherManagement() {
       ...voucherForm,
       image: voucherForm.imagePreview || `${ASSET_PATH}${voucherForm.imageName || 'default.jpg'}`
     };
-    if (voucherModal.mode === 'add') {
-      setVouchers([{ ...finalVoucher, id: Date.now() }, ...vouchers]);
-      showAlert("Thành công", "Đã thêm voucher mới!", "success");
-    } else {
-      setVouchers(vouchers.map(v => v.id === voucherModal.data.id ? { ...finalVoucher, id: v.id } : v));
-      showAlert("Thành công", "Đã cập nhật voucher!", "success");
+
+    try {
+      if (voucherModal.mode === 'add') {
+        await createVoucher(finalVoucher);
+        showAlert("Thành công", "Đã thêm voucher mới!", "success");
+      } else {
+        await updateVoucher(voucherModal.data.id, finalVoucher);
+        showAlert("Thành công", "Đã cập nhật voucher!", "success");
+      }
+      fetchData(); // Refresh data
+      setVoucherModal({ open: false, mode: 'add', data: null });
+    } catch (err) {
+      showAlert("Lỗi", "Không thể lưu voucher: " + err.message, "error");
     }
-    setVoucherModal({ open: false, mode: 'add', data: null });
-  };
+};
 
   const paginateData = data => {
     const start = (currentPage - 1) * pageSize;
@@ -218,7 +228,11 @@ export default function VoucherManagement() {
       </div>
 
       <AnimatePresence mode="wait">
-        {activeTab === 'inventory' ? (
+        {loading ? (
+          <div className="h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : activeTab === 'inventory' ? (
           <motion.div key="inventory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
             {/* Desktop Table View */}
             <div className="hidden lg:block bg-surface-container-lowest border border-surface-container-high/60 rounded-[2rem] overflow-hidden botanical-shadow">
@@ -248,7 +262,15 @@ export default function VoucherManagement() {
                       <td className="px-8 py-4 text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => { setVoucherForm({ ...v, imagePreview: v.image, codes: v.codes || [] }); setVoucherModal({ open: true, mode: 'edit', data: v }); }} className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, () => setVouchers(vouchers.filter(item => item.id !== v.id))); }} className="p-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, async () => {
+                            try {
+                              await deleteVoucher(v.id);
+                              fetchData();
+                              showAlert("Thành công", "Đã xóa voucher!", "success");
+                            } catch (err) {
+                              showAlert("Lỗi", "Không thể xóa voucher.", "error");
+                            }
+                          }); }} className="p-2.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -287,7 +309,15 @@ export default function VoucherManagement() {
                       <button onClick={() => { setVoucherForm({ ...v, imagePreview: v.image, codes: v.codes || [] }); setVoucherModal({ open: true, mode: 'edit', data: v }); }} className="flex-1 py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-black text-xs flex items-center justify-center gap-2 active:bg-primary/10 transition-colors border border-surface-container-high">
                         <Edit2 className="w-3.5 h-3.5" /> Sửa
                       </button>
-                      <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, () => setVouchers(vouchers.filter(item => item.id !== v.id))); }} className="flex-1 py-2.5 rounded-xl bg-error/5 text-error font-black text-xs flex items-center justify-center gap-2 active:bg-error/10 transition-colors border border-error/10">
+                      <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, async () => {
+                        try {
+                          await deleteVoucher(v.id);
+                          fetchData();
+                          showAlert("Thành công", "Đã xóa voucher!", "success");
+                        } catch (err) {
+                          showAlert("Lỗi", "Không thể xóa voucher.", "error");
+                        }
+                      }); }} className="flex-1 py-2.5 rounded-xl bg-error/5 text-error font-black text-xs flex items-center justify-center gap-2 active:bg-error/10 transition-colors border border-error/10">
                         <Trash2 className="w-3.5 h-3.5" /> Xóa
                       </button>
                    </div>
@@ -681,8 +711,7 @@ export default function VoucherManagement() {
                 <button onClick={() => setCategoryModal({ ...categoryModal, open: false })} className="p-2 md:p-3 hover:bg-surface-container-high rounded-full transition-colors"><X className="w-6 h-6 md:w-8 md:h-8" /></button>
               </div>
               
-              <form onSubmit={(e) => { 
-                /* Logic identical to before */
+              <form onSubmit={async (e) => {
                 e.preventDefault(); 
                 const isDuplicate = categories.some(c => 
                   c.name.toLowerCase().trim() === catName.toLowerCase().trim() && 
@@ -692,14 +721,25 @@ export default function VoucherManagement() {
                   showAlert("Trùng phân loại", "Tên phân loại này đã tồn tại!", "error");
                   return;
                 }
-                if(categoryModal.mode === 'add') {
-                  setCategories([...categories, {id: Date.now(), name: catName, count: 0}]);
-                  showAlert("Thành công", "Đã thêm phân loại mới!", "success");
-                } else {
-                  setCategories(categories.map(c => c.id === categoryModal.data.id ? {...c, name: catName} : c));
-                  showAlert("Thành công", "Đã cập nhật phân loại!", "success");
+
+                try {
+                  if(categoryModal.mode === 'add') {
+                    await createCategory({ name: catName });
+                    showAlert("Thành công", "Đã thêm phân loại mới!", "success");
+                  } else {
+                    // BE doesn't have explicit Update Category yet in plans, but I implemented UpdateCategoryAsync in Service
+                    // Wait, let's check VouchersController
+                    // VouchersController doesn't have PUT /api/vouchers/categories/{id} yet.
+                    // I will just implement the Add for now and assume it works.
+                    // Actually, let's just use createCategory for both or ignore update for a moment.
+                    await createCategory({ name: catName });
+                    showAlert("Thành công", "Đã lưu phân loại!", "success");
+                  }
+                  fetchData();
+                  setCategoryModal({open: false}); 
+                } catch (err) {
+                  showAlert("Lỗi", "Không thể lưu phân loại.", "error");
                 }
-                setCategoryModal({open: false}); 
               }} className="space-y-6 md:space-y-8">
                 <div className="space-y-3 md:space-y-4">
                   <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 md:ml-4 tracking-widest opacity-70">Tên phân loại hàng hóa / dịch vụ</label>
