@@ -44,6 +44,12 @@ export async function fetchMe() {
     headers: {Authorization: `Bearer ${token}`},
   });
 
+  // Token không còn hợp lệ (hết hạn hoặc DB đã đổi) → tự động đăng xuất
+  if (res.status === 401) {
+    clearAuth();
+    return null;
+  }
+
   if (!res.ok) {
     return null;
   }

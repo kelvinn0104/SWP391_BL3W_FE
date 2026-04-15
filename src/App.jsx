@@ -115,8 +115,14 @@ function Layout() {
 
     // Chỉ gọi fetchMe một lần duy nhất khi load trang để lấy dữ liệu mới nhất (như điểm thưởng)
     if (readAuth()) {
+      const tokenBefore = getToken();
       fetchMe().then((me) => {
-        if (me) setUser(getUser());
+        if (me) {
+          setUser(getUser());
+        } else if (tokenBefore && !getToken()) {
+          // Token bị xóa do 401 (hết hạn/DB thay đổi) → redirect về đăng nhập
+          navigate('/login', { replace: true });
+        }
       });
     }
 

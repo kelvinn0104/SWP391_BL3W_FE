@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { clearAuth, getUser } from '../lib/auth';
 import { updateProfile } from '../api/userApi';
 import { motion } from 'framer-motion';
+import AlertModal from '../components/ui/AlertModal';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -30,6 +31,10 @@ export default function Profile() {
   const [formData, setFormData] = useState({});
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
   
+  // Role categorisation: 3, 4 are Simple UI. 1, 2 are Detailed UI.
+  const isSimpleUI = user ? (user.role === 'Administrator' || user.role === '3' || 
+                     user.role === 'RecyclingEnterprise' || user.role === '4') : false;
+
   useEffect(() => {
     const handleAuthChange = () => {
       setUser(getUser());
@@ -146,10 +151,6 @@ export default function Profile() {
       </div>
     );
   }
-
-  // Role categorisation: 3, 4 are Simple UI. 1, 2 are Detailed UI.
-  const isSimpleUI = user.role === 'Administrator' || user.role === '3' || 
-                     user.role === 'RecyclingEnterprise' || user.role === '4';
 
   const roleInfo = {
     'Administrator': { label: 'Quản trị viên', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50' },
@@ -453,5 +454,3 @@ function InfoField({ isEditing, icon: Icon, label, value, onChange, type = 'text
     </div>
   );
 }
-
-import AlertModal from '../components/ui/AlertModal';
