@@ -42,7 +42,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-73px)] overflow-hidden bg-surface-container-low relative">
+    <div className="flex h-dvh w-full overflow-hidden bg-surface-container-low relative min-h-0">
       {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsSidebarOpen(true)}
@@ -83,7 +83,7 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5 mt-4 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-4 space-y-1.5 mt-4 overflow-y-auto no-scrollbar min-h-0">
           <NavLink
             to="/admin"
             end
@@ -205,7 +205,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-surface relative">
+      <main className="flex-1 overflow-y-auto bg-surface relative min-h-0">
         {/* Decorative Grid Background */}
         <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
           backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)',
@@ -213,15 +213,8 @@ export default function AdminLayout() {
         }}></div>
 
         {/* Content Container */}
-        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full min-h-full">
-          <header className="mb-6 md:mb-10">
-            <h1 className="text-2xl md:text-3xl font-serif italic text-on-surface mb-1 md:mb-2">
-              Chào ngày mới, <span className="not-italic font-black text-primary">{user.displayName || 'Admin'}</span>
-            </h1>
-            <p className="text-sm md:text-base text-on-surface-variant font-medium opacity-70">Bảng điều khiển quản trị tối cao của EcoSort.</p>
-          </header>
-          
-          <Outlet />
+        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
+          <Outlet context={{ user }} />
         </div>
       </main>
     </div>

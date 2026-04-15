@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { Calendar, FileText, Leaf, MapPin, Package } from "lucide-react";
 import Pagination from "../../components/ui/Pagination.jsx";
 
@@ -7,8 +7,8 @@ const PAGE_SIZE = 5;
 
 const HISTORY_STATUS = "Đã thu gom";
 
-/** Demo — thay bằng API khi backend sẵn sàng */
-const MOCK_TASKS = [
+/** Demo — thay bằng API khi backend sẵn sàng (export để TaskDetail dùng chung) */
+export const MOCK_HISTORY_TASKS = [
   {
     id: "RP-2380",
     title: "Thu gom chai nhựa khu tập thể",
@@ -19,6 +19,11 @@ const MOCK_TASKS = [
       "Đã cân và bàn giao tại kho trung chuyển Quận 10, biên nhận số BN-8821.",
     location: "Quận 10, TP.HCM",
     createdAt: "2026-03-28",
+    coordinates: { lat: 10.7756, lng: 106.6662 },
+    images: [
+      "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=1200&q=80",
+      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80",
+    ],
   },
   {
     id: "RP-2385",
@@ -29,6 +34,10 @@ const MOCK_TASKS = [
     description: "Thu gom đúng khung giờ, đã xác nhận trên app.",
     location: "Gò Vấp, TP.HCM",
     createdAt: "2026-04-01",
+    coordinates: { lat: 10.8398, lng: 106.6669 },
+    images: [
+      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&q=80",
+    ],
   },
   {
     id: "RP-2390",
@@ -39,6 +48,8 @@ const MOCK_TASKS = [
     description: "Không hiện ở lịch sử.",
     location: "Quận 12, TP.HCM",
     createdAt: "2026-04-06",
+    coordinates: { lat: 10.8616, lng: 106.678 },
+    images: [],
   },
   {
     id: "RP-2392",
@@ -49,6 +60,11 @@ const MOCK_TASKS = [
     description: "Phân loại sơ bộ tại chỗ, đủ khối lượng theo báo cáo.",
     location: "Quận 1, TP.HCM",
     createdAt: "2026-04-04",
+    coordinates: { lat: 10.7756, lng: 106.7021 },
+    images: [
+      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&q=80",
+      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=1200&q=80",
+    ],
   },
 ];
 
@@ -63,6 +79,10 @@ function statusBadgeClass(status) {
 
 function HistoryTaskCard({ task }) {
   return (
+    <Link
+      to={`/collector/tasks/${encodeURIComponent(task.id)}`}
+      className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+    >
     <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
       <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
         <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
@@ -123,6 +143,7 @@ function HistoryTaskCard({ task }) {
         </span>
       </div>
     </article>
+    </Link>
   );
 }
 
@@ -131,7 +152,7 @@ export default function HistoryTasks() {
   const [page, setPage] = useState(1);
 
   const tasks = useMemo(
-    () => MOCK_TASKS.filter((t) => t.status === HISTORY_STATUS),
+    () => MOCK_HISTORY_TASKS.filter((t) => t.status === HISTORY_STATUS),
     [],
   );
 
