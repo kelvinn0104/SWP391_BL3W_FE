@@ -1,90 +1,177 @@
-import {Trophy, Medal, Award, TrendingUp} from 'lucide-react';
+import { Award, Medal, TrendingUp, Trophy, UserRound } from 'lucide-react';
+
+const LEADERBOARD = [
+  {
+    rank: 1,
+    name: 'Nguyễn Văn A',
+    points: 4250,
+    actions: 124,
+    avatar: 'https://picsum.photos/seed/user1/100/100',
+  },
+  {
+    rank: 2,
+    name: 'Trần Thị B',
+    points: 3800,
+    actions: 98,
+    avatar: 'https://picsum.photos/seed/user2/100/100',
+  },
+  {
+    rank: 3,
+    name: 'Lê Văn C',
+    points: 3150,
+    actions: 85,
+    avatar: 'https://picsum.photos/seed/user3/100/100',
+  },
+  {
+    rank: 4,
+    name: 'Phạm Minh D',
+    points: 2900,
+    actions: 72,
+    avatar: 'https://picsum.photos/seed/user4/100/100',
+  },
+  {
+    rank: 5,
+    name: 'Hoàng Văn E',
+    points: 2750,
+    actions: 68,
+    avatar: 'https://picsum.photos/seed/user5/100/100',
+  },
+];
 
 export default function Leaderboard() {
-  return (
-    <div className="space-y-12">
-      <header className="flex flex-col md:flex-row justify-between items-end gap-6">
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface">Bảng xếp hạng</h1>
-          <p className="text-on-surface-variant text-lg max-w-2xl">
-            Vinh danh những cá nhân tích cực nhất trong cộng đồng EcoSort tuần này.
-          </p>
-        </div>
-        <div className="bg-primary-container/10 p-4 rounded-2xl flex items-center gap-4">
-          <TrendingUp className="text-primary w-8 h-8" />
-          <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-              Thứ hạng của bạn
-            </p>
-            <p className="text-xl font-black text-primary">#42 / 1,250 pts</p>
-          </div>
-        </div>
-      </header>
+  const myRank = 42;
+  const myPoints = 1250;
 
-      <div className="bg-surface-container-lowest rounded-[2.5rem] botanical-shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-surface-container-high">
-                <th className="px-8 py-6 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                  Hạng
-                </th>
-                <th className="px-8 py-6 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                  Người dùng
-                </th>
-                <th className="px-8 py-6 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                  Điểm tích lũy
-                </th>
-                <th className="px-8 py-6 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                  Hành động xanh
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container-high/50">
-              <LeaderboardRow
-                rank={1}
-                name="Nguyễn Văn A"
-                points="4,250"
-                actions={124}
-                avatar="https://picsum.photos/seed/user1/100/100"
-              />
-              <LeaderboardRow
-                rank={2}
-                name="Trần Thị B"
-                points="3,800"
-                actions={98}
-                avatar="https://picsum.photos/seed/user2/100/100"
-              />
-              <LeaderboardRow
-                rank={3}
-                name="Lê Văn C"
-                points="3,150"
-                actions={85}
-                avatar="https://picsum.photos/seed/user3/100/100"
-              />
-              <LeaderboardRow
-                rank={4}
-                name="Phạm Minh D"
-                points="2,900"
-                actions={72}
-                avatar="https://picsum.photos/seed/user4/100/100"
-              />
-              <LeaderboardRow
-                rank={5}
-                name="Hoàng Văn E"
-                points="2,750"
-                actions={68}
-                avatar="https://picsum.photos/seed/user5/100/100"
-              />
-            </tbody>
-          </table>
+  return (
+    <div className="relative min-h-full overflow-x-hidden">
+      {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+        aria-hidden
+      />
+
+      <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
+        <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow space-y-8">
+          <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div className="space-y-2">
+              <p className="text-sm font-extrabold text-primary">Community</p>
+              <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+                Bảng <span className="not-italic text-primary">xếp hạng</span>
+              </h1>
+              <p className="text-on-surface-variant max-w-2xl">
+                Vinh danh những cá nhân tích cực nhất trong cộng đồng EcoSort tuần này.
+              </p>
+            </div>
+
+            <div className="rounded-[2rem] border border-surface-container-high bg-surface p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                  Thứ hạng của bạn
+                </p>
+                <p className="text-lg sm:text-xl font-extrabold text-primary">
+                  #{myRank} <span className="text-on-surface-variant font-bold">/</span>{' '}
+                  {new Intl.NumberFormat('en-US').format(myPoints)} pts
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {LEADERBOARD.slice(0, 3).map((item) => (
+              <PodiumCard key={item.rank} {...item} />
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] border border-surface-container-high/60 botanical-shadow overflow-hidden">
+          <div className="px-7 sm:px-10 py-6 border-b border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm font-extrabold text-on-surface">Tất cả người dùng</p>
+            <p className="text-sm font-semibold text-on-surface-variant">
+              {LEADERBOARD.length} người tham gia
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[720px]">
+              <thead className="bg-surface-container-low/30">
+                <tr className="border-b border-surface-container-high/70">
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Hạng
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Người dùng
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Điểm tích lũy
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Hành động xanh
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container-high/60">
+                {LEADERBOARD.map((row) => (
+                  <LeaderboardRow key={row.rank} {...row} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function PodiumCard({ rank, name, points, actions, avatar }) {
+  const badge = rank === 1 ? 'Top 1' : rank === 2 ? 'Top 2' : 'Top 3';
+  const icon =
+    rank === 1 ? (
+      <Trophy className="w-5 h-5 text-yellow-600" fill="currentColor" />
+    ) : rank === 2 ? (
+      <Medal className="w-5 h-5 text-slate-500" fill="currentColor" />
+    ) : (
+      <Award className="w-5 h-5 text-amber-700" fill="currentColor" />
+    );
+
+  return (
+    <div className="rounded-[2rem] border border-surface-container-high bg-surface p-5 flex items-center gap-4">
+      <div className="relative">
+        <img
+          src={avatar}
+          alt={name}
+          className="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/10"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute -right-2 -bottom-2 w-8 h-8 rounded-2xl bg-surface-container-lowest border border-surface-container-high flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-black uppercase tracking-widest text-primary">{badge}</p>
+        <p className="text-base font-extrabold text-on-surface truncate">{name}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-on-surface-variant">
+          <span className="text-primary">{new Intl.NumberFormat('en-US').format(points)} pts</span>
+          <span className="opacity-60">•</span>
+          <span>{actions} lần</span>
         </div>
       </div>
     </div>
   );
 }
 
-function LeaderboardRow({rank, name, points, actions, avatar}) {
+function LeaderboardRow({ rank, name, points, actions, avatar }) {
   const getRankIcon = (r) => {
     if (r === 1) return <Trophy className="w-5 h-5 text-yellow-500" fill="currentColor" />;
     if (r === 2) return <Medal className="w-5 h-5 text-slate-400" fill="currentColor" />;
@@ -93,8 +180,8 @@ function LeaderboardRow({rank, name, points, actions, avatar}) {
   };
 
   return (
-    <tr className="hover:bg-surface-container-low transition-colors group">
-      <td className="px-8 py-6">
+    <tr className="hover:bg-surface-container-low/60 transition-colors">
+      <td className="px-6 sm:px-10 py-5">
         <div className="flex items-center gap-2">
           <span
             className={`text-lg font-black ${rank <= 3 ? 'text-primary' : 'text-on-surface-variant/40'}`}
@@ -104,21 +191,29 @@ function LeaderboardRow({rank, name, points, actions, avatar}) {
           {getRankIcon(rank)}
         </div>
       </td>
-      <td className="px-8 py-6">
+      <td className="px-6 sm:px-10 py-5">
         <div className="flex items-center gap-4">
-          <img
-            src={avatar}
-            alt={name}
-            className="w-10 h-10 rounded-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-          <span className="font-bold text-on-surface">{name}</span>
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={name}
+              className="w-10 h-10 rounded-2xl object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+              <UserRound className="w-5 h-5" />
+            </div>
+          )}
+          <span className="font-extrabold text-on-surface">{name}</span>
         </div>
       </td>
-      <td className="px-8 py-6">
-        <span className="font-extrabold text-primary">{points} pts</span>
+      <td className="px-6 sm:px-10 py-5">
+        <span className="font-extrabold text-primary">
+          {new Intl.NumberFormat('en-US').format(points)} pts
+        </span>
       </td>
-      <td className="px-8 py-6">
+      <td className="px-6 sm:px-10 py-5">
         <span className="font-bold text-on-surface-variant">{actions} lần</span>
       </td>
     </tr>
