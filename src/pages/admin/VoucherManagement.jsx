@@ -65,7 +65,7 @@ export default function VoucherManagement() {
   // Form States
   const [catName, setCatName] = useState('');
   const [voucherForm, setVoucherForm] = useState({
-    title: '', points: 0, category: '', stock: 0, imageName: '', imagePreview: null, codes: []
+    title: '', points: 0, category: '', stock: 0, imageName: '', imagePreview: null, imageFile: null, codes: []
   });
 
   const fileInputRef = useRef(null);
@@ -130,17 +130,30 @@ export default function VoucherManagement() {
       return;
     }
 
-    const finalVoucher = {
-      ...voucherForm,
-      image: voucherForm.imagePreview || `${ASSET_PATH}${voucherForm.imageName || 'default.jpg'}`
-    };
+    const formData = new FormData();
+    formData.append('Title', voucherForm.title);
+    formData.append('Points', voucherForm.points);
+    formData.append('Category', voucherForm.category);
+    formData.append('Stock', voucherForm.stock);
+    
+    if (voucherForm.imageFile) {
+      formData.append('ImageFile', voucherForm.imageFile);
+    } else if (voucherForm.imagePreview) {
+      // If no new file but we have a preview (existing image from DB)
+      formData.append('Image', voucherForm.imagePreview);
+    }
+
+    // Append codes
+    voucherForm.codes.forEach(code => {
+      formData.append('Codes', code);
+    });
 
     try {
       if (voucherModal.mode === 'add') {
-        await createVoucher(finalVoucher);
+        await createVoucher(formData);
         showAlert("Thành công", "Đã thêm voucher mới!", "success");
       } else {
-        await updateVoucher(voucherModal.data.id, finalVoucher);
+        await updateVoucher(voucherModal.data.id, formData);
         showAlert("Thành công", "Đã cập nhật voucher!", "success");
       }
       fetchData(); // Refresh data
@@ -211,7 +224,7 @@ export default function VoucherManagement() {
           {activeTab !== 'history' && (
             <button 
               onClick={activeTab === 'inventory' ? () => {
-                setVoucherForm({ title: '', points: 0, category: categories[0]?.name || '', stock: 0, imageName: '', imagePreview: null, codes: [] });
+                setVoucherForm({ title: '', points: 0, category: categories[0]?.name || '', stock: 0, imageName: '', imagePreview: null, imageFile: null, codes: [] });
                 setVoucherModal({ open: true, mode: 'add', data: null });
               } : () => {
                 setCatName('');
@@ -306,7 +319,15 @@ export default function VoucherManagement() {
                       <span className="text-[10px] font-mono opacity-30 mt-1">#{v.id}</span>
                    </div>
                    <div className="flex gap-2 pt-4 border-t border-surface-container-high/50" onClick={e => e.stopPropagation()}>
-                      <button onClick={() => { setVoucherForm({ ...v, imagePreview: v.image, codes: v.codes || [] }); setVoucherModal({ open: true, mode: 'edit', data: v }); }} className="flex-1 py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-black text-xs flex items-center justify-center gap-2 active:bg-primary/10 transition-colors border border-surface-container-high">
+                      <button onClick={() => { 
+                        setVoucherForm({ 
+                          ...v, 
+                          imagePreview: v.image, 
+                          imageFile: null,
+                          codes: v.codes || [] 
+                        }); 
+                        setVoucherModal({ open: true, mode: 'edit', data: v }); 
+                      }} className="flex-1 py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-black text-xs flex items-center justify-center gap-2 active:bg-primary/10 transition-colors border border-surface-container-high">
                         <Edit2 className="w-3.5 h-3.5" /> Sửa
                       </button>
                       <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, async () => {
@@ -618,7 +639,17 @@ export default function VoucherManagement() {
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 tracking-widest opacity-70">Hình ảnh Voucher</label>
                        <div onClick={() => fileInputRef.current?.click()} className="group relative cursor-pointer aspect-video bg-primary/[0.02] rounded-[1.5rem] md:rounded-[2rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center gap-2 overflow-hidden transition-all hover:bg-primary/[0.04]">
-                         <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={(e) => { const f = e.target.files[0]; if(f) setVoucherForm({...voucherForm, imageName: f.name, imagePreview: URL.createObjectURL(f)}); }} />
+                         <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={(e) => { 
+                           const f = e.target.files[0]; 
+                           if(f) {
+                             setVoucherForm({
+                               ...voucherForm, 
+                               imageName: f.name, 
+                               imageFile: f,
+                               imagePreview: URL.createObjectURL(f)
+                             }); 
+                           }
+                         }} />
                          {voucherForm.imagePreview ? (
                            <img src={voucherForm.imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="" />
                          ) : (
