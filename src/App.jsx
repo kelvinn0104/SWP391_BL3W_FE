@@ -47,6 +47,8 @@ import ReportDetail from "./pages/ReportDetail";
 import HistoryPage from "./pages/History";
 import Tasks from "./pages/collector/Tasks";
 import HistoryTasks from "./pages/collector/HistoryTasks";
+import VoucherManagement from "./pages/admin/VoucherManagement";
+import RewardManagement from "./pages/admin/RewardManagement";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -328,9 +330,14 @@ function Layout() {
                   aria-expanded={menuOpen}
                 >
                   <div className="text-right hidden lg:block">
-                    <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60">
-                      {user?.displayName || user?.email || "Cá nhân"}
-                    </p>
+                    <div className="flex items-center justify-end gap-1.5 mb-0.5">
+                      <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60 leading-none">
+                        {user?.displayName || user?.email || "Cá nhân"}
+                      </p>
+                      {(user?.phone || user?.role === 'Administrator' || user?.role === '3' || user?.role === 'RecyclingEnterprise' || user?.role === '4') && (
+                        <img src="/verify/verified.png" alt="verified" className="w-3.5 h-3.5 object-contain shrink-0" />
+                      )}
+                    </div>
                     <p className="text-sm font-extrabold text-primary">
                       {typeof user?.points === "number"
                         ? user.points.toLocaleString()
@@ -448,12 +455,14 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Auth routes - outside Layout */}
         <Route path="login" element={<Login />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="verify-code" element={<VerifyCode />} />
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="register" element={<Register />} />
 
+        {/* Public routes - inside Layout */}
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="rewards" element={<Rewards />} />
@@ -466,18 +475,26 @@ export default function App() {
           <Route path="history" element={<HistoryPage />} />
         </Route>
 
+        {/* Enterprise routes */}
         <Route path="enterprise" element={<EnterpriseLayout />}>
           <Route index element={<EnterpriseDashboard />} />
           <Route path="area" element={<EnterpriseArea />} />
           <Route path="requests" element={<EnterpriseRequests />} />
+          <Route path="tasks" element={<div className="p-10 text-center font-bold opacity-50">Quản lí công việc đang được phát triển...</div>} />
+          <Route path="accounts" element={<div className="p-10 text-center font-bold opacity-50">Quản lí tài khoản đang được phát triển...</div>} />
+          <Route path="feedback" element={<div className="p-10 text-center font-bold opacity-50">Quản lí feedback đang được phát triển...</div>} />
+          <Route path="rewards" element={<RewardManagement />} />
+          <Route path="vouchers" element={<VoucherManagement />} />
         </Route>
 
+        {/* Collector routes */}
         <Route path="collector" element={<CollectorLayout />}>
           <Route index element={<CollectorDashboard />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="history" element={<HistoryTasks />} />
         </Route>
 
+        {/* Admin routes */}
         <Route path="admin" element={<AdminLayout />}>
           <Route
             index
@@ -511,14 +528,8 @@ export default function App() {
               </div>
             }
           />
-          <Route
-            path="rewards"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Quản lí điểm thưởng đang được phát triển...
-              </div>
-            }
-          />
+          <Route path="rewards" element={<RewardManagement />} />
+          <Route path="vouchers" element={<VoucherManagement />} />
         </Route>
       </Routes>
     </Router>
