@@ -29,15 +29,6 @@ export default function CollectorLayout() {
 
   if (!user) return null;
 
-  function getInitial(nameOrEmail) {
-    const s = String(nameOrEmail || "").trim();
-    if (!s) return "U";
-    const parts = s.split(/\s+/).filter(Boolean);
-    const first = parts[0]?.[0] || "";
-    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
-    return (first + last).toUpperCase() || "U";
-  }
-
   function onLogout() {
     clearAuth();
     navigate("/login", { replace: true });
@@ -145,20 +136,7 @@ export default function CollectorLayout() {
           }}
         ></div>
         <div className="p-8 md:p-12 relative z-10 w-full">
-          {/* Header Dashboard Placeholder */}
-          <header className="mb-10">
-            <h1 className="text-3xl font-serif italic text-on-surface mb-2">
-              Xin chào,{" "}
-              <span className="not-italic font-black text-primary">
-                {user.displayName || "Nhân viên"}
-              </span>
-            </h1>
-            <p className="text-on-surface-variant font-medium">
-              Bắt đầu ngày làm việc của bạn ngay hôm nay.
-            </p>
-          </header>
-
-          <Outlet />
+          <Outlet context={{ user }} />
         </div>
       </main>
     </div>

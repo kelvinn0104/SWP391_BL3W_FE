@@ -39,11 +39,14 @@ import EnterpriseDashboard from "./pages/enterprise/Dashboard";
 import EnterpriseArea from "./pages/enterprise/Area";
 import EnterpriseRequests from "./pages/enterprise/Requests";
 import CollectorLayout from "./pages/collector/CollectorLayout";
+import CollectorDashboard from "./pages/collector/CollectorDashboard";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Report from "./pages/Report";
 import CreateReport from "./pages/CreateReport";
 import ReportDetail from "./pages/ReportDetail";
 import HistoryPage from "./pages/History";
+import Tasks from "./pages/collector/Tasks";
+import HistoryTasks from "./pages/collector/HistoryTasks";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -470,30 +473,9 @@ export default function App() {
         </Route>
 
         <Route path="collector" element={<CollectorLayout />}>
-          <Route
-            index
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Dashboard Collector đang được phát triển...
-              </div>
-            }
-          />
-          <Route
-            path="tasks"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Quản lí công việc đang được phát triển...
-              </div>
-            }
-          />
-          <Route
-            path="history"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Lịch sử công việc đang được phát triển...
-              </div>
-            }
-          />
+          <Route index element={<CollectorDashboard />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="history" element={<HistoryTasks />} />
         </Route>
 
         <Route path="admin" element={<AdminLayout />}>
