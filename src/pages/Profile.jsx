@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Mail, 
@@ -30,6 +30,14 @@ export default function Profile() {
   const [formData, setFormData] = useState({});
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
   
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setUser(getUser());
+    };
+    window.addEventListener('ecosort_auth_changed', handleAuthChange);
+    return () => window.removeEventListener('ecosort_auth_changed', handleAuthChange);
+  }, []);
+  
   const onLogout = () => {
     clearAuth();
     navigate('/', { replace: true });
@@ -50,15 +58,28 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    // Validation: Phone is mandatory
-    if (!isSimpleUI && (!formData.phone || formData.phone.trim() === '')) {
-      setAlertConfig({
-        isOpen: true,
-        title: "Thiếu thông tin",
-        message: "Số điện thoại là yêu cầu bắt buộc để đảm bảo xác thực tài khoản.",
-        type: "error"
-      });
-      return;
+    // Validation: Phone is mandatory and must be 10 digits numeric
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!isSimpleUI) {
+      if (!formData.phone || formData.phone.trim() === '') {
+        setAlertConfig({
+          isOpen: true,
+          title: "Thiếu thông tin",
+          message: "Số điện thoại là yêu cầu bắt buộc để đảm bảo xác thực tài khoản.",
+          type: "error"
+        });
+        return;
+      }
+      
+      if (!phoneRegex.test(formData.phone.trim())) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Định dạng không hợp lệ",
+          message: "Số điện thoại phải bao gồm đúng 10 chữ số và không chứa ký tự đặc biệt.",
+          type: "error"
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
