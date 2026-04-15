@@ -19,9 +19,9 @@ const AlertModal = ({ isOpen, onClose, title, message, type = 'warning', onConfi
   const themes = {
     warning: {
       icon: <AlertTriangle className="w-10 h-10" />,
-      color: 'text-amber-500',
-      bgIcon: 'bg-amber-500/10',
-      btn: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+      color: 'text-warning',
+      bgIcon: 'bg-warning/10',
+      btn: 'bg-warning hover:bg-warning/90 shadow-warning/20'
     },
     error: {
       icon: <XCircle className="w-10 h-10" />,
@@ -46,26 +46,26 @@ const AlertModal = ({ isOpen, onClose, title, message, type = 'warning', onConfi
   const theme = themes[type] || themes.info;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div 
-        className="bg-surface border border-surface-container-highest rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 p-8 text-center relative"
+        className="bg-surface-container-lowest border border-surface-container-highest rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 p-10 text-center relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 text-on-surface-variant hover:text-on-surface transition-colors p-2 hover:bg-surface-container rounded-full"
+          className="absolute top-6 right-6 text-on-surface-variant hover:text-error transition-all p-2 bg-surface-container hover:bg-error/10 rounded-full group"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
         </button>
 
-        <div className={`w-20 h-20 ${theme.bgIcon} ${theme.color} rounded-full flex items-center justify-center mx-auto mb-6`}>
+        <div className={`w-24 h-24 ${theme.bgIcon} ${theme.color} rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-inner`}>
           {theme.icon}
         </div>
 
-        <h3 className="text-2xl font-black text-on-surface mb-2">{title}</h3>
-        <p className="text-on-surface-variant mb-8 leading-relaxed font-medium">
+        <h3 className="text-3xl font-black text-on-surface mb-3 tracking-tight">{title}</h3>
+        <div className="text-on-surface-variant mb-10 leading-relaxed font-bold opacity-80">
           {message}
-        </p>
+        </div>
 
         {isConfirm ? (
           <div className="flex gap-3">

@@ -23,9 +23,8 @@ import EnterpriseArea from './pages/enterprise/Area';
 import EnterpriseRequests from './pages/enterprise/Requests';
 import CollectorLayout from './pages/collector/CollectorLayout';
 import AdminLayout from './pages/admin/AdminLayout';
-import Report from './pages/Report';
-import CreateReport from './pages/CreateReport';
-import ReportDetail from './pages/ReportDetail';
+import VoucherManagement from './pages/admin/VoucherManagement';
+import RewardManagement from './pages/admin/RewardManagement';
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem('ecosort_auth') === '1';
@@ -146,7 +145,7 @@ function Layout({children}) {
             <nav className="hidden md:flex items-center gap-8">
               <NavLink
                 to="/"
-                className={({ isActive }) =>
+                className={({isActive}) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -154,7 +153,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/rewards"
-                className={({ isActive }) =>
+                className={({isActive}) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -162,7 +161,7 @@ function Layout({children}) {
               </NavLink>
               <NavLink
                 to="/leaderboard"
-                className={({ isActive }) =>
+                className={({isActive}) =>
                   `font-bold transition-colors ${isActive ? 'text-primary border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`
                 }
               >
@@ -173,7 +172,7 @@ function Layout({children}) {
 
           <div className="flex items-center gap-6">
             <Link
-              to="/report"
+              to="/login?returnTo=/report"
               className="hidden sm:inline-flex items-center justify-center bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
               Report Waste
@@ -285,9 +284,14 @@ function Layout({children}) {
                   aria-expanded={menuOpen}
                 >
                   <div className="text-right hidden lg:block">
-                    <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60">
-                      {user?.displayName || user?.email || 'Cá nhân'}
-                    </p>
+                    <div className="flex items-center justify-end gap-1.5 mb-0.5">
+                      <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60 leading-none">
+                        {user?.displayName || user?.email || 'Cá nhân'}
+                      </p>
+                      {(user?.phone || user?.role === 'Administrator' || user?.role === '3' || user?.role === 'RecyclingEnterprise' || user?.role === '4') && (
+                        <img src="/verify/verified.png" alt="verified" className="w-3.5 h-3.5 object-contain shrink-0" />
+                      )}
+                    </div>
                     <p className="text-sm font-extrabold text-primary">
                       {typeof user?.points === 'number' ? user.points.toLocaleString() : '0'} Points
                     </p>
@@ -399,11 +403,17 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          
           {/* Enterprise Routes (Nested under EnterpriseLayout bypassing global Layout container but kept inside Router) */}
           <Route path="/enterprise" element={<EnterpriseLayout />}>
             <Route index element={<EnterpriseDashboard />} />
             <Route path="area" element={<EnterpriseArea />} />
             <Route path="requests" element={<EnterpriseRequests />} />
+            <Route path="tasks" element={<div className="p-10 text-center font-bold opacity-50">Quản lí công việc đang được phát triển...</div>} />
+            <Route path="accounts" element={<div className="p-10 text-center font-bold opacity-50">Quản lí tài khoản đang được phát triển...</div>} />
+            <Route path="feedback" element={<div className="p-10 text-center font-bold opacity-50">Quản lí feedback đang được phát triển...</div>} />
+            <Route path="rewards" element={<RewardManagement />} />
+            <Route path="vouchers" element={<VoucherManagement />} />
           </Route>
 
           <Route path="/collector" element={<CollectorLayout />}>
@@ -414,15 +424,11 @@ export default function App() {
 
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<div className="p-10 text-center font-bold opacity-50">Dashboard Admin đang được phát triển...</div>} />
-            <Route path="system" element={<div className="p-10 text-center font-bold opacity-50">Quản trị hệ thống đang được phát triển...</div>} />
             <Route path="accounts" element={<div className="p-10 text-center font-bold opacity-50">Quản lí tài khoản đang được phát triển...</div>} />
             <Route path="feedback" element={<div className="p-10 text-center font-bold opacity-50">Quản lí feedback đang được phát triển...</div>} />
-            <Route path="rewards" element={<div className="p-10 text-center font-bold opacity-50">Quản lí điểm thưởng đang được phát triển...</div>} />
+            <Route path="rewards" element={<RewardManagement />} />
+            <Route path="vouchers" element={<VoucherManagement />} />
           </Route>
-
-          <Route path="/report" element={<Report />} />
-          <Route path="/report/create" element={<CreateReport />} />
-          <Route path="/report/:id" element={<ReportDetail />} />
         </Routes>
       </Layout>
     </Router>
