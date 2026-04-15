@@ -43,74 +43,92 @@ export default function Leaderboard() {
   const myPoints = 1250;
 
   return (
-    <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
-      <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow space-y-8">
-        <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-          <div className="space-y-2">
-            <p className="text-sm font-extrabold text-primary">Community</p>
-            <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
-              Bảng <span className="not-italic text-primary">xếp hạng</span>
-            </h1>
-            <p className="text-on-surface-variant max-w-2xl">
-              Vinh danh những cá nhân tích cực nhất trong cộng đồng EcoSort tuần này.
+    <div className="relative min-h-full overflow-x-hidden">
+      {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+        aria-hidden
+      />
+
+      <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
+        <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow space-y-8">
+          <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div className="space-y-2">
+              <p className="text-sm font-extrabold text-primary">Community</p>
+              <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+                Bảng <span className="not-italic text-primary">xếp hạng</span>
+              </h1>
+              <p className="text-on-surface-variant max-w-2xl">
+                Vinh danh những cá nhân tích cực nhất trong cộng đồng EcoSort tuần này.
+              </p>
+            </div>
+
+            <div className="rounded-[2rem] border border-surface-container-high bg-surface p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                  Thứ hạng của bạn
+                </p>
+                <p className="text-lg sm:text-xl font-extrabold text-primary">
+                  #{myRank} <span className="text-on-surface-variant font-bold">/</span>{' '}
+                  {new Intl.NumberFormat('en-US').format(myPoints)} pts
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {LEADERBOARD.slice(0, 3).map((item) => (
+              <PodiumCard key={item.rank} {...item} />
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] border border-surface-container-high/60 botanical-shadow overflow-hidden">
+          <div className="px-7 sm:px-10 py-6 border-b border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm font-extrabold text-on-surface">Tất cả người dùng</p>
+            <p className="text-sm font-semibold text-on-surface-variant">
+              {LEADERBOARD.length} người tham gia
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-surface-container-high bg-surface p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                Thứ hạng của bạn
-              </p>
-              <p className="text-lg sm:text-xl font-extrabold text-primary">
-                #{myRank} <span className="text-on-surface-variant font-bold">/</span>{' '}
-                {new Intl.NumberFormat('en-US').format(myPoints)} pts
-              </p>
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[720px]">
+              <thead className="bg-surface-container-low/30">
+                <tr className="border-b border-surface-container-high/70">
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Hạng
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Người dùng
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Điểm tích lũy
+                  </th>
+                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                    Hành động xanh
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container-high/60">
+                {LEADERBOARD.map((row) => (
+                  <LeaderboardRow key={row.rank} {...row} />
+                ))}
+              </tbody>
+            </table>
           </div>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {LEADERBOARD.slice(0, 3).map((item) => (
-            <PodiumCard key={item.rank} {...item} />
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] border border-surface-container-high/60 botanical-shadow overflow-hidden">
-        <div className="px-7 sm:px-10 py-6 border-b border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm font-extrabold text-on-surface">Tất cả người dùng</p>
-          <p className="text-sm font-semibold text-on-surface-variant">{LEADERBOARD.length} người tham gia</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[720px]">
-            <thead className="bg-surface-container-low/30">
-              <tr className="border-b border-surface-container-high/70">
-                <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                  Hạng
-                </th>
-                <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                  Người dùng
-                </th>
-                <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                  Điểm tích lũy
-                </th>
-                <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                  Hành động xanh
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-container-high/60">
-              {LEADERBOARD.map((row) => (
-                <LeaderboardRow key={row.rank} {...row} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
