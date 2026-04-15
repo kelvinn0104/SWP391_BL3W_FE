@@ -18,8 +18,9 @@ import {
   Edit2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { clearAuth, getUser } from '../lib/auth';
+import { updateProfile } from '../api/userApi';
+import { motion } from 'framer-motion';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -39,8 +40,8 @@ export default function Profile() {
       fullName: user.fullName || '',
       displayName: user.displayName || user.name || '',
       gender: user.gender || 'Male',
-      dob: user.dob || '1990-01-01',
-      phone: user.phone || '',
+      dob: user.dob || user.dateOfBirth || '1990-01-01',
+      phone: user.phone || user.phoneNumber || '',
       email: user.email || user.gmail || '',
       address: user.address || 'Hồ Chí Minh, Việt Nam',
       language: user.language || 'Tiếng Việt'
@@ -48,7 +49,7 @@ export default function Profile() {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation: Phone is mandatory
     if (!isSimpleUI && (!formData.phone || formData.phone.trim() === '')) {
       setAlertConfig({
@@ -61,15 +62,27 @@ export default function Profile() {
     }
 
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      const updatedUser = { ...user, ...formData };
+    try {
+      // Map FE field names to BE field names
+      const requestData = {
+        fullName: formData.fullName,
+        displayName: formData.displayName,
+        gender: formData.gender,
+        dateOfBirth: formData.dob,
+        phoneNumber: formData.phone,
+        address: formData.address,
+        language: formData.language,
+        avatarUrl: user.avatar || user.avatarUrl
+      };
+
+      const updatedUser = await updateProfile(requestData);
+      
+      // Update local state
       setUser(updatedUser);
       // Update global storage for other components (Header)
       localStorage.setItem('ecosort_user', JSON.stringify(updatedUser));
       window.dispatchEvent(new Event('ecosort_auth_changed'));
       
-      setIsSaving(false);
       setIsEditing(false);
       setAlertConfig({
         isOpen: true,
@@ -77,7 +90,16 @@ export default function Profile() {
         message: "Thông tin hồ sơ của bạn đã được cập nhật.",
         type: "success"
       });
-    }, 800);
+    } catch (err) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Thất bại",
+        message: err.message || "Không thể cập nhật hồ sơ lúc này.",
+        type: "error"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -155,7 +177,7 @@ export default function Profile() {
             <div className="relative inline-block">
                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-2xl overflow-hidden mx-auto bg-surface-container-low ring-1 ring-surface-container-highest">
                   <img 
-                    src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
+                    src={user.avatar || user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
@@ -170,7 +192,7 @@ export default function Profile() {
                 <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tighter">
                   {isEditing ? (formData.displayName || formData.fullName) : (user.displayName || user.name)}
                 </h1>
-                {((isEditing ? formData.phone : user.phone) || isSimpleUI) && (
+                {((isEditing ? formData.phone : (user.phone || user.phoneNumber)) || isSimpleUI) && (
                   <img src="/verify/verified.png" alt="verified" className="w-6 h-6 object-contain shrink-0 animate-in zoom-in duration-300" />
                 )}
               </div>
@@ -306,7 +328,7 @@ export default function Profile() {
                          isEditing={isEditing}
                          icon={Calendar} 
                          label="Ngày sinh" 
-                         value={isEditing ? formData.dob : user.dob || '1990-01-01'} 
+                         value={isEditing ? formData.dob : (user.dob || user.dateOfBirth || '1990-01-01')} 
                          type="date"
                          onChange={(val) => handleInputChange('dob', val)}
                        />
@@ -315,7 +337,7 @@ export default function Profile() {
                          icon={Phone} 
                          label="Số điện thoại" 
                          required
-                         value={isEditing ? formData.phone : user.phone || 'Chưa cập nhật'} 
+                         value={isEditing ? formData.phone : (user.phone || user.phoneNumber || 'Chưa cập nhật')} 
                          onChange={(val) => handleInputChange('phone', val)}
                        />
                        <InfoField 
