@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Mail, 
@@ -29,6 +29,14 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+  
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setUser(getUser());
+    };
+    window.addEventListener('ecosort_auth_changed', handleAuthChange);
+    return () => window.removeEventListener('ecosort_auth_changed', handleAuthChange);
+  }, []);
   
   const onLogout = () => {
     clearAuth();

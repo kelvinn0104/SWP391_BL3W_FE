@@ -53,7 +53,7 @@ export async function fetchMe() {
   setAuth({
     accessToken: token,
     user: { ...data }, // Lưu toàn bộ trường hồ sơ mới
-  }, false);
+  }, true); // Cập nhật và phát tín hiệu để các trang (như Profile) biết để làm mới giao diện
 
   return data;
 }
