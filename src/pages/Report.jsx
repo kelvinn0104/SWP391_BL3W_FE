@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, FileText, Filter, MapPin, PackageCheck, Plus, Tag, User } from 'lucide-react';
 
 const FILTER_ALL = 'All';
+const REPORTS_PER_PAGE = 5;
 
 const REPORT_STATUS_OPTIONS = [
   { value: 'Pending', label: 'Chờ duyệt' },
@@ -120,6 +121,7 @@ export function statusClassName(status) {
 
 export default function Report() {
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredReports = useMemo(
     () =>
@@ -128,6 +130,23 @@ export default function Report() {
         : MY_REPORTS.filter((report) => report.status === activeStatus),
     [activeStatus]
   );
+
+  const totalPages = Math.ceil(filteredReports.length / REPORTS_PER_PAGE);
+
+  const paginatedReports = useMemo(() => {
+    const startIndex = (currentPage - 1) * REPORTS_PER_PAGE;
+    return filteredReports.slice(startIndex, startIndex + REPORTS_PER_PAGE);
+  }, [currentPage, filteredReports]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeStatus]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -210,7 +229,7 @@ export default function Report() {
             )}
           </div>
         ) : (
-          filteredReports.map((report) => (
+          paginatedReports.map((report) => (
             <Link
               key={report.id}
               to={`/report/${encodeURIComponent(report.id)}`}
@@ -259,6 +278,45 @@ export default function Report() {
           ))
         )}
       </section>
+      {filteredReports.length > 0 && (
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+          <p className="text-sm text-on-surface-variant font-semibold">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+            >
+              Trước
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
+                  currentPage === page
+                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                    : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+            >
+              Sau
+            </button>
+          </div>
+        </section>
+      )}
       </div>
     </div>
   );

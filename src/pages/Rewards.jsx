@@ -47,9 +47,11 @@ const RewardCodeCopy = ({ code }) => {
 };
 
 export default function Rewards() {
+  const REWARDS_PER_PAGE = 8;
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReward, setSelectedReward] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [vouchers, setVouchers] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -94,6 +96,23 @@ export default function Rewards() {
       return matchCategory && matchSearch;
     });
   }, [activeTab, searchQuery, vouchers]);
+
+  const totalPages = Math.ceil(filteredRewards.length / REWARDS_PER_PAGE);
+
+  const paginatedRewards = useMemo(() => {
+    const startIndex = (currentPage - 1) * REWARDS_PER_PAGE;
+    return filteredRewards.slice(startIndex, startIndex + REWARDS_PER_PAGE);
+  }, [currentPage, filteredRewards]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleRedeemConfirm = async () => {
     if (!selectedReward) return;
@@ -197,7 +216,7 @@ export default function Rewards() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredRewards.map((reward) => (
+          {paginatedRewards.map((reward) => (
             <div 
               key={reward.id}
               className="group block bg-surface rounded-2xl overflow-hidden border border-surface-container-highest hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
@@ -235,6 +254,46 @@ export default function Rewards() {
           </div>
         ))}
         </div>
+      )}
+
+      {filteredRewards.length > 0 && (
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+          <p className="text-sm text-on-surface-variant font-semibold">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+            >
+              Trước
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
+                  currentPage === page
+                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                    : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+            >
+              Sau
+            </button>
+          </div>
+        </section>
       )}
 
       {filteredRewards.length === 0 && (
