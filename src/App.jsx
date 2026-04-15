@@ -333,7 +333,7 @@ function Layout() {
                       <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold opacity-60 leading-none">
                         {user?.displayName || user?.email || "Cá nhân"}
                       </p>
-                      {(user?.phone || user?.role === 'Administrator' || user?.role === '3' || user?.role === 'RecyclingEnterprise' || user?.role === '4') && (
+                      {(user?.phone || user?.phoneNumber || user?.role === 'Administrator' || user?.role === '3' || user?.role === 'RecyclingEnterprise' || user?.role === '4') && (
                         <img src="/verify/verified.png" alt="verified" className="w-3.5 h-3.5 object-contain shrink-0" />
                       )}
                     </div>
