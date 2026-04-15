@@ -40,16 +40,33 @@ export default function ReportDetail() {
 
     if (!report) {
         return (
-            <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-6">
-                <Link
-                    to="/report"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Quay lại danh sách
-                </Link>
-                <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
-                    Không tìm thấy báo cáo với mã <span className="font-bold text-on-surface">{id || '—'}</span>.
+            <div className="relative min-h-full overflow-x-hidden">
+                {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+                    aria-hidden
+                />
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+                    aria-hidden
+                />
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+                    aria-hidden
+                />
+
+                <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-6">
+                    <Link
+                        to="/report"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Quay lại danh sách
+                    </Link>
+                    <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
+                        Không tìm thấy báo cáo với mã{' '}
+                        <span className="font-bold text-on-surface">{id || '—'}</span>.
+                    </div>
                 </div>
             </div>
         );
@@ -59,7 +76,22 @@ export default function ReportDetail() {
     const statusLabel = getStatusLabel(report.status);
 
     return (
-        <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
+        <div className="relative min-h-full overflow-x-hidden">
+            {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+            <div
+                className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+                aria-hidden
+            />
+            <div
+                className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+                aria-hidden
+            />
+            <div
+                className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+                aria-hidden
+            />
+
+            <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
             <Link
                 to="/report"
                 className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
@@ -79,16 +111,6 @@ export default function ReportDetail() {
                             >
                                 {getStatusLabel(report.status)}
                             </span>
-                            {showComplaintButton && (
-                                <button
-                                    type="button"
-                                    onClick={() => setComplaintOpen(true)}
-                                    className="inline-flex items-center gap-2 rounded-full bg-rose-600 text-white px-4 py-2 text-xs sm:text-sm font-extrabold shadow-sm shadow-rose-600/25 transition-colors hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
-                                >
-                                    <AlertTriangle className="w-4 h-4" />
-                                    Khiếu nại
-                                </button>
-                            )}
                         </div>
                         <p className="text-sm font-semibold text-on-surface-variant">Mã report: {report.id}</p>
                         <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
@@ -114,11 +136,21 @@ export default function ReportDetail() {
                         </div>
                     </div>
 
-                    <div className="self-start shrink-0 w-full lg:w-auto">
+                    <div className="self-start shrink-0 w-full lg:w-auto lg:min-w-[14rem] space-y-3">
                         <div className="inline-flex w-full lg:w-auto items-center justify-center gap-2 bg-primary/5 text-primary rounded-xl px-4 py-2.5 text-sm font-bold">
                             <PackageCheck className="w-4 h-4" />
                             {report.weight}
                         </div>
+                        {showComplaintButton && (
+                            <button
+                                type="button"
+                                onClick={() => setComplaintOpen(true)}
+                                className="inline-flex w-full lg:w-auto items-center justify-center gap-2 rounded-xl bg-rose-600 text-white px-4 py-2.5 text-sm font-extrabold shadow-sm shadow-rose-600/25 transition-colors hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
+                            >
+                                <AlertTriangle className="w-4 h-4" />
+                                Khiếu nại báo cáo
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -191,6 +223,7 @@ export default function ReportDetail() {
                 reportId={report.id}
                 reportStatusLabel={statusLabel}
             />
+            </div>
         </div>
     );
 }

@@ -30,55 +30,71 @@ export default function Rewards() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10">
-      <header className="rounded-3xl border border-surface-container-high/60 bg-surface-container-lowest botanical-shadow p-6 sm:p-8">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-3">
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-on-surface">
-              Đổi quà hấp dẫn
-            </h1>
-            <p className="text-on-surface-variant text-base sm:text-lg max-w-2xl">
-              Sử dụng điểm EcoSort bạn đã tích lũy được để đổi lấy những phần quà thân thiện với
-              môi trường.
-            </p>
-          </div>
+    <div className="relative min-h-full overflow-x-hidden">
+      {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+        aria-hidden
+      />
 
-          <div className="flex items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-surface-container-high bg-surface-container-lowest px-4 py-3 text-sm font-extrabold text-primary">
-              <Star className="w-4 h-4" fill="currentColor" />
-              <span aria-label="Số điểm hiện có">{pointsText} điểm</span>
+      <div className="relative z-0 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10">
+        <header className="rounded-3xl border border-surface-container-high/60 bg-surface-container-lowest botanical-shadow p-6 sm:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-on-surface">
+                Đổi quà hấp dẫn
+              </h1>
+              <p className="text-on-surface-variant text-base sm:text-lg max-w-2xl">
+                Sử dụng điểm EcoSort bạn đã tích lũy được để đổi lấy những phần quà thân thiện với
+                môi trường.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-surface-container-high bg-surface-container-lowest px-4 py-3 text-sm font-extrabold text-primary">
+                <Star className="w-4 h-4" fill="currentColor" />
+                <span aria-label="Số điểm hiện có">{pointsText} điểm</span>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-lg sm:text-xl font-extrabold text-on-surface">Danh sách quà tặng</h2>
-          <p className="text-sm text-on-surface-variant">Chọn quà và bấm “Đổi ngay”.</p>
-        </div>
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-4">
+            <h2 className="text-lg sm:text-xl font-extrabold text-on-surface">Danh sách quà tặng</h2>
+            <p className="text-sm text-on-surface-variant">Chọn quà và bấm “Đổi ngay”.</p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-          <RewardCard
-            image="https://picsum.photos/seed/bag/400/300"
-            title="Túi vải Canvas Eco"
-            points={500}
-            category="Phụ kiện"
-          />
-          <RewardCard
-            image="https://picsum.photos/seed/bottle/400/300"
-            title="Bình nước giữ nhiệt"
-            points={1200}
-            category="Đồ dùng"
-          />
-          <RewardCard
-            image="https://picsum.photos/seed/voucher/400/300"
-            title="Voucher Highland 50k"
-            points={800}
-            category="Ẩm thực"
-          />
-        </div>
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            <RewardCard
+              image="https://picsum.photos/seed/bag/400/300"
+              title="Túi vải Canvas Eco"
+              points={500}
+              category="Phụ kiện"
+            />
+            <RewardCard
+              image="https://picsum.photos/seed/bottle/400/300"
+              title="Bình nước giữ nhiệt"
+              points={1200}
+              category="Đồ dùng"
+            />
+            <RewardCard
+              image="https://picsum.photos/seed/voucher/400/300"
+              title="Voucher Highland 50k"
+              points={800}
+              category="Ẩm thực"
+            />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

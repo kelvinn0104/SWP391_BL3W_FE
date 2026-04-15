@@ -130,7 +130,22 @@ export default function Report() {
   );
 
   return (
-    <div className="px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
+    <div className="relative min-h-full overflow-x-hidden">
+      {/* Nền chủ đề xanh lá (đồng bộ Home) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+        aria-hidden
+      />
+
+      <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-8">
       <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2">
@@ -244,6 +259,7 @@ export default function Report() {
           ))
         )}
       </section>
+      </div>
     </div>
   );
 }

@@ -24,7 +24,22 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div className="space-y-20 md:space-y-32 pb-24 md:pb-32 px-4 sm:px-6 md:px-16">
+    <div className="relative min-h-full overflow-x-hidden">
+      {/* Nền chủ đề xanh lá: gradient + ánh sáng nhẹ, đồng bộ palette EcoSort */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+        aria-hidden
+      />
+
+      <div className="relative z-0 space-y-20 md:space-y-32 pb-24 md:pb-32 px-4 sm:px-6 md:px-16">
       {/* Hero Section - Editorial Style */}
       <section className="relative pt-12 lg:pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -78,7 +93,7 @@ export default function Home() {
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/55 via-primary/15 to-transparent"></div>
 
               {/* Floating Info Card */}
               <div className="absolute bottom-4 left-4 right-4 sm:bottom-8 sm:left-8 sm:right-8 eco-glass p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/20">
@@ -313,7 +328,7 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/85 via-primary/55 to-emerald-900/35 backdrop-blur-[2px]"></div>
 
         <div className="relative z-10 max-w-4xl space-y-12 text-white">
           <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif italic leading-tight">
@@ -333,6 +348,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }
@@ -356,7 +372,7 @@ function ImpactStat({ label, value, unit }) {
 function StepCard({ number, title, description }) {
   return (
     <div className="space-y-8 group">
-      <div className="text-8xl font-serif italic text-primary/10 group-hover:text-primary/20 transition-colors leading-none">
+      <div className="text-8xl font-serif italic font-bold text-primary/40 group-hover:text-primary/70 transition-colors leading-none tabular-nums">
         {number}
       </div>
       <div className="space-y-4">
