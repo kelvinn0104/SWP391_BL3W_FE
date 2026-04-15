@@ -50,15 +50,28 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    // Validation: Phone is mandatory
-    if (!isSimpleUI && (!formData.phone || formData.phone.trim() === '')) {
-      setAlertConfig({
-        isOpen: true,
-        title: "Thiếu thông tin",
-        message: "Số điện thoại là yêu cầu bắt buộc để đảm bảo xác thực tài khoản.",
-        type: "error"
-      });
-      return;
+    // Validation: Phone is mandatory and must be 10 digits numeric
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!isSimpleUI) {
+      if (!formData.phone || formData.phone.trim() === '') {
+        setAlertConfig({
+          isOpen: true,
+          title: "Thiếu thông tin",
+          message: "Số điện thoại là yêu cầu bắt buộc để đảm bảo xác thực tài khoản.",
+          type: "error"
+        });
+        return;
+      }
+      
+      if (!phoneRegex.test(formData.phone.trim())) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Định dạng không hợp lệ",
+          message: "Số điện thoại phải bao gồm đúng 10 chữ số và không chứa ký tự đặc biệt.",
+          type: "error"
+        });
+        return;
+      }
     }
 
     setIsSaving(true);
