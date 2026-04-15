@@ -14,7 +14,7 @@ const MOCK_TASKS = [
     title: "Thu gom chai nhựa khu tập thể",
     status: "Đã thu gom",
     weightKg: 24.6,
-    category: "Nhựa & kim loại",
+    category: "Kim loại",
     description:
       "Đã cân và bàn giao tại kho trung chuyển Quận 10, biên nhận số BN-8821.",
     location: "Quận 10, TP.HCM",
@@ -42,10 +42,10 @@ const MOCK_TASKS = [
   },
   {
     id: "RP-2392",
-    title: "Hỗn hợp tái chế văn phòng",
+    title: "Nhựa văn phòng",
     status: "Đã thu gom",
     weightKg: 9.4,
-    category: "Hỗn hợp tái chế",
+    category: "Nhựa",
     description: "Phân loại sơ bộ tại chỗ, đủ khối lượng theo báo cáo.",
     location: "Quận 1, TP.HCM",
     createdAt: "2026-04-04",

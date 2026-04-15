@@ -18,7 +18,17 @@
   --color-on-surface: #1a1c18;
   --color-on-surface-variant: #43493e;
   
+  --color-secondary: #00609b;
+  --color-on-secondary: #ffffff;
+  
+  --color-success: #386a20;
+  --color-on-success: #ffffff;
+  
+  --color-warning: #7d5900;
+  --color-on-warning: #ffffff;
+  
   --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
 }
 
 @utility eco-glass {

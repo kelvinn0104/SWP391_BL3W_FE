@@ -22,7 +22,7 @@ export const MY_REPORTS = [
   {
     id: 'RP-2401',
     title: 'Nhựa và lon tại hẻm 12',
-    category: 'Nhựa & kim loại',
+    category: 'Kim loại',
     description:
       'Tập kết chai nhựa PET, lon nước ngọt đặt cạnh thùng rác tạm tại hẻm 12. Cần thu gom trong ngày để tránh vỡ vụn và ô nhiễm.',
     location: 'Quận 3, TP.HCM',
@@ -70,7 +70,7 @@ export const MY_REPORTS = [
   {
     id: 'RP-2379',
     title: 'Rác tái chế tại công viên',
-    category: 'Hỗn hợp tái chế',
+    category: 'Nhựa',
     description:
       'Nhựa, giấy và vài mảnh kim loại nhỏ gom chung tại khu vực ghế ngồi gần lối ra. Đã phân loại sơ bộ theo túi.',
     location: 'Bình Thạnh, TP.HCM',

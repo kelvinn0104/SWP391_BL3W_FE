@@ -12,10 +12,8 @@ import {
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
-    'Nhựa & kim loại',
     'Giấy',
     'Nhựa',
-    'Hỗn hợp tái chế',
     'Kim loại',
 ];
 
