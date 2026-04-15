@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Award, Medal, TrendingUp, Trophy, UserRound } from 'lucide-react';
 
 const LEADERBOARD = [
@@ -38,9 +39,18 @@ const LEADERBOARD = [
   },
 ];
 
+const USERS_PER_PAGE = 5;
+
 export default function Leaderboard() {
   const myRank = 42;
   const myPoints = 1250;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(LEADERBOARD.length / USERS_PER_PAGE);
+  const paginatedLeaderboard = useMemo(() => {
+    const start = (currentPage - 1) * USERS_PER_PAGE;
+    return LEADERBOARD.slice(start, start + USERS_PER_PAGE);
+  }, [currentPage]);
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -121,12 +131,52 @@ export default function Leaderboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container-high/60">
-                {LEADERBOARD.map((row) => (
+                {paginatedLeaderboard.map((row) => (
                   <LeaderboardRow key={row.rank} {...row} />
                 ))}
               </tbody>
             </table>
           </div>
+
+          {LEADERBOARD.length > 0 && (
+            <div className="px-7 sm:px-10 py-5 border-t border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm font-semibold text-on-surface-variant">
+                Trang {currentPage}/{totalPages}
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+                >
+                  Trước
+                </button>
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
+                      currentPage === page
+                        ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                        : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-xl border border-surface-container-high bg-surface text-sm font-bold text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary/40 hover:text-primary transition-all"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>
