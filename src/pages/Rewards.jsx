@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Star, 
@@ -12,9 +12,12 @@ import {
   LayoutGrid,
   Zap,
   Copy,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import AlertModal from '../components/ui/AlertModal';
+import { getVouchers, getVoucherCategories, redeemVoucher } from '../api/voucherApi';
+import { getUser, fetchMe, getApiBaseUrl } from '../lib/auth';
 
 // Small inner component for Copyable Code
 const RewardCodeCopy = ({ code }) => {
@@ -48,6 +51,12 @@ export default function Rewards() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReward, setSelectedReward] = useState(null);
   
+  const [vouchers, setVouchers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [userPoints, setUserPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+
   // Alert Modal State
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -56,89 +65,71 @@ export default function Rewards() {
     type: 'success'
   });
   
-  const userPoints = 12850;
-
-  const categories = [
-    { id: 'all', label: 'Tất cả' },
-    { id: 'voucher', label: 'Voucher' },
-    { id: 'tech', label: 'Công nghệ' },
-    { id: 'food', label: 'Ẩm thực' },
-    { id: 'travel', label: 'Du lịch' },
-  ];
-
-  const rewards = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=600&auto=format&fit=crop",
-      title: "Sony WH-1000XM5",
-      points: 45000,
-      category: "tech",
-      isHot: true
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=600&auto=format&fit=crop",
-      title: "Highlands 100k",
-      points: 1500,
-      category: "food"
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop",
-      title: "Eco Smartwatch",
-      points: 12500,
-      category: "tech",
-      isHot: true
-    },
-    {
-      id: 4,
-      image: "https://images.unsplash.com/photo-1622484210924-423f03021966?q=80&w=600&auto=format&fit=crop",
-      title: "Agoda 500k",
-      points: 8000,
-      category: "travel"
-    },
-    {
-      id: 5,
-      image: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=600&auto=format&fit=crop",
-      title: "Shopee 200k",
-      points: 3200,
-      category: "voucher"
-    },
-    {
-      id: 6,
-      image: "https://images.unsplash.com/photo-1591337676887-a217a6970c8a?q=80&w=600&auto=format&fit=crop",
-      title: "iPhone 15 Pro Max",
-      points: 250000,
-      category: "tech"
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [vData, cData, userData] = await Promise.all([
+        getVouchers(),
+        getVoucherCategories(),
+        fetchMe()
+      ]);
+      setVouchers(vData || []);
+      setCategories([{ id: 'all', label: 'Tất cả' }, ...(cData || []).map(c => ({ id: c.name, label: c.name }))]);
+      setUserPoints(userData?.points || 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+  
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const filteredRewards = useMemo(() => {
-    return rewards.filter(r => {
+    return vouchers.filter(r => {
       const matchCategory = activeTab === 'all' || r.category === activeTab;
       const matchSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCategory && matchSearch;
     });
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, vouchers]);
 
-  const showSuccess = (rewardTitle) => {
-    const generatedCode = `ECO-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+  const handleRedeemConfirm = async () => {
+    if (!selectedReward) return;
     
-    setAlertConfig({
-      isOpen: true,
-      title: 'Thành Công!',
-      message: (
-        <div className="space-y-2">
-          <p>
-            Bạn đã đổi thành công phần quà: <span className="text-primary font-black">{rewardTitle}</span>.
-          </p>
-          <RewardCodeCopy code={generatedCode} />
-          <p className="text-[10px] mt-4 font-medium italic opacity-60">Hãy kiểm tra ví của bạn để xem chi tiết nhé!</p>
-        </div>
-      ),
-      type: 'success'
-    });
-    setSelectedReward(null);
+    setIsRedeeming(true);
+    try {
+      const result = await redeemVoucher(selectedReward.id);
+      
+      setAlertConfig({
+        isOpen: true,
+        title: 'Thành Công!',
+        message: (
+          <div className="space-y-2">
+            <p>
+              Bạn đã đổi thành công phần quà: <span className="text-primary font-black">{selectedReward.title}</span>.
+            </p>
+            <RewardCodeCopy code={result.code} />
+            <p className="text-[10px] mt-4 font-medium italic opacity-60">Hãy kiểm tra ví của bạn để xem chi tiết nhé!</p>
+          </div>
+        ),
+        type: 'success'
+      });
+      
+      // Update local points
+      setUserPoints(prev => prev - selectedReward.points);
+      setSelectedReward(null);
+    } catch (err) {
+      setAlertConfig({
+        isOpen: true,
+        title: 'Lỗi',
+        message: err.message || "Không thể đổi quà lúc này.",
+        type: 'error'
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   return (
@@ -199,20 +190,27 @@ export default function Rewards() {
       </div>
 
       {/* Clean Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredRewards.map((reward) => (
-          <div 
-            key={reward.id}
-            className="group block bg-surface rounded-2xl overflow-hidden border border-surface-container-highest hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
-            onClick={() => setSelectedReward(reward)}
-          >
-            <div className="relative h-48 overflow-hidden bg-surface-container">
-              <img 
-                src={reward.image} 
-                alt={reward.title} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                referrerPolicy="no-referrer"
-              />
+      {loading ? (
+        <div className="py-20 flex flex-col items-center justify-center gap-4 text-on-surface-variant/40">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="font-bold text-sm">Đang tải quà tặng...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredRewards.map((reward) => (
+            <div 
+              key={reward.id}
+              className="group block bg-surface rounded-2xl overflow-hidden border border-surface-container-highest hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
+              onClick={() => setSelectedReward(reward)}
+            >
+              <div className="relative h-48 overflow-hidden bg-surface-container">
+                <img 
+                  src={reward.image?.startsWith('http') ? reward.image : `${getApiBaseUrl()}${reward.image}`} 
+                  alt={reward.title} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  referrerPolicy="no-referrer"
+                  onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=600&auto=format&fit=crop'}
+                />
               {reward.isHot && (
                 <div className="absolute top-3 left-3 bg-orange-500 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md shadow-lg">
                   Hot
@@ -236,7 +234,8 @@ export default function Rewards() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {filteredRewards.length === 0 && (
         <div className="py-20 text-center text-on-surface-variant/40 italic">
@@ -267,7 +266,7 @@ export default function Rewards() {
               </div>
               <div className="p-8 text-center space-y-8">
                  <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-xl border-4 border-white">
-                    <img src={selectedReward.image} alt="" className="w-full h-full object-cover" />
+                    <img src={selectedReward.image?.startsWith('http') ? selectedReward.image : `${getApiBaseUrl()}${selectedReward.image}`} alt="" className="w-full h-full object-cover" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=600&auto=format&fit=crop'} />
                  </div>
                  <div className="space-y-1">
                     <h3 className="text-xl font-black text-on-surface">{selectedReward.title}</h3>
@@ -285,10 +284,12 @@ export default function Rewards() {
                     </div>
                  </div>
                  <button 
-                  onClick={() => showSuccess(selectedReward.title)}
-                  className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                  onClick={handleRedeemConfirm}
+                  disabled={isRedeeming || userPoints < selectedReward.points}
+                  className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:hover:scale-100 flex items-center justify-center gap-3"
                  >
-                   Xác nhận đổi ngay
+                   {isRedeeming && <Loader2 className="w-5 h-5 animate-spin" />}
+                   {userPoints < selectedReward.points ? 'Không đủ điểm' : 'Xác nhận đổi ngay'}
                  </button>
               </div>
             </motion.div>

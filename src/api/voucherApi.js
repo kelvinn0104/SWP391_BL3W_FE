@@ -7,10 +7,14 @@ import { getApiBaseUrl, getToken } from '../lib/auth';
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const headers = {
-    'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
+
+  // Nếu body là FormData, không set Content-Type để trình duyệt tự quyết định (multipart/form-data)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
     ...options,
@@ -38,17 +42,17 @@ export async function getVoucherCategories() {
   return await apiFetch('/api/vouchers/categories');
 }
 
-export async function createVoucher(data) {
+export async function createVoucher(formData) {
   return await apiFetch('/api/vouchers', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: formData,
   });
 }
 
-export async function updateVoucher(id, data) {
+export async function updateVoucher(id, formData) {
   return await apiFetch(`/api/vouchers/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: formData, 
   });
 }
 
