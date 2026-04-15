@@ -175,7 +175,7 @@ function Layout() {
                   `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
-                Home
+                Trang chủ
               </NavLink>
               <NavLink
                 to="/rewards"
@@ -183,7 +183,7 @@ function Layout() {
                   `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
-                Rewards
+                Phần thưởng
               </NavLink>
               <NavLink
                 to="/leaderboard"
@@ -191,7 +191,7 @@ function Layout() {
                   `font-bold transition-colors ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-on-surface-variant hover:text-primary"}`
                 }
               >
-                Leaderboard
+                Bảng xếp hạng
               </NavLink>
             </nav>
           </div>
@@ -201,7 +201,7 @@ function Layout() {
               to="/report"
               className="hidden sm:inline-flex items-center justify-center bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
-              Report Waste
+              Báo cáo rác thải
             </Link>
 
             <div className="relative" ref={notifRef}>
@@ -262,13 +262,12 @@ function Layout() {
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                             )}
                             <div
-                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
-                                notif.type === "warning"
-                                  ? "bg-amber-100 text-amber-600"
-                                  : notif.type === "success"
-                                    ? "bg-emerald-100 text-emerald-600"
-                                    : "bg-blue-100 text-blue-600"
-                              }`}
+                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${notif.type === "warning"
+                                ? "bg-amber-100 text-amber-600"
+                                : notif.type === "success"
+                                  ? "bg-emerald-100 text-emerald-600"
+                                  : "bg-blue-100 text-blue-600"
+                                }`}
                             >
                               {notif.type === "warning" ? (
                                 <Bell className="w-6 h-6" />
