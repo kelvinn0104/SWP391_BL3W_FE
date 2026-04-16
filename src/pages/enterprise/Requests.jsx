@@ -4,7 +4,8 @@ import {
   getCollectors, 
   updateRequestStatus, 
   assignRequest 
-} from '../../api/enterpriseApi';
+} from '../../virtual api/collectionManagementVirtualApi';
+import Pagination from '../../components/ui/Pagination';
 import {  
   MapPin, 
   Scale, 
@@ -35,9 +36,12 @@ export default function Requests() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [modalMode, setModalMode] = useState('view'); // 'view' or 'edit'
+  const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('All');
   const [coordinatingRequest, setCoordinatingRequest] = useState(null);
   const [cancellingRequest, setCancellingRequest] = useState(null);
+
+  const ITEMS_PER_PAGE = 8;
 
   useEffect(() => {
     loadData();
@@ -54,6 +58,11 @@ export default function Requests() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setCurrentPage(1);
   };
 
   const handleAssign = async (reqId, colId) => {
@@ -97,8 +106,14 @@ export default function Requests() {
     return result;
   }, [requests, searchQuery, activeTab]);
 
+  const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const stats = useMemo(() => {
-    const totalWeight = requests.reduce((sum, r) => sum + r.weightKg, 0);
+    const totalWeight = requests.reduce((sum, r) => sum + parseFloat(r.weightKg || 0), 0);
     const pendingCount = requests.filter(r => r.status === 'Pending').length;
     const completedWeight = requests.filter(r => r.status === 'Collected').reduce((sum, r) => sum + r.weightKg, 0);
     
@@ -155,7 +170,7 @@ export default function Requests() {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap
                 ${activeTab === tab.id ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/40'}
@@ -175,7 +190,7 @@ export default function Requests() {
               type="text" 
               placeholder="Tìm kiếm cư dân, địa chỉ..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="w-full bg-white border border-surface-container-high rounded-2xl py-2.5 pl-11 pr-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             />
           </div>
@@ -197,12 +212,30 @@ export default function Requests() {
           <div className="col-span-2 text-center">Thao tác</div>
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2 space-y-3 no-scrollbar pb-10">
-          <AnimatePresence mode="popLayout">
-            {filteredRequests.length > 0 ? filteredRequests.map((req) => (
-              <RequestRow 
-                key={req.id} 
-                req={req} 
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3 no-scrollbar pb-10 min-h-[600px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage + activeTab + searchQuery}
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.05
+                  }
+                },
+                exit: { opacity: 0, transition: { duration: 0.2 } }
+              }}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              className="space-y-3"
+            >
+              {paginatedRequests.length > 0 ? paginatedRequests.map((req, idx) => (
+                <RequestRow 
+                  key={req.id} 
+                  index={idx}
+                  req={req} 
                 collectors={collectors}
                 onStatus={handleStatus}
                 onAssign={handleAssign}
@@ -212,16 +245,27 @@ export default function Requests() {
                 onCancel={() => setCancellingRequest(req)}
               />
             )) : (
-              <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 0.4 }}
-                className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-surface-container-highest rounded-[3rem] text-on-surface-variant"
-              >
-                <Package className="w-12 h-12 mb-4 opacity-10" />
-                <p className="font-black uppercase tracking-widest text-xs">Không tìm thấy yêu cầu nào</p>
-              </motion.div>
-            )}
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 0.4 }}
+                  className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-surface-container-highest rounded-[3rem] text-on-surface-variant"
+                >
+                  <Package className="w-12 h-12 mb-4 opacity-10" />
+                  <p className="font-black uppercase tracking-widest text-xs">Không tìm thấy yêu cầu nào</p>
+                </motion.div>
+              )}
+            </motion.div>
           </AnimatePresence>
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -256,8 +300,6 @@ export default function Requests() {
             onClose={() => setCancellingRequest(null)}
             onConfirm={(reason) => {
               handleStatus(cancellingRequest.id, 'Cancelled');
-              // In mock mode, we just update status. 
-              // A real app would send 'reason' to the API.
               setCancellingRequest(null);
             }}
           />
@@ -267,7 +309,7 @@ export default function Requests() {
   );
 }
 
-function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel }) {
+function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel, index }) {
   const getStatusBadge = () => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
@@ -283,8 +325,12 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
 
   return (
     <motion.div 
-      layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, scale: 0.98 }} whileHover={{ scale: 1.005, backgroundColor: 'white' }}
+      variants={{
+        hidden: { opacity: 0, y: 20, scale: 0.98 },
+        show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', damping: 25, stiffness: 300 } },
+        exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+      }}
+      whileHover={{ scale: 1.005, backgroundColor: 'white', transition: { duration: 0.2 } }}
       onClick={onView}
       className="bg-white/60 backdrop-blur-sm border border-surface-container-high rounded-[1.5rem] p-4 grid grid-cols-12 gap-4 items-center cursor-pointer hover:shadow-xl hover:shadow-black/5 transition-all group relative"
     >
@@ -313,11 +359,11 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         </div>
       </div>
       <div className="col-span-1 text-center flex flex-col items-center justify-center">
-        <p className="text-[10px] font-black text-on-surface truncate w-full mb-0.5">{req.wasteType}</p>
-        <p className="text-[11px] font-bold text-on-surface-variant/50 flex items-center gap-1.5 leading-none">
-          <Scale className="w-3 h-3 text-emerald-500/40" />
-          {req.weightKg} kg
-        </p>
+        <p className="text-[11px] font-black text-on-surface truncate w-full mb-1">{req.wasteType}</p>
+        <div className="px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 flex items-center gap-1.5 leading-none">
+          <Scale className="w-2.5 h-2.5 text-emerald-600/60" />
+          <span className="text-[10px] font-black text-emerald-700">{req.weightKg} kg</span>
+        </div>
       </div>
       <div className="col-span-2 text-center flex justify-center">
         <div className="flex flex-col items-center">
@@ -329,9 +375,17 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         {req.collectorId && collectors.find(c => c.id === req.collectorId) ? (
           <div className="inline-flex items-center gap-2 bg-indigo-50/50 px-3 py-1.5 rounded-xl border border-indigo-100/30">
             <User className="w-3.5 h-3.5 text-indigo-400" />
-            <p className="text-[11px] font-extrabold text-indigo-600 truncate max-w-[80px]">
-              {collectors.find(c => c.id === req.collectorId).name}
-            </p>
+            <div className="flex flex-col items-start leading-tight">
+              <p className="text-[11px] font-extrabold text-indigo-600 truncate max-w-[80px]">
+                {collectors.find(c => c.id === req.collectorId).name}
+              </p>
+              <p className="text-[9px] font-bold text-indigo-400/60">
+                {(() => {
+                  const col = collectors.find(c => c.id === req.collectorId);
+                  return col.phoneNumber || col.phone || "Chưa có SĐT";
+                })()}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="inline-flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 shadow-sm transition-all antialiased">
@@ -409,7 +463,9 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
                   <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
                   <div className="text-center">
                      <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                     <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>{c.phone}</p>
+                     <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                       {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                     </p>
                   </div>
                 </button>
               ))}
@@ -489,6 +545,20 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                <currentStatus.icon className="w-4 h-4" />
                <span className="text-xs font-black uppercase tracking-widest">{currentStatus.label}</span>
             </div>
+
+            {req.priority && (
+              <div className={`px-4 py-2 rounded-2xl border-2 flex items-center gap-2 shrink-0 ${
+                req.priority === 'High' ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                req.priority === 'Medium' ? 'bg-amber-50 border-amber-100 text-amber-600' :
+                'bg-emerald-50 border-emerald-100 text-emerald-600'
+              }`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  req.priority === 'High' ? 'bg-rose-500 animate-pulse' :
+                  req.priority === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'
+                }`} />
+                <span className="text-[10px] font-black uppercase tracking-[0.1em]">{req.priority === 'High' ? 'Ưu tiên cao' : req.priority === 'Medium' ? 'Trung bình' : 'Tiêu chuẩn'}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-10 pt-8 no-scrollbar space-y-8">
@@ -516,14 +586,41 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                   </div>
               </div>
 
-              {/* Note */}
-              <div className="bg-surface-container/50 rounded-[2rem] p-6 border border-surface-container-high italic text-on-surface-variant/70">
-                 <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-3 not-italic">
-                    Ghi chú của dân
-                 </h4>
-                 <p className="text-xs font-bold leading-relaxed line-clamp-4">"{req.note || 'Không có ghi chú thêm.'}"</p>
-              </div>
-              </div>
+              {/* Note & Times */}
+               <div className="flex flex-col gap-6">
+                 <div className="bg-surface-container/50 rounded-[2rem] p-6 border border-surface-container-high italic text-on-surface-variant/70 min-h-[120px]">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-3 not-italic">
+                       Ghi chú của cư dân
+                    </h4>
+                    <p className="text-xs font-bold leading-relaxed">"{req.note || 'Không có ghi chú thêm.'}"</p>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container-high">
+                       <p className="text-[9px] font-black text-on-surface-variant/40 uppercase mb-2">Giờ bắt đầu</p>
+                       <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                          <span className="text-xs font-black text-on-surface">
+                            {req.status === 'Assigned' || req.status === 'Collected' 
+                              ? new Date(new Date(req.createdAt).getTime() + 3600000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                              : '---'}
+                          </span>
+                       </div>
+                    </div>
+                    <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-container-high">
+                       <p className="text-[9px] font-black text-on-surface-variant/40 uppercase mb-2">Giờ hoàn tất</p>
+                       <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span className="text-xs font-black text-on-surface">
+                            {req.status === 'Collected' 
+                              ? new Date(new Date(req.createdAt).getTime() + 7200000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                              : '---'}
+                          </span>
+                       </div>
+                    </div>
+                 </div>
+               </div>
+            </div>
 
             {/* Interaction Grid: Status & Staff Selection */}
             {req.status !== 'Cancelled' && (
@@ -584,7 +681,9 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                         </div>
                         <div className="min-w-0 text-left">
                           <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${req.collectorId === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                          <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>{c.phone}</p>
+                           <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                            {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                          </p>
                         </div>
                       </button>
                     ))}

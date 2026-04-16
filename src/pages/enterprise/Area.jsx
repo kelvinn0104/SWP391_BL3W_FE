@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { getCapacity, updateCapacity, getCollectors, deleteArea, updateArea } from '../../api/enterpriseApi';
+import { getCapacity, updateCapacity, getCollectors, deleteArea, updateArea } from '../../api/areaApi';
 import Pagination from '../../components/ui/Pagination';
 import AlertModal from '../../components/ui/AlertModal';
 import {
@@ -30,14 +30,15 @@ const COMMON_DISTRICTS = [
 const findCollectorAssignment = (name, allAreas, excludeDistrict = null, excludeWard = null) => {
   if (!name || name === 'Chưa phân công' || !Array.isArray(allAreas)) return null;
   for (const a of allAreas) {
-    if (!a.wards) continue;
-    for (const w of a.wards) {
-      const wCollectors = w.collectors || (w.collectorName ? [w.collectorName] : []);
-      if (wCollectors.includes(name)) {
+    const wards = a.wards || a.Wards;
+    if (!wards) continue;
+    for (const w of wards) {
+      const actualCollectors = w.collectors || w.Collectors || (w.collectorName ? [w.collectorName] : []);
+      if (actualCollectors.includes(name)) {
         // Tránh báo chính nó đang bận tại chính nó đang chỉnh sửa
-        const wName = typeof w === 'string' ? w : w.name;
-        if (a.district === excludeDistrict && wName === excludeWard) continue;
-        return { district: a.district, ward: wName };
+        const wName = typeof w === 'string' ? w : (w.name || w.Name);
+        if ((a.district || a.District) === excludeDistrict && wName === excludeWard) continue;
+        return { district: a.district || a.District, ward: wName };
       }
     }
   }
@@ -411,8 +412,8 @@ export default function Area() {
 
             <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3 px-2">
               {displayedDistricts.map(districtName => {
-                const existingData = areasData.find(a => a.district === districtName);
-                const isActive = existingData && (existingData.processedThisMonthKg > 0 || existingData.wards.length > 0);
+                const existingData = areasData.find(a => (a.district || a.District) === districtName);
+                const isActive = existingData && ((existingData.processedThisMonthKg || existingData.ProcessedThisMonthKg || 0) > 0 || (existingData.wards || existingData.Wards || []).length > 0);
 
                 return (
                   <div
@@ -456,7 +457,7 @@ export default function Area() {
                     </h3>
 
                     <p className="text-[9px] md:text-[10px] font-bold text-on-surface-variant uppercase whitespace-nowrap mt-1 opacity-70">
-                      {isActive ? `${existingData.processedThisMonthKg >= 1000 ? (existingData.processedThisMonthKg / 1000).toFixed(1) + 'k' : existingData.processedThisMonthKg} Kg` : 'Trống'}
+                      {isActive ? `${(existingData.processedThisMonthKg || existingData.ProcessedThisMonthKg || 0) >= 1000 ? ((existingData.processedThisMonthKg || existingData.ProcessedThisMonthKg || 0) / 1000).toFixed(1) + 'k' : (existingData.processedThisMonthKg || existingData.ProcessedThisMonthKg || 0)} Kg` : 'Trống'}
                     </p>
                   </div>
                 );
@@ -592,25 +593,30 @@ export default function Area() {
                                 <div className="absolute z-[110] w-full mt-2 bg-surface border-2 border-surface-container-highest rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2">
                                   <div className="max-h-40 overflow-y-auto">
                                     {collectors
-                                      .filter(c => c.name.toLowerCase().includes(customDistrictForm.tempCollector.toLowerCase()))
+                                      .filter(c => {
+                                        const search = customDistrictForm.tempCollector.toLowerCase();
+                                        const name = (c.fullName || c.displayName || c.email || "").toLowerCase();
+                                        return name.includes(search);
+                                      })
                                       .map(c => {
-                                        const isAlreadySelected = customDistrictForm.wardCollectors.includes(c.name);
+                                        const isAlreadySelected = customDistrictForm.wardCollectors.includes(c.fullName || c.displayName || c.email);
                                         return (
                                           <button
-                                            key={c.id}
+                                            key={c.userId || c.id || c.email}
                                             disabled={isAlreadySelected}
                                             onClick={() => {
-                                              const assignment = findCollectorAssignment(c.name, areasData);
+                                              const cName = c.fullName || c.displayName || c.email;
+                                              const assignment = findCollectorAssignment(cName, areasData);
                                               if (assignment) {
                                                 setPendingCustomTransfer({
-                                                  name: c.name,
+                                                  name: cName,
                                                   fromDistrict: assignment.district,
                                                   fromWard: assignment.ward
                                                 });
                                               } else {
                                                 setCustomDistrictForm({
                                                   ...customDistrictForm,
-                                                  wardCollectors: [...customDistrictForm.wardCollectors, c.name],
+                                                  wardCollectors: [...customDistrictForm.wardCollectors, cName],
                                                   tempCollector: ''
                                                 });
                                               }
@@ -620,15 +626,18 @@ export default function Area() {
                                           >
                                             <div className="flex flex-col text-left">
                                               <span className={`font-extrabold text-xs md:text-sm mb-1 transition-colors ${isAlreadySelected ? 'text-on-surface-variant' : 'text-primary group-hover:text-primary-dark'}`}>
-                                                {c.name} {isAlreadySelected && '(Đã chọn)'}
+                                                {(c.fullName || c.FullName || c.displayName || c.DisplayName || c.email || c.Email || c.userId || c.Id || "Người dùng không tên")} {isAlreadySelected && '(Đã chọn)'}
                                               </span>
                                               <div className="flex items-center gap-2">
-                                                <span className="text-[9px] md:text-[10px] font-bold text-on-surface-variant/70 tracking-tight">{c.phone}</span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-on-surface-variant/70 tracking-tight">
+                                                  {c.phoneNumber || c.PhoneNumber || c.phone || "Chưa có SĐT"}
+                                                </span>
                                                 {(() => {
-                                                  const ownOccupancy = findCollectorAssignment(c.name, areasData);
+                                                  const cName = (c.fullName || c.FullName || c.displayName || c.DisplayName || c.email || c.Email);
+                                                  const ownOccupancy = findCollectorAssignment(cName, areasData);
                                                   return ownOccupancy ? (
                                                     <span className="text-[7px] md:text-[8px] font-black text-rose-600 bg-rose-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider animate-in fade-in">
-                                                      Đang bận
+                                                      Đang bận tại {ownOccupancy.district} - {ownOccupancy.ward}
                                                     </span>
                                                   ) : null;
                                                 })()}
@@ -890,18 +899,20 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
   const occupancy = useMemo(() => findCollectorAssignment(editForm.tempCollector, allAreas, area.district, editingWardName), [editForm.tempCollector, allAreas, area.district, editingWardName]);
 
   const topWard = useMemo(() => {
-    if (!area.wards || area.wards.length === 0) return null;
-    return [...area.wards]
+    const wards = area.wards || area.Wards;
+    if (!wards || wards.length === 0) return null;
+    return [...wards]
       .map(w => typeof w === 'string' ? { name: w, collectedKg: 0 } : w)
-      .sort((a, b) => b.collectedKg - a.collectedKg)[0];
-  }, [area.wards]);
+      .sort((a, b) => (b.collectedKg || b.CollectedKg || 0) - (a.collectedKg || a.CollectedKg || 0))[0];
+  }, [area.wards, area.Wards]);
 
   const startEditWard = (ward) => {
     setIsAddingWard(false);
-    setEditingWardName(ward.name);
+    setEditingWardName(ward.name || ward.Name);
+    const wCollectors = ward.collectors || ward.Collectors || (ward.collectorName ? [ward.collectorName] : []);
     setEditForm({
-      name: ward.name,
-      collectors: ward.collectors || (ward.collectorName ? [ward.collectorName] : []),
+      name: ward.name || ward.Name,
+      collectors: Array.isArray(wCollectors) ? wCollectors : [],
       tempCollector: ''
     });
   };
@@ -1007,29 +1018,29 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
             <div className="text-center p-2 rounded-2xl bg-surface-container/30 md:bg-transparent">
               <p className="text-[9px] md:text-xs font-bold text-on-surface-variant uppercase mb-1">Mức thu cao nhất</p>
               <p className="text-lg md:text-2xl font-black text-primary">
-                {topWard ? `${topWard.collectedKg >= 1000 ? (topWard.collectedKg/1000).toFixed(1)+'k' : topWard.collectedKg} Kg` : "0 Kg"}
+                {topWard ? `${(topWard.collectedKg || topWard.CollectedKg || 0) >= 1000 ? ((topWard.collectedKg || topWard.CollectedKg || 0)/1000).toFixed(1)+'k' : (topWard.collectedKg || topWard.CollectedKg || 0)} Kg` : "0 Kg"}
               </p>
               {topWard && (
                 <p className="text-[8px] md:text-[10px] font-bold text-primary/70 uppercase tracking-tighter truncate mt-0.5 max-w-[100px] mx-auto">
-                  ({topWard.name})
+                  ({topWard.name || topWard.Name})
                 </p>
               )}
             </div>
             <div className="text-center p-2 rounded-2xl bg-surface-container/30 md:bg-transparent">
               <p className="text-[9px] md:text-xs font-bold text-on-surface-variant uppercase mb-1">Đã xử lý thực tế</p>
               <p className="text-lg md:text-2xl font-black text-secondary">
-                {area.processedThisMonthKg >= 1000 ? (area.processedThisMonthKg/1000).toFixed(1)+'k' : (area.processedThisMonthKg || 0)} Kg
+                {(area.processedThisMonthKg || area.ProcessedThisMonthKg || 0) >= 1000 ? ((area.processedThisMonthKg || area.ProcessedThisMonthKg || 0)/1000).toFixed(1)+'k' : (area.processedThisMonthKg || area.ProcessedThisMonthKg || 0)} Kg
               </p>
             </div>
             <div className="text-center p-2 rounded-2xl bg-surface-container/30 md:bg-transparent">
               <p className="text-[9px] md:text-xs font-bold text-on-surface-variant uppercase mb-1">Đơn hoàn thành</p>
-              <p className="text-lg md:text-2xl font-black text-on-surface">{area.completedRequests || 0}</p>
+              <p className="text-lg md:text-2xl font-black text-on-surface">{area.completedRequests || area.CompletedRequests || 0}</p>
             </div>
             <div className="text-center p-2 rounded-2xl bg-surface-container/30 md:bg-transparent">
               <p className="text-[9px] md:text-xs font-bold text-on-surface-variant uppercase mb-1">Phường trực thuộc</p>
-              <p className="text-lg md:text-2xl font-black text-on-surface">{area.wards.length}</p>
-            </div>
+              <p className="text-lg md:text-2xl font-black text-on-surface">{(area.wards || area.Wards || []).length}</p>
           </div>
+        </div>
 
           {/* Công Cụ Quản Lý */}
           <div className="p-6 md:p-10 space-y-8 md:space-y-12">
@@ -1102,11 +1113,12 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
                         <div className="col-span-2 text-center">Hành động</div>
                       </div>
 
-                      {paginatedWards.map(w => {
+                      {paginatedWards.map((w, idx) => { 
                         const wardObj = typeof w === 'string' ? { name: w, collectors: [], collectedKg: 0, completedRequests: 0 } : w;
+                        const actualCollectors = wardObj.collectors || wardObj.Collectors || [];
                         return (
                           <div
-                            key={wardObj.name}
+                            key={`${wardObj.name}-${idx}`}
                             onClick={() => setViewingWard(wardObj)}
                             className="group relative flex flex-col md:grid md:grid-cols-12 md:items-center bg-surface-container-lowest border-2 border-surface-container-highest p-4 md:px-5 md:py-4 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer gap-4 animate-in slide-in-from-right-4 duration-300"
                           >
@@ -1124,16 +1136,16 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
                               <div className="flex items-center justify-between md:justify-start gap-2">
                                 <span className="md:hidden text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">Đội ngũ</span>
                                 <div className="text-sm font-bold text-on-surface">
-                                  {(wardObj.collectors && wardObj.collectors.length > 0) ? (
+                                  {actualCollectors.length > 0 ? (
                                     <div className="flex flex-wrap gap-1.5 items-center justify-end md:justify-start">
-                                      {wardObj.collectors.slice(0, 2).map(name => (
+                                      {actualCollectors.slice(0, 2).map(name => (
                                         <span key={name} className="text-[10px] font-bold bg-primary/5 text-primary border border-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                                           {name}
                                         </span>
                                       ))}
-                                      {wardObj.collectors.length > 2 && (
+                                      {actualCollectors.length > 2 && (
                                         <span className="text-[10px] font-black text-on-surface-variant/40 bg-surface-container px-2 py-0.5 rounded-full">
-                                          +{wardObj.collectors.length - 2}
+                                           +{actualCollectors.length - 2}
                                         </span>
                                       )}
                                     </div>
@@ -1289,27 +1301,34 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
 
                       {showCollectorDropdown && (
                         <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-surface-container-highest rounded-xl shadow-xl overflow-hidden z-[110] max-h-48 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-200">
-                          {collectors.filter(c => (c.name || '').toLowerCase().includes((editForm.tempCollector || '').toLowerCase())).length === 0 ? (
+                          {collectors.filter(c => {
+                            const cName = (c.fullName || c.FullName || c.displayName || c.DisplayName || c.email || c.Email || "").toLowerCase();
+                            return cName.includes((editForm.tempCollector || '').toLowerCase());
+                          }).length === 0 ? (
                             <div className="p-4 text-center text-xs text-on-surface-variant italic">Không tìm thấy nhân viên</div>
                           ) : (
-                            collectors.filter(c => (c.name || '').toLowerCase().includes((editForm.tempCollector || '').toLowerCase())).map(c => {
-                              const isAlreadyInTeam = editForm.collectors.includes(c.name);
+                            collectors.filter(c => {
+                              const cName = (c.fullName || c.FullName || c.displayName || c.DisplayName || c.email || c.Email || "").toLowerCase();
+                              return cName.includes((editForm.tempCollector || '').toLowerCase());
+                            }).map(c => {
+                              const cName = (c.fullName || c.FullName || c.displayName || c.DisplayName || c.email || c.Email);
+                              const isAlreadyInTeam = editForm.collectors.includes(cName);
                               return (
                                 <div
-                                  key={c.id}
+                                  key={c.userId || c.userId || c.id || c.Id || cName}
                                   onClick={() => {
                                     if (!isAlreadyInTeam) {
-                                      const assignment = findCollectorAssignment(c.name, allAreas, area.district, editingWardName);
+                                      const assignment = findCollectorAssignment(cName, allAreas, area.district, editingWardName);
                                       if (assignment) {
                                         setPendingTransfer({
-                                          name: c.name,
+                                          name: cName,
                                           fromDistrict: assignment.district,
                                           fromWard: assignment.ward
                                         });
                                       } else {
                                         setEditForm({
                                           ...editForm,
-                                          collectors: [...editForm.collectors, c.name],
+                                          collectors: [...editForm.collectors, cName],
                                           tempCollector: ''
                                         });
                                       }
@@ -1320,12 +1339,12 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
                                 >
                                   <div className="flex flex-col">
                                     <span className={`font-extrabold text-sm mb-1 transition-colors ${isAlreadyInTeam ? 'text-on-surface-variant' : 'text-primary group-hover:text-primary-dark'}`}>
-                                      {c.name} {isAlreadyInTeam && '(Đã chọn)'}
+                                      {cName} {isAlreadyInTeam && '(Đã chọn)'}
                                     </span>
                                     <div className="flex items-center gap-3">
-                                      <span className="text-[10px] font-bold text-on-surface-variant/70 tracking-tight">{c.phone}</span>
+                                      <span className="text-[10px] font-bold text-on-surface-variant/70 tracking-tight">{c.phoneNumber || c.PhoneNumber || c.phone || "Chưa có SĐT"}</span>
                                       {(() => {
-                                        const ownOccupancy = findCollectorAssignment(c.name, allAreas, area.district, editingWardName);
+                                        const ownOccupancy = findCollectorAssignment(cName, allAreas, area.district, editingWardName);
                                         return ownOccupancy ? (
                                           <span className="text-[8px] font-black text-rose-600 bg-rose-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider animate-in fade-in">
                                             Đang bận tại {ownOccupancy.district} - {ownOccupancy.ward}
@@ -1505,7 +1524,10 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
                     </div>
                   ) : (
                     viewingWard.collectors.map(name => {
-                      const collectorDetails = collectors.find(c => c.name === name);
+                      const collectorDetails = collectors.find(c => 
+                        (c.fullName || c.FullName || c.displayName || c.DisplayName || c.name || c.Name) === name
+                      );
+                      const displayPhone = collectorDetails?.phoneNumber || collectorDetails?.PhoneNumber || collectorDetails?.phone || 'Chưa có SĐT';
                       return (
                         <div key={name} className="flex items-center justify-between p-4 bg-surface-container-lowest border border-surface-container-highest rounded-2xl hover:border-primary/30 transition-colors group">
                           <div className="flex items-center gap-4">
@@ -1514,7 +1536,7 @@ function DistrictDetailView({ area, allAreas, collectors, onBack, onUpdate, onRe
                             </div>
                             <div className="flex flex-col">
                               <span className="font-bold text-on-surface group-hover:text-primary transition-colors">{name}</span>
-                              <span className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider">{collectorDetails?.phone || 'Chưa có SĐT'}</span>
+                              <span className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider">{displayPhone}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 bg-success/10 text-success text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">
