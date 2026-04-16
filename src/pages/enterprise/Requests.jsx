@@ -55,9 +55,10 @@ export default function Requests() {
 
   const handleAssign = async (reqId, colId) => {
     try {
-      const updated = await assignRequest(reqId, colId);
-      const finalUpdated = updated || { ...requests.find(r => r.id === reqId), status: 'Assigned', collectorId: colId };
-      setRequests(prev => prev.map(r => r.id === reqId ? finalUpdated : r));
+      await assignRequest(reqId, colId);
+      setRequests(prev => prev.map(r => 
+        r.id === reqId ? { ...r, status: 'Assigned', collectorId: colId } : r
+      ));
     } catch (err) {
       console.error("Assignment failed", err);
     }
@@ -65,9 +66,10 @@ export default function Requests() {
 
   const handleStatus = async (reqId, status) => {
     try {
-      const updated = await updateRequestStatus(reqId, status);
-      const finalUpdated = updated || { ...requests.find(r => r.id === reqId), status };
-      setRequests(prev => prev.map(r => r.id === reqId ? finalUpdated : r));
+      await updateRequestStatus(reqId, status);
+      setRequests(prev => prev.map(r => 
+        r.id === reqId ? { ...r, status } : r
+      ));
     } catch (err) {
       console.error("Status update failed", err);
     }
@@ -267,18 +269,27 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordin
       <div className="col-span-1">
         <div className="flex flex-col">
           <span className="text-[10px] font-black text-primary/40 font-mono leading-none mb-1">REQ</span>
-          <span className="text-sm font-black text-on-surface leading-none">{req.id.split('-')[1] || req.id}</span>
+          <span className="text-sm font-black text-on-surface leading-none">
+            {req.id?.includes('-') ? req.id.split('-')[1] : (req.id || 'N/A')}
+          </span>
         </div>
         </div>
       <div className="col-span-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface-variant font-black shrink-0 shadow-sm border border-white/50">{req.citizenName.charAt(0)}</div>
+          <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface-variant font-black shrink-0 shadow-sm border border-white/50">
+            {req.citizenName?.charAt(0) || '?'}
+          </div>
           <div className="min-w-0">
-            <h4 className="font-extrabold text-on-surface text-sm truncate group-hover:text-primary transition-colors">{req.citizenName}</h4>
-            <div className="flex items-center gap-1 text-[10px] font-bold text-on-surface-variant/40 truncate"><MapPin className="w-3 h-3" />{req.address}</div>
+            <h4 className="font-extrabold text-on-surface text-sm truncate group-hover:text-primary transition-colors">
+              {req.citizenName || 'Khách vãng lai'}
+            </h4>
+            <div className="flex items-center gap-1 text-[10px] font-bold text-on-surface-variant/40 truncate">
+              <MapPin className="w-3 h-3" />
+              {req.address || 'Không rõ địa chỉ'}
+            </div>
           </div>
         </div>
-        </div>
+      </div>
       <div className="col-span-1 text-center flex flex-col items-center">
           <p className="text-sm font-black text-on-surface flex items-center gap-1.5"><Scale className="w-3.5 h-3.5 text-primary" />{req.weightKg} kg</p>
       </div>
@@ -366,7 +377,7 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
                   <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
                   <div className="text-center">
                      <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                     <p className="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-tighter">{c.role || 'Collector'}</p>
+                     <p className="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-tighter font-mono">{c.phone}</p>
                   </div>
                 </button>
               ))}

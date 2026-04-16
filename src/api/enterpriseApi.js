@@ -91,12 +91,12 @@ export async function getRequests() {
 
 export async function getCollectors() {
   return [
-    { id: 'col-1', name: 'Professional Collector', role: 'Premium Staff', phone: '0901 234 567' },
-    { id: 'col-2', name: 'Collector #1', role: 'Staff', phone: '0902 345 678' },
-    { id: 'col-3', name: 'Collector #2', role: 'Staff', phone: '0903 456 789' },
-    { id: 'col-4', name: 'Collector #3', role: 'Staff', phone: '0904 567 890' },
-    { id: 'col-5', name: 'Collector #4', role: 'Staff', phone: '0905 678 901' },
-    { id: 'col-6', name: 'Collector #5', role: 'Staff', phone: '0906 789 012' }
+    { id: 'col-1', name: 'Professional Collector', phone: '0901 234 567' },
+    { id: 'col-2', name: 'Collector #1', phone: '0902 345 678' },
+    { id: 'col-3', name: 'Collector #2', phone: '0903 456 789' },
+    { id: 'col-4', name: 'Collector #3', phone: '0904 567 890' },
+    { id: 'col-5', name: 'Collector #4', phone: '0905 678 901' },
+    { id: 'col-6', name: 'Collector #5', phone: '0906 789 012' }
   ];
 }
 
