@@ -23,7 +23,8 @@ import {
   Calendar,
   Truck,
   HelpCircle,
-  Edit
+  Edit,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -35,6 +36,7 @@ export default function Requests() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [activeTab, setActiveTab] = useState('All');
   const [coordinatingRequest, setCoordinatingRequest] = useState(null);
+  const [cancellingRequest, setCancellingRequest] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -205,6 +207,7 @@ export default function Requests() {
                 onAssign={handleAssign}
                 onView={() => setSelectedRequest(req)}
                 onOpenCoordination={() => handleOpenCoordination(req)}
+                onCancel={() => setCancellingRequest(req)}
               />
             )) : (
               <motion.div 
@@ -222,11 +225,12 @@ export default function Requests() {
       <AnimatePresence>
         {selectedRequest && (
           <RequestDetailModal 
-            req={selectedRequest} 
+            req={requests.find(r => r.id === selectedRequest.id) || selectedRequest} 
             onClose={() => setSelectedRequest(null)} 
             collectors={collectors}
             onAssign={handleAssign}
             onStatus={handleStatus}
+            onCancel={(req) => { setSelectedRequest(null); setCancellingRequest(req); }}
           />
         )}
       </AnimatePresence>
@@ -241,18 +245,33 @@ export default function Requests() {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {cancellingRequest && (
+          <CancellationDialog
+            req={cancellingRequest}
+            onClose={() => setCancellingRequest(null)}
+            onConfirm={(reason) => {
+              handleStatus(cancellingRequest.id, 'Cancelled');
+              // In mock mode, we just update status. 
+              // A real app would send 'reason' to the API.
+              setCancellingRequest(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordination }) {
+function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordination, onCancel }) {
   const getStatusBadge = () => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
       case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Đã duyệt' };
       case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Đang đi' };
       case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
-      case 'Cancelled': return { color: 'text-on-surface-variant/40 bg-surface-container', icon: X, label: 'Hủy' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
       default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
     }
   };
@@ -325,8 +344,8 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordin
       <div className="col-span-2 flex items-center justify-center gap-2">
         {req.status === 'Pending' && (
           <div className="flex gap-1.5">
-            <button onClick={(e) => { e.stopPropagation(); onStatus(req.id, 'Accepted'); }} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Duyệt</button>
-            <button onClick={(e) => { e.stopPropagation(); onStatus(req.id, 'Cancelled'); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Hủy</button>
+            <button onClick={(e) => { e.stopPropagation(); onStatus(req.id, 'Accepted'); }} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Duyệt</button>
+            <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10 active:scale-95 transition-all">Hủy</button>
           </div>
         )}
         {req.status === 'Accepted' && (
@@ -334,6 +353,12 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordin
         )}
         {(req.status === 'Assigned' || req.status === 'Collected') && (
           <button onClick={(e) => { e.stopPropagation(); onView(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
+        )}
+        {req.status === 'Cancelled' && (
+          <div className="flex items-center gap-2 px-5 py-2 bg-on-surface/5 text-on-surface-variant/20 rounded-xl border border-dashed border-on-surface/10 grayscale">
+            <Lock className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Đã khóa</span>
+          </div>
         )}
       </div>
       </motion.div>
@@ -377,7 +402,7 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
                   <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
                   <div className="text-center">
                      <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                     <p className="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-tighter font-mono">{c.phone}</p>
+                     <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>{c.phone}</p>
                   </div>
                 </button>
               ))}
@@ -403,80 +428,249 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
   );
 }
 
-function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus }) {
+function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCancel }) {
+  const currentStatus = (() => {
+    switch(req.status) {
+      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Đã duyệt' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Đang đi' };
+      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
+      default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
+    }
+  })();
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-on-surface/60 backdrop-blur-md" />
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-surface-container-low w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[3rem] shadow-2xl relative z-10 flex flex-col md:flex-row">
-        <div className="w-full md:w-5/12 bg-surface-container-high relative">
-          {req.images && req.images.length > 0 ? <img src={req.images[0]} alt="Waste" className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center opacity-10"><Package className="w-24 h-24 mb-4" /><p className="font-black uppercase tracking-[0.2em] text-sm">No Image</p></div>}
-        </div>
-        <div className="flex-1 p-8 md:p-10 overflow-y-auto no-scrollbar">
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 font-mono">#{req.id}</p>
-              <h2 className="text-3xl font-extrabold text-on-surface tracking-tight mb-2">{req.citizenName}</h2>
-              <div className="flex items-center gap-2 text-on-surface-variant/70 font-bold text-sm"><MapPin className="w-4 h-4 text-primary" />{req.address}</div>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+        animate={{ opacity: 1, scale: 1, y: 0 }} 
+        exit={{ opacity: 0, scale: 0.95, y: 20 }} 
+        className="bg-white w-full max-w-6xl overflow-hidden rounded-[3rem] shadow-2xl relative z-10 flex h-auto max-h-[85vh]"
+      >
+        {/* Left: Image Section */}
+        <div className="w-4/12 bg-surface-container-high relative flex-shrink-0">
+          {req.images?.[0] ? (
+            <img src={req.images[0]} alt="Waste" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-surface-container-highest text-on-surface-variant/20">
+              <Package className="w-16 h-16 mb-2" />
+              <p className="text-[10px] font-black uppercase tracking-widest leading-none">Không có hình ảnh</p>
             </div>
-            <button onClick={onClose} className="p-3 hover:bg-surface-container-high rounded-2xl transition-all"><X className="w-6 h-6 text-on-surface-variant/30" /></button>
+          )}
+          <div className="absolute top-6 left-6">
+            <div className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl flex items-center gap-2 border border-white/50">
+               <div className="w-2 h-2 rounded-full bg-primary" />
+               <span className="text-[10px] font-black text-on-surface uppercase tracking-widest font-mono">#{req.id}</span>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-6 mb-8">
-             <div className="bg-surface-container rounded-[2rem] p-6">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4">Danh mục vật liệu</h4>
-                <div className="space-y-3">
-                  {req.materials ? req.materials.map((m, idx) => (
-                    <div key={idx} className="flex justify-between items-center group">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/30 group-hover:bg-primary transition-colors" />
-                        <span className="text-sm font-extrabold text-on-surface">{m.type}</span>
-                      </div>
-                      <span className="text-sm font-black text-on-surface-variant/50">{m.amount} {m.unit}</span>
-                    </div>
-                  )) : <p className="text-sm font-black">{req.weightKg} kg {req.wasteType}</p>}
-                </div>
-             </div>
-             <div className="bg-surface-container p-6 rounded-[2rem] border-2 border-dashed border-surface-container-highest flex flex-col justify-center text-center">
-                <div className="flex items-center justify-center gap-2 text-primary mb-1">
-                   {req.status === 'Collected' ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />}
-                   <span className="text-2xl font-black">{req.status}</span>
-                </div>
-                <p className="text-[10px] font-black text-on-surface-variant/30 uppercase tracking-[0.2em]">Trạng thái hiện tại</p>
-             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-              <div className="bg-on-surface/[0.03] p-6 rounded-[2rem] border border-on-surface/5">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4 flex items-center gap-2"><Info className="w-3.5 h-3.5" /> Ghi chú cư dân</h4>
-                <p className="text-sm font-medium italic text-on-surface/70 leading-relaxed">"{req.note || "Không có ghi chú nào đi kèm."}"</p>
+</div>
+
+        {/* Right: Content Section */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="p-10 pb-0 flex justify-between items-start gap-6">
+            <div className="min-w-0">
+              <h2 className="text-3xl font-black text-on-surface leading-tight mb-2 truncate">{req.citizenName}</h2>
+              <div className="flex items-center gap-2 text-on-surface-variant/60 font-bold text-sm truncate">
+                <MapPin className="w-4 h-4 text-primary" />
+                {req.address}
               </div>
-              {(req.status !== 'Pending' && req.status !== 'Cancelled') && (
-                <div className="bg-on-surface/[0.03] p-6 rounded-[2rem] border border-on-surface/5">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4 flex items-center gap-2"><Truck className="w-3.5 h-3.5" /> Cập nhật trạng thái</h4>
-                  <div className="flex gap-2">
-                    {['Accepted', 'Assigned', 'Collected'].map(s => (
-                      <button key={s} onClick={() => onStatus(req.id, s)} className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${req.status === s ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-surface-container-highest/50 text-on-surface-variant/40 hover:bg-surface-container-highest'}`}>{s === 'Accepted' ? 'Duyệt' : s === 'Assigned' ? 'Đang đi' : 'Xong'}</button>
+            </div>
+            
+            <div className={`px-5 py-2.5 rounded-[1.5rem] ${currentStatus.color} border border-white shadow-sm flex items-center gap-3 shrink-0`}>
+               <currentStatus.icon className="w-4 h-4" />
+               <span className="text-xs font-black uppercase tracking-widest">{currentStatus.label}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-10 pt-8 no-scrollbar space-y-8">
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Materials */}
+              <div className="bg-surface-container/50 rounded-[2rem] p-6 border border-surface-container-high">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4 flex items-center gap-2">
+                   <Package className="w-3.5 h-3.5" /> Cơ cấu loại rác
+                 </h4>
+                 <div className="space-y-3">
+                   {req.materials?.map((m, i) => (
+                     <div key={i} className="flex justify-between items-center group">
+                       <span className="text-xs font-black text-on-surface">{m.type}</span>
+                       <span className="text-xs font-bold text-on-surface-variant/40">{m.amount} {m.unit}</span>
+                     </div>
+                   )) || <p className="text-sm font-black text-on-surface">{req.weightKg}kg - {req.wasteType}</p>}
+                 </div>
+              </div>
+
+              {/* Note */}
+              <div className="bg-surface-container/50 rounded-[2rem] p-6 border border-surface-container-high italic text-on-surface-variant/70">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-3 not-italic">
+                    Ghi chú của dân
+                 </h4>
+                 <p className="text-xs font-bold leading-relaxed line-clamp-4">"{req.note || 'Không có ghi chú thêm.'}"</p>
+              </div>
+              </div>
+
+            {/* Interaction Grid: Status & Staff Selection */}
+            {req.status !== 'Cancelled' && (
+              <div className="grid grid-cols-12 gap-8">
+                {/* Status Updates */}
+                <div className="col-span-4 space-y-4">
+                  <div className="flex items-center gap-3 px-2">
+                    <h4 className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] whitespace-nowrap">Cập nhật tiến độ</h4>
+                    <div className="flex-1 h-[1px] bg-on-surface/5" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { id: 'Accepted', label: 'Duyệt hồ sơ', color: 'bg-blue-500' },
+                      { id: 'Assigned', label: 'Đang vận chuyển', color: 'bg-indigo-500' },
+                      { id: 'Collected', label: 'Đã hoàn thành', color: 'bg-emerald-500' }
+                    ].map(s => (
+                      <button 
+                        key={s.id} 
+                        onClick={() => onStatus(req.id, s.id)}
+                        className={`w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          req.status === s.id 
+                            ? `${s.color} text-white shadow-lg shadow-on-surface/5 scale-[1.02]` 
+                            : 'bg-surface-container-high text-on-surface-variant/40 hover:bg-surface-container-highest'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
                     ))}
                   </div>
                 </div>
-              )}
-           </div>
-          {(req.status !== 'Pending' && req.status !== 'Cancelled') && (
-             <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4 flex items-center gap-2 px-4 text-center justify-center"><User className="w-3.5 h-3.5 text-indigo-500" /> Điều phối nhân viên</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {collectors.map(c => (
-                    <button key={c.id} onClick={() => onAssign(req.id, c.id)} className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${req.collectorId === c.id ? 'border-indigo-500 bg-indigo-50 shadow-xl shadow-indigo-500/10' : 'border-transparent bg-on-surface/5 hover:bg-on-surface/10 hover:scale-[1.02]'}`}>
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${req.collectorId === c.id ? 'bg-indigo-500 text-white' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-5 h-5" /></div>
-                      <span className={`text-[11px] font-black truncate w-full text-center ${req.collectorId === c.id ? 'text-indigo-700' : 'text-on-surface/70'}`}>{c.name}</span>
-                    </button>
-                  ))}
+              
+           {/* Staff Selection Area */}
+                <div className="col-span-8 space-y-4">
+                  <div className="flex items-center gap-3 px-2">
+                     <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] whitespace-nowrap">Điều phối nhân viên</h4>
+                     <div className="flex-1 h-[1px] bg-on-surface/5" />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {collectors.map(c => (
+                      <button 
+                        key={c.id} 
+                        onClick={() => onAssign(req.id, c.id)}
+                        className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
+                          req.collectorId === c.id 
+                          ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
+                          : 'border-transparent bg-on-surface-variant/5 hover:bg-on-surface-variant/10'
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          req.collectorId === c.id ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
+                        }`}>
+                          <User className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${req.collectorId === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
+                          <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>{c.phone}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-             </div>
-           )}
-          <div className="flex gap-4">
-             {req.status === 'Pending' && <button onClick={() => { onStatus(req.id, 'Accepted'); onClose(); }} className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Tiếp nhận hồ sơ</button>}
-             {(req.status === 'Accepted' || req.status === 'Assigned' || req.status === 'Collected') && <div className="flex-1 py-4 text-center border-2 border-dashed border-primary/20 rounded-2xl bg-primary/5"><p className="text-[10px] font-black text-primary uppercase tracking-widest italic font-mono">- Chế độ chỉnh sửa đang bật -</p></div>}
-             <button onClick={onClose} className="px-10 py-4 bg-surface-container-high text-on-surface-variant rounded-2xl font-black uppercase tracking-widest hover:bg-surface-container-highest transition-all">Đóng</button>
+                </div>
+            )}
           </div>
+
+          {/* Footer Actions */}
+          <div className="p-10 pt-4 bg-white/50 border-t border-on-surface/5 flex justify-between items-center">
+             <div className="flex items-center gap-6">
+                {req.status === 'Pending' && (
+                  <button onClick={() => onStatus(req.id, 'Accepted')} className="px-10 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-3">
+                    Tiếp nhận hồ sơ <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+                {req.status !== 'Pending' && req.status !== 'Cancelled' && (
+                  <button 
+                    onClick={() => onCancel(req)} 
+                    className="text-[10px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-widest transition-all p-2"
+                  >
+                    Hủy đơn thu gom
+                  </button>
+                )}
+             </div>
+             
+             <div className="flex gap-4">
+                {req.status === 'Pending' && (
+                  <button onClick={() => onCancel(req)} className="px-8 bg-red-50 text-red-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-red-100 transition-all">Hủy đơn</button>
+                )}
+                
+                {req.status !== 'Pending' && req.status !== 'Cancelled' && (
+                  <button onClick={onClose} className="px-12 bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    Xác nhận
+                  </button>
+                )}
+
+                <button onClick={onClose} className="px-10 py-4 bg-surface-container-high text-on-surface-variant rounded-2xl font-black uppercase tracking-widest hover:bg-surface-container-highest transition-all">
+                  {req.status === 'Pending' ? 'Đóng' : 'Quay lại'}
+                </button>
+             </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function CancellationDialog({ req, onClose, onConfirm }) {
+  const [reason, setReason] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        onClick={onClose} 
+        className="absolute inset-0 bg-red-950/20 backdrop-blur-md" 
+      />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 10 }} 
+        animate={{ opacity: 1, scale: 1, y: 0 }} 
+        exit={{ opacity: 0, scale: 0.9, y: 10 }} 
+        className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl relative z-10 overflow-hidden"
+      >
+        <div className="p-10 pb-8 text-center">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <X className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-black text-on-surface mb-2">Hủy đơn thu gom?</h3>
+          <p className="text-sm font-bold text-on-surface-variant/60 leading-relaxed mb-8">
+            Vui lòng cho biết lý do hủy đơn của <span className="text-on-surface font-black">{req.citizenName}</span>.
+          </p>
+
+          <textarea
+            autoFocus
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ví dụ: Sai thông tin địa chỉ, rác không đúng quy định..."
+            className="w-full h-32 bg-surface-container border-2 border-surface-container-highest focus:border-red-500 rounded-[2rem] p-6 text-sm font-bold text-on-surface focus:outline-none transition-all resize-none placeholder:text-on-surface-variant/20"
+          />
+        </div>
+
+        <div className="p-8 bg-surface-container-high/50 flex flex-col gap-3">
+          <button 
+            disabled={!reason.trim()}
+            onClick={() => onConfirm(reason)}
+            className={`w-full py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 ${
+              reason.trim() 
+                ? 'bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-500/30' 
+                : 'bg-on-surface/5 text-on-surface-variant/20 cursor-not-allowed border-2 border-dashed border-on-surface/10'
+            }`}
+          >
+            {reason.trim() ? 'Xác nhận hủy đơn' : 'Hãy nhập lý do'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={onClose}
+            className="w-full py-4 text-xs font-black text-on-surface-variant hover:text-on-surface transition-all uppercase tracking-widest"
+          >
+            Quay lại
+          </button>
         </div>
       </motion.div>
     </div>

@@ -101,12 +101,9 @@ export async function getCollectors() {
 }
 
 export async function assignRequest(requestId, collectorId) {
-  //Simulate network delay then return success
-  await new Promise(resolve => setTimeout(resolve, 800));
   return { success: true, requestId, collectorId };
 }
 
 export async function updateRequestStatus(requestId, newStatus) {
-  await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, requestId, status: newStatus };
 }
