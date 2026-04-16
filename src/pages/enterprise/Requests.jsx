@@ -281,7 +281,7 @@ export default function Requests() {
       <AnimatePresence>
         {selectedRequest && (
           <RequestDetailModal 
-            req={requests.find(r => r.id === selectedRequest.id) || selectedRequest} 
+            req={requests.find(r => r.id == selectedRequest.id) || selectedRequest} 
             readOnly={modalMode === 'view'}
             onClose={() => { setSelectedRequest(null); setModalMode('view'); }} 
             collectors={collectors}
@@ -382,7 +382,7 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         </div>
       </div>
       <div className="col-span-2 text-center flex justify-center">
-        {req.collectorId ? (
+        {req.collectorId && (req.status === 'Assigned' || req.status === 'Collected') ? (
           <div className="inline-flex items-center gap-2 bg-indigo-50/50 px-3 py-1.5 rounded-xl border border-indigo-100/30">
             <User className="w-3.5 h-3.5 text-indigo-400" />
             <div className="flex flex-col items-start leading-tight">
@@ -704,32 +704,49 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                   </div>
                   
                   <div className={`grid ${readOnly ? 'grid-cols-4' : 'grid-cols-3'} gap-3`}>
-                    {collectors.map(c => (
-                      <button 
-                        key={c.id} 
-                        onClick={() => !readOnly && onAssign(req.id, c.id)}
-                        className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
-                          req.collectorId === c.id 
-                          ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
-                          : 'border-transparent bg-on-surface-variant/5'
-                        } ${readOnly ? 'cursor-default' : 'hover:bg-on-surface-variant/10 cursor-pointer'}`}
-                      >
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                          req.collectorId === c.id ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
-                        }`}>
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0 text-left">
-                          <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${req.collectorId === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                           <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
-                            {c.phoneNumber || c.phone || "Chưa có SĐT"}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                    {(() => {
+                      const filtered = collectors.filter(c => {
+                        if (readOnly && req.collectorId === (c.userId || c.id)) return true;
+                        // Check if collector is assigned to this ward
+                        return c.wardIds && c.wardIds.includes(Number(req.wardId));
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="col-span-12 py-8 flex flex-col items-center justify-center bg-surface-container/30 rounded-[2rem] border border-dashed border-on-surface/5">
+                            <UsersIcon className="w-8 h-8 text-on-surface-variant/20 mb-2" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">Không có nhân viên trong khu vực này</p>
+                          </div>
+                        );
+                      }
+
+                      return filtered.map(c => (
+                        <button 
+                          key={c.userId || c.id} 
+                          onClick={() => !readOnly && onAssign(req.id, c.userId || c.id)}
+                          className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
+                            req.collectorId === (c.userId || c.id)
+                            ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
+                            : 'border-transparent bg-on-surface-variant/5'
+                          } ${readOnly ? 'cursor-default' : 'hover:bg-on-surface-variant/10 cursor-pointer'}`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            req.collectorId === (c.userId || c.id) ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
+                          }`}>
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${req.collectorId === (c.userId || c.id) ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name || c.displayName}</p>
+                            <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === (c.userId || c.id) ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                              {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                            </p>
+                          </div>
+                        </button>
+                      ));
+                    })()}
                   </div>
                 </div>
-                </div>
+              </div>
             )}
           </div>
 
