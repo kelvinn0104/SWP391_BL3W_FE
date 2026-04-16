@@ -69,6 +69,19 @@ export async function createCategory(data) {
   });
 }
 
+export async function updateCategory(id, data) {
+  return await apiFetch(`/api/vouchers/categories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCategory(id) {
+  return await apiFetch(`/api/vouchers/categories/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function getRedemptionHistory() {
   return await apiFetch('/api/vouchers/history');
 }

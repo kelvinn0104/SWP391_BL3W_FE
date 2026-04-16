@@ -69,8 +69,8 @@ export default function EnterpriseLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:relative top-0 bottom-0 left-0 w-72 lg:w-64 bg-surface-container-lowest border-r border-surface-container-highest 
-        flex flex-col eco-glass z-50 transition-all duration-300 ease-in-out
+        fixed lg:relative top-[73px] lg:top-0 bottom-0 left-0 w-72 lg:w-64 bg-surface-container-lowest border-r border-surface-container-highest 
+        flex flex-col eco-glass z-40 transition-all duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-6 flex items-center justify-between">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCapacity, getRequests } from '../../api/enterpriseApi';
+import { getCapacity, getRequests } from '../../api/areaApi';
 import { Activity, PackageCheck, AlertCircle, Weight } from 'lucide-react';
 
 export default function Dashboard() {

@@ -23,13 +23,16 @@ import {
 } from 'lucide-react';
 import Pagination from '../../components/ui/Pagination';
 import AlertModal from '../../components/ui/AlertModal';
+import { getUser, getApiBaseUrl } from '../../lib/auth';
 import { 
   getVouchers, 
   getVoucherCategories, 
   createVoucher, 
   updateVoucher, 
   deleteVoucher, 
-  createCategory, 
+  createCategory,
+  updateCategory,
+  deleteCategory, 
   getRedemptionHistory 
 } from '../../api/voucherApi';
 
@@ -268,7 +271,7 @@ export default function VoucherManagement() {
                       className="hover:bg-primary/[0.02] transition-colors cursor-pointer group"
                     >
                       <td className="px-8 py-4 text-center opacity-40 font-mono text-xs">#{v.id}</td>
-                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={v.image} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://picsum.photos/seed/voucher/400/300'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
+                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={v.image?.startsWith('http') || v.image?.startsWith('/voucher') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
                       <td className="px-8 py-4"><span className="px-2.5 py-1 bg-surface-container-high rounded-full text-[10px] text-on-surface-variant uppercase">{v.category}</span></td>
                       <td className="px-8 py-4 text-primary font-black"><div className="flex items-center gap-1.5"><Star className="w-4 h-4" fill="currentColor" />{v.points}</div></td>
                       <td className="px-8 py-4 text-on-surface-variant">{v.stock}</td>
@@ -301,7 +304,7 @@ export default function VoucherManagement() {
                   className="bg-surface-container-lowest p-4 rounded-3xl border border-surface-container-high botanical-shadow relative group active:scale-[0.98] transition-all"
                 >
                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 shadow-sm bg-surface-container-low">
-                      <img src={v.image} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://picsum.photos/seed/voucher/400/300'} />
+                      <img src={v.image?.startsWith('http') || v.image?.startsWith('/voucher') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} />
                       <div className="absolute top-2 right-2 px-3 py-1 bg-primary text-white text-xs font-black rounded-full shadow-lg flex items-center gap-1">
                         <Star className="w-3 h-3" fill="currentColor" /> {v.points}
                       </div>
@@ -370,13 +373,21 @@ export default function VoucherManagement() {
                       </td>
                       <td className="px-8 py-4 text-center">
                         <span className="px-3 py-1 bg-surface-container-low rounded-lg text-on-surface-variant font-black border border-surface-container-high/50">
-                          {cat.count} vật phẩm
+                          {cat.voucherCount} Voucher
                         </span>
                       </td>
                       <td className="px-8 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); setCatName(cat.name); setCategoryModal({ open: true, mode: 'edit', data: cat }); }} className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-all"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); showConfirm("Xóa phân loại", `Xóa "${cat.name}" sẽ ảnh hưởng đến các voucher thuộc loại này. Tiếp tục?`, () => setCategories(categories.filter(item => item.id !== cat.id))); }} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); showConfirm("Xóa phân loại", `Xóa "${cat.name}" sẽ ảnh hưởng đến các voucher thuộc loại này. Tiếp tục?`, async () => {
+                            try {
+                              await deleteCategory(cat.id);
+                              fetchData();
+                              showAlert("Thành công", "Đã xóa phân loại!", "success");
+                            } catch (err) {
+                              showAlert("Lỗi", "Không thể xóa phân loại. Có thể vẫn còn voucher thuộc loại này.", "error");
+                            }
+                          }); }} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -395,14 +406,22 @@ export default function VoucherManagement() {
                        </div>
                        <div>
                           <h3 className="text-lg font-black text-on-surface">{cat.name}</h3>
-                          <p className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{cat.count} vật phẩm</p>
+                          <p className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">{cat.voucherCount} Voucher</p>
                        </div>
                     </div>
                     <div className="flex gap-2 pt-4 border-t border-surface-container-high/50">
                        <button onClick={() => { setCatName(cat.name); setCategoryModal({ open: true, mode: 'edit', data: cat }); }} className="flex-1 py-3 rounded-xl bg-surface-container-low text-primary font-black text-xs flex items-center justify-center gap-2 border border-primary/20">
                           <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                        </button>
-                       <button onClick={() => { showConfirm("Xóa phân loại", `Xóa "${cat.name}" sẽ ảnh hưởng đến các voucher thuộc loại này. Tiếp tục?`, () => setCategories(categories.filter(item => item.id !== cat.id))); }} className="flex-1 py-3 rounded-xl bg-error/5 text-error font-black text-xs flex items-center justify-center gap-2 border border-error/20">
+                       <button onClick={() => { showConfirm("Xóa phân loại", `Xóa "${cat.name}" sẽ ảnh hưởng đến các voucher thuộc loại này. Tiếp tục?`, async () => {
+                          try {
+                            await deleteCategory(cat.id);
+                            fetchData();
+                            showAlert("Thành công", "Đã xóa phân loại!", "success");
+                          } catch (err) {
+                            showAlert("Lỗi", "Không thể xóa phân loại.", "error");
+                          }
+                       }); }} className="flex-1 py-3 rounded-xl bg-error/5 text-error font-black text-xs flex items-center justify-center gap-2 border border-error/20">
                           <Trash2 className="w-3.5 h-3.5" /> Xóa
                        </button>
                     </div>
@@ -514,10 +533,10 @@ export default function VoucherManagement() {
                   <div className="lg:w-2/5 space-y-6 md:space-y-8">
                     <div className="relative group overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border-4 border-white shadow-2xl aspect-video">
                       <img 
-                        src={detailModal.data.image} 
+                        src={detailModal.data.image?.startsWith('http') || detailModal.data.image?.startsWith('/voucher') || detailModal.data.image?.startsWith('/src/assets') ? detailModal.data.image : `${getApiBaseUrl()}${detailModal.data.image?.startsWith('/') ? '' : '/'}${detailModal.data.image}`}
                         alt="" 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                        onError={e => e.target.src = 'https://picsum.photos/seed/voucher/800/400'} 
+                        onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=800&auto=format&fit=crop'}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4 md:p-6">
                          <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-lg leading-tight">{detailModal.data.title}</h3>
@@ -651,7 +670,10 @@ export default function VoucherManagement() {
                            }
                          }} />
                          {voucherForm.imagePreview ? (
-                           <img src={voucherForm.imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="" />
+                           <img src={voucherForm.imagePreview?.startsWith('blob') || voucherForm.imagePreview?.startsWith('http') || voucherForm.imagePreview?.startsWith('/voucher') || voucherForm.imagePreview?.startsWith('/src/assets') 
+                              ? voucherForm.imagePreview 
+                              : `${getApiBaseUrl()}${voucherForm.imagePreview?.startsWith('/') ? '' : '/'}${voucherForm.imagePreview}`} 
+                              className="absolute inset-0 w-full h-full object-cover" alt="" />
                          ) : (
                            <>
                             <div className="p-3 md:p-4 bg-primary/10 rounded-2xl text-primary transform group-hover:scale-110 transition-transform">
@@ -758,13 +780,8 @@ export default function VoucherManagement() {
                     await createCategory({ name: catName });
                     showAlert("Thành công", "Đã thêm phân loại mới!", "success");
                   } else {
-                    // BE doesn't have explicit Update Category yet in plans, but I implemented UpdateCategoryAsync in Service
-                    // Wait, let's check VouchersController
-                    // VouchersController doesn't have PUT /api/vouchers/categories/{id} yet.
-                    // I will just implement the Add for now and assume it works.
-                    // Actually, let's just use createCategory for both or ignore update for a moment.
-                    await createCategory({ name: catName });
-                    showAlert("Thành công", "Đã lưu phân loại!", "success");
+                    await updateCategory(categoryModal.data.id, { name: catName });
+                    showAlert("Thành công", "Đã cập nhật phân loại!", "success");
                   }
                   fetchData();
                   setCategoryModal({open: false}); 

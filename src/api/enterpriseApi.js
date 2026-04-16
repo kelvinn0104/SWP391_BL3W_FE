@@ -1,31 +1,9 @@
 /**
- * 100% MOCK API cho Enterprise Features (Pure Frontend Development)
+ * 100% MOCK API cho Collection Management Features (TESTING VERSION with Pagination)
  */
 
-export async function getCapacity() {
-  return {
-    areas: [
-      { id: 'area-1', district: 'Quận 1', monthlyCapacityKg: 5000, processedThisMonthKg: 1200, completedRequests: 45, wards: [] },
-      { id: 'area-2', district: 'Bình Thạnh', monthlyCapacityKg: 8000, processedThisMonthKg: 3500, completedRequests: 82, wards: [] },
-      { id: 'area-3', district: 'Quận 7', monthlyCapacityKg: 6000, processedThisMonthKg: 2100, completedRequests: 31, wards: [] }
-    ]
-  };
-}
-
-export async function updateCapacity(data) {
-  return { success: true, ...data };
-}
-
-export async function deleteArea(id) {
-  return { success: true };
-}
-
-export async function updateArea(id, data) {
-  return { success: true, ...data };
-}
-
 export async function getRequests() {
-  return [
+  const baseRequests = [
     {
       id: 'REQ-001',
       citizenName: 'Lê Văn Tùng',
@@ -86,7 +64,38 @@ export async function getRequests() {
       ],
       priority: 'Low'
     }
-  ]; 
+  ];
+
+  // Generate 24 items total for pagination testing
+  const expandedRequests = [];
+  const statuses = ['Pending', 'Accepted', 'Assigned', 'Collected', 'Cancelled'];
+  const names = ['Hoàng Văn A', 'Trần Thị B', 'Nguyễn Văn C', 'Phan Văn D', 'Lê Thị E', 'Đặng Văn F'];
+  const addresses = ['102 Lê Lai, Q1', '45 Phan Xích Long, PN', '22 Nguyễn Thị Minh Khai, Q3', '78 Võ Văn Tần, Q3', '15 Trần Hưng Đạo, Q1'];
+
+  for (let i = 0; i < 24; i++) {
+    if (i < baseRequests.length) {
+      expandedRequests.push(baseRequests[i]);
+    } else {
+      const statusIndex = i % statuses.length;
+      const status = statuses[statusIndex];
+      expandedRequests.push({
+        id: `REQ-${(i + 1).toString().padStart(3, '0')}`,
+        citizenName: names[i % names.length],
+        address: addresses[i % addresses.length],
+        wasteType: i % 2 === 0 ? 'Nhựa & Kim loại' : 'Giấy & Carton',
+        weightKg: Number((5 + Math.random() * 20).toFixed(1)),
+        status: status,
+        collectorId: (status === 'Assigned' || status === 'Collected') ? `col-${(i % 5) + 1}` : null,
+        createdAt: new Date(Date.now() - 3600000 * i * 3).toISOString(),
+        materials: [
+          { type: 'Rác tổng hợp', amount: 10, unit: 'kg' }
+        ],
+        priority: i % 3 === 0 ? 'High' : 'Medium'
+      });
+    }
+  }
+
+  return expandedRequests; 
 }
 
 export async function getCollectors() {

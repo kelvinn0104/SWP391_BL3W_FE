@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getCapacity, updateCapacity } from '../../api/enterpriseApi';
+import { getCapacity, updateCapacity } from '../../api/areaApi';
 import { Save, Check, ShieldCheck, MapPin, Plus, X } from 'lucide-react';
 
 const WASTE_TYPES = ['Plastic', 'Paper', 'Glass', 'Metals', 'E-Waste', 'Organic'];
