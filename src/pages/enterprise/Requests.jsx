@@ -34,6 +34,7 @@ export default function Requests() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [modalMode, setModalMode] = useState('view'); // 'view' or 'edit'
   const [activeTab, setActiveTab] = useState('All');
   const [coordinatingRequest, setCoordinatingRequest] = useState(null);
   const [cancellingRequest, setCancellingRequest] = useState(null);
@@ -205,7 +206,8 @@ export default function Requests() {
                 collectors={collectors}
                 onStatus={handleStatus}
                 onAssign={handleAssign}
-                onView={() => setSelectedRequest(req)}
+                onView={() => { setSelectedRequest(req); setModalMode('view'); }}
+                onEdit={() => { setSelectedRequest(req); setModalMode('edit'); }}
                 onOpenCoordination={() => handleOpenCoordination(req)}
                 onCancel={() => setCancellingRequest(req)}
               />
@@ -226,7 +228,8 @@ export default function Requests() {
         {selectedRequest && (
           <RequestDetailModal 
             req={requests.find(r => r.id === selectedRequest.id) || selectedRequest} 
-            onClose={() => setSelectedRequest(null)} 
+            readOnly={modalMode === 'view'}
+            onClose={() => { setSelectedRequest(null); setModalMode('view'); }} 
             collectors={collectors}
             onAssign={handleAssign}
             onStatus={handleStatus}
@@ -264,7 +267,7 @@ export default function Requests() {
   );
 }
 
-function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordination, onCancel }) {
+function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel }) {
   const getStatusBadge = () => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
@@ -351,8 +354,8 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordin
         {req.status === 'Accepted' && (
            <button onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">Điều phối <ChevronRight className="w-3 h-3" /></button>
         )}
-        {(req.status === 'Assigned' || req.status === 'Collected') && (
-          <button onClick={(e) => { e.stopPropagation(); onView(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
+        {(req.status === 'Assigned' || req.status === 'Collected' || req.status === 'Accepted') && (
+          <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
         )}
         {req.status === 'Cancelled' && (
           <div className="flex items-center gap-2 px-5 py-2 bg-on-surface/5 text-on-surface-variant/20 rounded-xl border border-dashed border-on-surface/10 grayscale">
@@ -428,7 +431,7 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
   );
 }
 
-function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCancel }) {
+function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCancel, readOnly = false }) {
   const currentStatus = (() => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
@@ -515,49 +518,53 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
             {req.status !== 'Cancelled' && (
               <div className="grid grid-cols-12 gap-8">
                 {/* Status Updates */}
-                <div className="col-span-4 space-y-4">
-                  <div className="flex items-center gap-3 px-2">
-                    <h4 className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] whitespace-nowrap">Cập nhật tiến độ</h4>
-                    <div className="flex-1 h-[1px] bg-on-surface/5" />
+                {!readOnly && (
+                  <div className="col-span-4 space-y-4">
+                    <div className="flex items-center gap-3 px-2">
+                      <h4 className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] whitespace-nowrap">Cập nhật tiến độ</h4>
+                      <div className="flex-1 h-[1px] bg-on-surface/5" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {[
+                        { id: 'Accepted', label: 'Duyệt hồ sơ', color: 'bg-blue-500' },
+                        { id: 'Assigned', label: 'Đang vận chuyển', color: 'bg-indigo-500' },
+                        { id: 'Collected', label: 'Đã hoàn thành', color: 'bg-emerald-500' }
+                      ].map(s => (
+                        <button 
+                          key={s.id} 
+                          onClick={() => onStatus(req.id, s.id)}
+                          className={`w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            req.status === s.id 
+                              ? `${s.color} text-white shadow-lg shadow-on-surface/5 scale-[1.02]` 
+                              : 'bg-surface-container-high text-on-surface-variant/40 hover:bg-surface-container-highest'
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {[
-                      { id: 'Accepted', label: 'Duyệt hồ sơ', color: 'bg-blue-500' },
-                      { id: 'Assigned', label: 'Đang vận chuyển', color: 'bg-indigo-500' },
-                      { id: 'Collected', label: 'Đã hoàn thành', color: 'bg-emerald-500' }
-                    ].map(s => (
-                      <button 
-                        key={s.id} 
-                        onClick={() => onStatus(req.id, s.id)}
-                        className={`w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                          req.status === s.id 
-                            ? `${s.color} text-white shadow-lg shadow-on-surface/5 scale-[1.02]` 
-                            : 'bg-surface-container-high text-on-surface-variant/40 hover:bg-surface-container-highest'
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
               
            {/* Staff Selection Area */}
-                <div className="col-span-8 space-y-4">
+                <div className={`${readOnly ? 'col-span-12' : 'col-span-8'} space-y-4`}>
                   <div className="flex items-center gap-3 px-2">
-                     <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] whitespace-nowrap">Điều phối nhân viên</h4>
+                     <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] whitespace-nowrap">
+                       {readOnly ? 'Nhân viên phụ trách' : 'Điều phối nhân viên'}
+                     </h4>
                      <div className="flex-1 h-[1px] bg-on-surface/5" />
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className={`grid ${readOnly ? 'grid-cols-4' : 'grid-cols-3'} gap-3`}>
                     {collectors.map(c => (
                       <button 
                         key={c.id} 
-                        onClick={() => onAssign(req.id, c.id)}
+                        onClick={() => !readOnly && onAssign(req.id, c.id)}
                         className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
                           req.collectorId === c.id 
                           ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
-                          : 'border-transparent bg-on-surface-variant/5 hover:bg-on-surface-variant/10'
-                        }`}
+                          : 'border-transparent bg-on-surface-variant/5'
+                        } ${readOnly ? 'cursor-default' : 'hover:bg-on-surface-variant/10 cursor-pointer'}`}
                       >
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                           req.collectorId === c.id ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
@@ -579,12 +586,12 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
           {/* Footer Actions */}
           <div className="p-10 pt-4 bg-white/50 border-t border-on-surface/5 flex justify-between items-center">
              <div className="flex items-center gap-6">
-                {req.status === 'Pending' && (
+                {!readOnly && req.status === 'Pending' && (
                   <button onClick={() => onStatus(req.id, 'Accepted')} className="px-10 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-3">
                     Tiếp nhận hồ sơ <ArrowRight className="w-4 h-4" />
                   </button>
                 )}
-                {req.status !== 'Pending' && req.status !== 'Cancelled' && (
+                {!readOnly && req.status !== 'Pending' && req.status !== 'Cancelled' && req.status !== 'Collected' && (
                   <button 
                     onClick={() => onCancel(req)} 
                     className="px-6 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase tracking-widest hover:bg-red-100 transition-all text-[10px]"
@@ -595,11 +602,11 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
              </div>
              
              <div className="flex gap-4">
-                {req.status === 'Pending' && (
+                {!readOnly && req.status === 'Pending' && (
                   <button onClick={() => onCancel(req)} className="px-8 bg-red-50 text-red-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-red-100 transition-all">Hủy đơn</button>
                 )}
                 
-                {req.status !== 'Pending' && req.status !== 'Cancelled' && (
+                {!readOnly && req.status !== 'Pending' && req.status !== 'Cancelled' && (
                   <button onClick={onClose} className="px-12 bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all">
                     Xác nhận
                   </button>
