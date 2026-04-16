@@ -52,6 +52,8 @@ import TaskDetail from "./pages/collector/TaskDetail";
 import VoucherManagement from "./pages/admin/VoucherManagement";
 import RewardManagement from "./pages/admin/RewardManagement";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminFeedbackDetail from "./pages/admin/AdminFeedbackDetail";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -271,13 +273,12 @@ function Layout() {
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                             )}
                             <div
-                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
-                                notif.type === "warning"
+                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${notif.type === "warning"
                                   ? "bg-amber-100 text-amber-600"
                                   : notif.type === "success"
                                     ? "bg-emerald-100 text-emerald-600"
                                     : "bg-blue-100 text-blue-600"
-                              }`}
+                                }`}
                             >
                               {notif.type === "warning" ? (
                                 <Bell className="w-6 h-6" />
@@ -349,12 +350,12 @@ function Layout() {
                         user?.role === "3" ||
                         user?.role === "RecyclingEnterprise" ||
                         user?.role === "4") && (
-                        <img
-                          src="/verify/verified.png"
-                          alt="verified"
-                          className="w-3.5 h-3.5 object-contain shrink-0"
-                        />
-                      )}
+                          <img
+                            src="/verify/verified.png"
+                            alt="verified"
+                            className="w-3.5 h-3.5 object-contain shrink-0"
+                          />
+                        )}
                     </div>
                     <p className="text-sm font-extrabold text-primary">
                       {typeof user?.points === "number"
@@ -554,14 +555,8 @@ export default function App() {
               </div>
             }
           />
-          <Route
-            path="feedback"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Quản lí feedback đang được phát triển...
-              </div>
-            }
-          />
+          <Route path="feedback" element={<AdminFeedback />} />
+          <Route path="feedback/:id" element={<AdminFeedbackDetail />} />
           <Route path="rewards" element={<RewardManagement />} />
           <Route path="vouchers" element={<VoucherManagement />} />
         </Route>
