@@ -587,7 +587,7 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                 {req.status !== 'Pending' && req.status !== 'Cancelled' && (
                   <button 
                     onClick={() => onCancel(req)} 
-                    className="text-[10px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-widest transition-all p-2"
+                    className="px-6 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase tracking-widest hover:bg-red-100 transition-all text-[10px]"
                   >
                     Hủy đơn thu gom
                   </button>
