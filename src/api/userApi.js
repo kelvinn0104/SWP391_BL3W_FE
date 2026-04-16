@@ -21,12 +21,15 @@ async function apiFetch(endpoint, options = {}) {
     return null;
   }
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.message || 'Có lỗi xảy ra');
+    if (response.status === 401) {
+      console.warn("Token expired or unauthorized");
+    }
+    const errorText = await response.text();
+    throw new Error(errorText || `Error ${response.status}`);
   }
 
+  const data = await response.json();
   return data;
 }
 

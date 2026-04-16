@@ -346,7 +346,7 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         <div className="flex flex-col">
           <span className="text-[10px] font-black text-primary/40 font-mono leading-none mb-1">REQ</span>
           <span className="text-sm font-black text-on-surface leading-none">
-            {req.id?.includes('-') ? req.id.split('-')[1] : (req.id || 'N/A')}
+            {req.id?.toString().includes('-') ? req.id.toString().split('-')[1] : (req.id || 'N/A')}
           </span>
         </div>
         </div>

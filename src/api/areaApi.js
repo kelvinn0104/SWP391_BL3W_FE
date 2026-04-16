@@ -97,9 +97,7 @@ export const updateArea = async (id, data) => {
 // --- Requests & Collectors (REAL BE) ---
 
 export const getRequests = async () => {
-    // Note: RequestController is currently missing in BE.
-    // This will return 404 until implemented.
-    return await apiFetch('/api/CollectionRequest'); 
+    return await apiFetch('/api/requests'); 
 };
 
 export const getCollectors = async () => {
@@ -108,14 +106,14 @@ export const getCollectors = async () => {
 };
 
 export const assignRequest = async (requestId, collectorId) => {
-  return await apiFetch(`/api/enterprise/requests/${requestId}/assign`, {
-    method: 'POST',
+  return await apiFetch(`/api/requests/${requestId}/assign`, {
+    method: 'PATCH',
     body: JSON.stringify({ collectorId }),
   });
 };
 
 export const updateRequestStatus = async (requestId, newStatus) => {
-  return await apiFetch(`/api/enterprise/requests/${requestId}/status`, {
+  return await apiFetch(`/api/requests/${requestId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status: newStatus }),
   });
