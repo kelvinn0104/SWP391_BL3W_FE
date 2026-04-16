@@ -163,7 +163,7 @@ function Layout() {
   return (
     <div className="min-h-screen flex flex-col font-sans">
       {/* TopNavBar */}
-      <header className="sticky top-0 w-full z-50 eco-glass botanical-shadow">
+      <header className="sticky top-0 w-full z-[100] eco-glass botanical-shadow">
         <div className="flex items-center justify-between px-6 md:px-16 py-4 w-full">
           <div className="flex items-center gap-10">
             <Link to="/" className="flex items-center gap-2">
@@ -417,7 +417,7 @@ function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-surface-container-low w-full mt-20 border-t border-surface-container-highest">
+      <footer className="bg-surface-container-low w-full border-t border-surface-container-highest">
         <div className="w-full px-6 md:px-16 py-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
