@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { 
   getRequests, 
-  getCollectors, 
   updateRequestStatus, 
   assignRequest 
-} from '../../virtual api/collectionManagementVirtualApi';
+} from '../../api/collectionApi';
+import { getCollectors } from '../../api/userApi';
 import Pagination from '../../components/ui/Pagination';
 import {  
   MapPin, 
@@ -51,10 +51,18 @@ export default function Requests() {
     setLoading(true);
     try {
       const [reqs, cols] = await Promise.all([getRequests(), getCollectors()]);
+      
+      // Map API response to match FE expectations if needed
+      const mappedCollectors = cols.map(c => ({
+        ...c,
+        name: c.displayName || c.fullName || "N/A"
+      }));
+
       setRequests(reqs);
-      setCollectors(cols);
+      setCollectors(mappedCollectors);
       } catch (err) {
       console.error("Failed to load requests", err);
+      // alert("Không thể kết nối tới máy chủ API. Vui lòng kiểm tra lại Backend!");
     } finally {
       setLoading(false);
     }
@@ -98,9 +106,9 @@ export default function Requests() {
     }
     if (searchQuery) {
       result = result.filter(r => 
-        r.citizenName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchQuery.toLowerCase())
+        (r.citizenName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.address || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.id?.toString() || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     return result;
@@ -115,7 +123,7 @@ export default function Requests() {
   const stats = useMemo(() => {
     const totalWeight = requests.reduce((sum, r) => sum + parseFloat(r.weightKg || 0), 0);
     const pendingCount = requests.filter(r => r.status === 'Pending').length;
-    const completedWeight = requests.filter(r => r.status === 'Collected').reduce((sum, r) => sum + r.weightKg, 0);
+    const completedWeight = requests.filter(r => r.status === 'Collected').reduce((sum, r) => sum + (r.weightKg || 0), 0);
     
     return [
       { label: 'Tổng khối lượng', value: `${totalWeight.toFixed(1)}kg`, icon: Scale, color: 'text-primary' },

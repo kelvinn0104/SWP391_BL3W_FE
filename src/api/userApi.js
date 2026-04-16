@@ -40,3 +40,28 @@ export const updateProfile = async (profileData) => {
 export const getMe = async () => {
     return await apiFetch('/api/users/me');
 };
+
+/**
+ * API cho Account Management (Admin/Enterprise)
+ */
+export const getCollectors = async () => {
+  return await apiFetch('/api/accounts/collectors');
+};
+
+export const getCitizens = async () => {
+  return await apiFetch('/api/accounts/citizens');
+};
+
+export const lockAccount = async (id, isLocked) => {
+  return await apiFetch(`/api/accounts/${id}/lock`, {
+    method: 'PATCH',
+    body: JSON.stringify(isLocked),
+  });
+};
+
+export const createCollector = async (data) => {
+  return await apiFetch('/api/accounts/collectors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+};
