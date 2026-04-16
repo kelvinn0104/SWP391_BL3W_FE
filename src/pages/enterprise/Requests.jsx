@@ -312,8 +312,12 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
           </div>
         </div>
       </div>
-      <div className="col-span-1 text-center flex flex-col items-center">
-          <p className="text-sm font-black text-on-surface flex items-center gap-1.5"><Scale className="w-3.5 h-3.5 text-primary" />{req.weightKg} kg</p>
+      <div className="col-span-1 text-center flex flex-col items-center justify-center">
+        <p className="text-[10px] font-black text-on-surface truncate w-full mb-0.5">{req.wasteType}</p>
+        <p className="text-[11px] font-bold text-on-surface-variant/50 flex items-center gap-1.5 leading-none">
+          <Scale className="w-3 h-3 text-emerald-500/40" />
+          {req.weightKg} kg
+        </p>
       </div>
       <div className="col-span-2 text-center flex justify-center">
         <div className="flex flex-col items-center">
@@ -354,7 +358,7 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         {req.status === 'Accepted' && (
            <button onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">Điều phối <ChevronRight className="w-3 h-3" /></button>
         )}
-        {(req.status === 'Assigned' || req.status === 'Collected' || req.status === 'Accepted') && (
+        {(req.status === 'Assigned' || req.status === 'Collected') && (
           <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
         )}
         {req.status === 'Cancelled' && (
@@ -495,14 +499,21 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                  <h4 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 mb-4 flex items-center gap-2">
                    <Package className="w-3.5 h-3.5" /> Cơ cấu loại rác
                  </h4>
-                 <div className="space-y-3">
-                   {req.materials?.map((m, i) => (
-                     <div key={i} className="flex justify-between items-center group">
-                       <span className="text-xs font-black text-on-surface">{m.type}</span>
-                       <span className="text-xs font-bold text-on-surface-variant/40">{m.amount} {m.unit}</span>
-                     </div>
-                   )) || <p className="text-sm font-black text-on-surface">{req.weightKg}kg - {req.wasteType}</p>}
-                 </div>
+                 <div className="space-y-4">
+                    <div className="flex justify-between items-end border-b border-on-surface/5 pb-3">
+                       <span className="text-sm font-black text-indigo-600 uppercase tracking-tight">{req.wasteType}</span>
+                       <span className="text-xs font-bold text-on-surface-variant/40">{req.weightKg} kg (Tổng)</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {req.materials?.map((m, i) => (
+                        <div key={i} className="flex justify-between items-center group">
+                          <span className="text-xs font-black text-on-surface">{m.type}</span>
+                          <span className="text-xs font-bold text-on-surface-variant/40">{m.amount} {m.unit}</span>
+                        </div>
+                      )) || <p className="text-xs font-black text-on-surface-variant/30 italic">Không có chi tiết thành phần</p>}
+                    </div>
+                  </div>
               </div>
 
               {/* Note */}
