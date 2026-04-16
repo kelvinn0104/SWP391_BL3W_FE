@@ -21,12 +21,15 @@ async function apiFetch(endpoint, options = {}) {
     return null;
   }
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(data.message || 'Có lỗi xảy ra');
+    if (response.status === 401) {
+      console.warn("Token expired or unauthorized");
+    }
+    const errorText = await response.text();
+    throw new Error(errorText || `Error ${response.status}`);
   }
 
+  const data = await response.json();
   return data;
 }
 
@@ -39,4 +42,30 @@ export const updateProfile = async (profileData) => {
 
 export const getMe = async () => {
     return await apiFetch('/api/users/me');
+};
+
+/**
+ * API cho Account Management (Admin/Enterprise)
+ */
+export const getCollectors = async (wardId = null) => {
+  const query = wardId ? `?wardId=${wardId}` : '';
+  return await apiFetch(`/api/accounts/collectors${query}`);
+};
+
+export const getCitizens = async () => {
+  return await apiFetch('/api/accounts/citizens');
+};
+
+export const lockAccount = async (id, isLocked) => {
+  return await apiFetch(`/api/accounts/${id}/lock`, {
+    method: 'PATCH',
+    body: JSON.stringify(isLocked),
+  });
+};
+
+export const createCollector = async (data) => {
+  return await apiFetch('/api/accounts/collectors', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 };
