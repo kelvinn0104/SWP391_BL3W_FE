@@ -1,4 +1,5 @@
 import {motion} from 'motion/react';
+import {Link} from 'react-router-dom';
 import {
   Leaf,
   Camera,
@@ -245,9 +246,12 @@ export default function Home() {
             <h2 className="text-4xl font-serif italic">
               Bảng xếp hạng <span className="not-italic text-primary">Tuần</span>
             </h2>
-            <button className="text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+            <Link
+              to="/leaderboard"
+              className="text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
+            >
               Tất cả
-            </button>
+            </Link>
           </div>
           <div className="bg-surface-container-lowest rounded-[3rem] p-8 botanical-shadow border border-surface-container-high/50 divide-y divide-surface-container-high">
             <LeaderboardItem
