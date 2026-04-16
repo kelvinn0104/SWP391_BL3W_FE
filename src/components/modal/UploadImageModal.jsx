@@ -1,12 +1,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { ImagePlus, PackageCheck, Upload, X } from "lucide-react";
 
-const STATUS_OPTIONS = [
-  { value: "complete_match", label: "Thu gom đủ khối lượng và đúng loại" },
-  { value: "complete_partial", label: "Thu gom một phần / khối lượng khác báo cáo" },
-  { value: "issue_site", label: "Có phát sinh tại hiện trường (ghi chú bên dưới)" },
-];
-
 export default function UploadImageModal({
   open,
   onClose,
@@ -19,7 +13,7 @@ export default function UploadImageModal({
   const descId = `${modalId}-desc`;
 
   const [files, setFiles] = useState([]);
-  const [status, setStatus] = useState(STATUS_OPTIONS[0].value);
+  const [actualWeight, setActualWeight] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -39,7 +33,7 @@ export default function UploadImageModal({
   useEffect(() => {
     if (!open) return;
     setFiles([]);
-    setStatus(STATUS_OPTIONS[0].value);
+    setActualWeight("");
     setNote("");
     setSubmitting(false);
     setFileError("");
@@ -88,7 +82,7 @@ export default function UploadImageModal({
     setSubmitting(true);
     setFileError("");
     try {
-      // TODO: FormData — upload ảnh + status + note lên API
+      // TODO: FormData — upload ảnh + actualWeight + note lên API
       await new Promise((r) => setTimeout(r, 600));
       onSuccess?.();
       onClose?.();
@@ -226,23 +220,21 @@ export default function UploadImageModal({
 
           <div className="space-y-2">
             <label
-              htmlFor={`${modalId}-status`}
+              htmlFor={`${modalId}-actual-weight`}
               className="text-sm font-bold text-on-surface"
             >
-              Thông tin trạng thái
+              Khối lượng thực tế
             </label>
-            <select
-              id={`${modalId}-status`}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <input
+              id={`${modalId}-actual-weight`}
+              type="number"
+              min="0"
+              step="0.1"
+              value={actualWeight}
+              onChange={(e) => setActualWeight(e.target.value)}
+              placeholder="Nhập khối lượng thực tế"
+              className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
+            />
           </div>
 
           <div className="space-y-2">
