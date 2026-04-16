@@ -4,7 +4,7 @@ import {
   getCollectors, 
   updateRequestStatus, 
   assignRequest 
-} from '../../virtual api/collectionManagementVirtualApi';
+} from '../../api/enterpriseApi';
 import Pagination from '../../components/ui/Pagination';
 import {  
   MapPin, 
