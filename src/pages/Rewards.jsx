@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { 
   Star, 
   ArrowRight, 
@@ -171,9 +172,13 @@ export default function Rewards() {
                 <span className="text-xl font-black text-on-surface">{userPoints.toLocaleString()}</span>
               </div>
            </div>
-           <button className="p-3 bg-surface-container hover:bg-surface-container-high rounded-2xl transition-colors text-on-surface-variant" title="Lịch sử">
+           <Link
+              to="/rewards/history"
+              className="p-3 bg-surface-container hover:bg-surface-container-high rounded-2xl transition-colors text-on-surface-variant"
+              title="Lịch sử đổi quà"
+           >
               <History className="w-6 h-6" />
-           </button>
+           </Link>
         </div>
       </header>
 

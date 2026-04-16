@@ -44,6 +44,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Report from "./pages/Report";
 import CreateReport from "./pages/CreateReport";
 import ReportDetail from "./pages/ReportDetail";
+import HistoryVoucher from "./pages/HistoryVoucher";
 import HistoryPage from "./pages/History";
 import Tasks from "./pages/collector/Tasks";
 import HistoryTasks from "./pages/collector/HistoryTasks";
@@ -489,6 +490,7 @@ export default function App() {
           <Route path="report" element={<Report />} />
           <Route path="report/create" element={<CreateReport />} />
           <Route path="report/:id" element={<ReportDetail />} />
+          <Route path="rewards/history" element={<HistoryVoucher />} />
           <Route path="history" element={<HistoryPage />} />
         </Route>
 
