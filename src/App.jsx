@@ -52,6 +52,8 @@ import TaskDetail from "./pages/collector/TaskDetail";
 import VoucherManagement from "./pages/admin/VoucherManagement";
 import RewardManagement from "./pages/admin/RewardManagement";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminFeedbackDetail from "./pages/admin/AdminFeedbackDetail";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -554,14 +556,8 @@ export default function App() {
               </div>
             }
           />
-          <Route
-            path="feedback"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Quản lí feedback đang được phát triển...
-              </div>
-            }
-          />
+          <Route path="feedback" element={<AdminFeedback />} />
+          <Route path="feedback/:id" element={<AdminFeedbackDetail />} />
           <Route path="rewards" element={<RewardManagement />} />
           <Route path="vouchers" element={<VoucherManagement />} />
         </Route>

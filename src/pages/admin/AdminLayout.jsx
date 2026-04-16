@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Settings, 
-  MessageSquare, 
-  Ticket, 
-  ShieldCheck, 
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  MessageSquare,
+  Ticket,
+  ShieldCheck,
   Star,
   LogOut,
   Menu,
-  X 
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clearAuth, getUser } from '../../lib/auth';
@@ -44,7 +44,7 @@ export default function AdminLayout() {
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-surface-container-low relative min-h-0">
       {/* Mobile Toggle Button */}
-      <button 
+      <button
         onClick={() => setIsSidebarOpen(true)}
         className="lg:hidden fixed bottom-6 right-6 z-40 bg-primary text-white p-4 rounded-2xl shadow-2xl shadow-primary/40 active:scale-95 transition-all"
       >
@@ -54,7 +54,7 @@ export default function AdminLayout() {
       {/* Backdrop for Mobile */}
       <AnimatePresence>
         {isSidebarOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -138,7 +138,7 @@ export default function AdminLayout() {
             }
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-sm">Quản lí Feedback</span>
+            <span className="text-sm">Quản lý Feedback</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
