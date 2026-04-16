@@ -231,7 +231,7 @@ export default function Rewards() {
                 <img 
                   src={reward.image?.startsWith('http') || reward.image?.startsWith('/voucher') || reward.image?.startsWith('/src/assets') 
                     ? reward.image 
-                    : `${getApiBaseUrl()}${reward.image}`} 
+                    : `${getApiBaseUrl()}${reward.image?.startsWith('/') ? '' : '/'}${reward.image}`}
                   alt={reward.title} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                   referrerPolicy="no-referrer"
@@ -334,7 +334,7 @@ export default function Rewards() {
                  <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-xl border-4 border-white">
                     <img src={selectedReward.image?.startsWith('http') || selectedReward.image?.startsWith('/voucher') || selectedReward.image?.startsWith('/src/assets') 
                       ? selectedReward.image 
-                      : `${getApiBaseUrl()}${selectedReward.image}`} alt="" className="w-full h-full object-cover" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=600&auto=format&fit=crop'} />
+                      : `${getApiBaseUrl()}${selectedReward.image?.startsWith('/') ? '' : '/'}${selectedReward.image}`} alt="" className="w-full h-full object-cover" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=600&auto=format&fit=crop'} />
                  </div>
                  <div className="space-y-1">
                     <h3 className="text-xl font-black text-on-surface">{selectedReward.title}</h3>
