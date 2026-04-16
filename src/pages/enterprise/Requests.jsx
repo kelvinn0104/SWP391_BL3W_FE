@@ -84,14 +84,16 @@ export default function Requests() {
     }
   };
 
-  const handleStatus = async (reqId, status) => {
+  const handleStatus = async (reqId, status, reason = null) => {
     try {
-      await updateRequestStatus(reqId, status);
+      await updateRequestStatus(reqId, status, reason);
       setRequests(prev => prev.map(r => 
-        r.id === reqId ? { ...r, status } : r
+        r.id === reqId ? { ...r, status, cancellationReason: reason } : r
       ));
+      // alert(`Cập nhật trạng thái thành công: ${status}`);
     } catch (err) {
       console.error("Status update failed", err);
+      // alert("Lỗi khi cập nhật trạng thái: " + err.message);
     }
   };
 
@@ -307,7 +309,7 @@ export default function Requests() {
             req={cancellingRequest}
             onClose={() => setCancellingRequest(null)}
             onConfirm={(reason) => {
-              handleStatus(cancellingRequest.id, 'Cancelled');
+              handleStatus(cancellingRequest.id, 'Cancelled', reason);
               setCancellingRequest(null);
             }}
           />
@@ -434,24 +436,45 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
   );
 }
 
-function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
+function CoordinationDrawer({ req, onAssign, onClose }) {
   const [selectedCol, setSelectedCol] = useState(null);
+  const [localCollectors, setLocalCollectors] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchLocalCollectors = async () => {
+      setLoading(true);
+      try {
+        const cols = await getCollectors(req.wardId);
+        const mapped = cols.map(c => ({
+          ...c,
+          name: c.displayName || c.fullName || "N/A"
+        }));
+        setLocalCollectors(mapped);
+      } catch (err) {
+        console.error("Failed to fetch local collectors", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLocalCollectors();
+  }, [req.wardId]);
 
   return (
     <div className="fixed inset-0 z-[150] flex justify-end overflow-hidden">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" />
-      <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="relative w-full max-w-md bg-surface-container-low shadow-[-20px_0_50px_rgba(0,0,0,0.2)] flex flex-col">
-        <div className="p-8 border-b border-white/5 bg-surface-container-high/50">
+      <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="relative w-full max-w-md bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.2)] flex flex-col">
+        <div className="p-8 border-b border-surface-container-high bg-surface-container-low/30">
           <div className="flex justify-between items-start mb-6">
             <div>
               <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2 font-mono">Trung tâm điều phối</p>
-              <h2 className="text-2xl font-black text-on-surface tracking-tight">Chọn nhân sự phụ trách</h2>
+              <h2 className="text-2xl font-black text-on-surface tracking-tight">Khu vực: {req.wardName || 'Chưa xác định'}</h2>
             </div>
             <button onClick={onClose} className="p-3 hover:bg-surface-container-highest rounded-2xl transition-all"><X className="w-6 h-6 text-on-surface-variant/30" /></button>
           </div>
-          <div className="bg-white/40 border border-white/50 rounded-3xl p-5 shadow-sm">
+          <div className="bg-surface-container-low border border-surface-container-high rounded-3xl p-5 shadow-sm">
              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black shadow-inner">{req.citizenName.charAt(0)}</div>
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black shadow-inner">{(req.citizenName || "?").charAt(0)}</div>
                 <div>
                    <h4 className="font-black text-on-surface leading-tight mb-1">{req.citizenName}</h4>
                    <p className="text-[10px] font-bold text-on-surface-variant/50 flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" />{req.address}</p>
@@ -460,34 +483,46 @@ function CoordinationDrawer({ req, collectors, onAssign, onClose }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-surface-container-low/50">
-           <div className="grid grid-cols-2 gap-4">
-              {collectors.map(c => (
-                <button
-                  key={c.id} onClick={() => setSelectedCol(c.id)}
-                  className={`p-5 rounded-[2.5rem] border-2 transition-all flex flex-col items-center gap-4 relative group ${selectedCol === c.id ? 'border-indigo-500 bg-white shadow-xl shadow-indigo-500/10' : 'border-transparent bg-on-surface/5 hover:bg-on-surface/10 hover:scale-[1.02]'}`}
-                >
-                  {selectedCol === c.id && <div className="absolute top-4 right-4 bg-indigo-500 text-white rounded-full p-1.5 shadow-lg animate-in zoom-in duration-300"><CheckCircle className="w-3.5 h-3.5" /></div>}
-                  <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
-                  <div className="text-center">
-                     <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                     <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
-                       {c.phoneNumber || c.phone || "Chưa có SĐT"}
-                     </p>
-                  </div>
-                </button>
-              ))}
-           </div>
+        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-surface-container-low/20">
+           {loading ? (
+             <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-50">
+               <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+               <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Đang tìm cộng tác viên trong Phường...</p>
+             </div>
+           ) : localCollectors.length > 0 ? (
+             <div className="grid grid-cols-2 gap-4">
+                {localCollectors.map(c => (
+                  <button
+                    key={c.id} onClick={() => setSelectedCol(c.id)}
+                    className={`p-5 rounded-[2.5rem] border-2 transition-all flex flex-col items-center gap-4 relative group ${selectedCol === c.id ? 'border-indigo-500 bg-white shadow-xl shadow-indigo-500/10' : 'border-transparent bg-on-surface/5 hover:bg-on-surface/10 hover:scale-[1.02]'}`}
+                  >
+                    {selectedCol === c.id && <div className="absolute top-4 right-4 bg-indigo-500 text-white rounded-full p-1.5 shadow-lg animate-in zoom-in duration-300"><CheckCircle className="w-3.5 h-3.5" /></div>}
+                    <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
+                    <div className="text-center">
+                       <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
+                       <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                         {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                       </p>
+                    </div>
+                  </button>
+                ))}
+             </div>
+           ) : (
+             <div className="h-full flex flex-col items-center justify-center space-y-4 text-center opacity-40">
+               <div className="w-16 h-16 bg-surface-container-high rounded-full flex items-center justify-center"><User className="w-8 h-8" /></div>
+               <p className="text-xs font-bold text-on-surface max-w-[200px]">Không tìm thấy cộng tác viên nào được giao phụ trách phường này.</p>
+             </div>
+           )}
         </div>
 
-        <div className="p-8 bg-surface-container-high/80 backdrop-blur-md border-t border-white/5">
+        <div className="p-8 bg-white border-t border-surface-container-high">
            <button
              disabled={!selectedCol}
              onClick={() => { if(selectedCol) { onAssign(req.id, selectedCol); onClose(); } }}
              className={`w-full py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 ${
                selectedCol 
                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xl shadow-indigo-500/40' 
-                 : 'bg-on-surface/5 text-on-surface-variant/20 cursor-not-allowed border-2 border-dashed border-on-surface/10'
+                 : 'bg-surface-container-high text-on-surface-variant/20 cursor-not-allowed border-2 border-dashed border-surface-container-highest'
              }`}
            >
              {selectedCol ? 'Xác nhận nhân viên' : 'Chọn nhân viên để tiếp tục'}

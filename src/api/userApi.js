@@ -47,8 +47,9 @@ export const getMe = async () => {
 /**
  * API cho Account Management (Admin/Enterprise)
  */
-export const getCollectors = async () => {
-  return await apiFetch('/api/accounts/collectors');
+export const getCollectors = async (wardId = null) => {
+  const query = wardId ? `?wardId=${wardId}` : '';
+  return await apiFetch(`/api/accounts/collectors${query}`);
 };
 
 export const getCitizens = async () => {
