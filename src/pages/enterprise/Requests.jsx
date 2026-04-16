@@ -247,13 +247,13 @@ export default function Requests() {
                   index={idx}
                   req={req} 
                 collectors={collectors}
-                onStatus={handleStatus}
-                onAssign={handleAssign}
-                onView={() => { setSelectedRequest(req); setModalMode('view'); }}
-                onEdit={() => { setSelectedRequest(req); setModalMode('edit'); }}
-                onOpenCoordination={() => handleOpenCoordination(req)}
-                onCancel={() => setCancellingRequest(req)}
-              />
+                  onStatus={handleStatus}
+                  onAssign={handleAssign}
+                  onView={() => { setSelectedRequest(req); setModalMode('view'); }}
+                  onEdit={() => { setSelectedRequest(req); setModalMode('edit'); }}
+                  onOpenCoordination={() => handleOpenCoordination(req)}
+                  onCancel={() => setCancellingRequest(req)}
+                />
             )) : (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 0.4 }}
@@ -382,18 +382,15 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
         </div>
       </div>
       <div className="col-span-2 text-center flex justify-center">
-        {req.collectorId && collectors.find(c => c.id === req.collectorId) ? (
+        {req.collectorId ? (
           <div className="inline-flex items-center gap-2 bg-indigo-50/50 px-3 py-1.5 rounded-xl border border-indigo-100/30">
             <User className="w-3.5 h-3.5 text-indigo-400" />
             <div className="flex flex-col items-start leading-tight">
               <p className="text-[11px] font-extrabold text-indigo-600 truncate max-w-[80px]">
-                {collectors.find(c => c.id === req.collectorId).name}
+                {req.collectorName || 'Đang cập nhật...'}
               </p>
               <p className="text-[9px] font-bold text-indigo-400/60">
-                {(() => {
-                  const col = collectors.find(c => c.id === req.collectorId);
-                  return col.phoneNumber || col.phone || "Chưa có SĐT";
-                })()}
+                {req.collectorPhone || "Chưa có SĐT"}
               </p>
             </div>
           </div>
@@ -493,14 +490,14 @@ function CoordinationDrawer({ req, onAssign, onClose }) {
              <div className="grid grid-cols-2 gap-4">
                 {localCollectors.map(c => (
                   <button
-                    key={c.id} onClick={() => setSelectedCol(c.id)}
-                    className={`p-5 rounded-[2.5rem] border-2 transition-all flex flex-col items-center gap-4 relative group ${selectedCol === c.id ? 'border-indigo-500 bg-white shadow-xl shadow-indigo-500/10' : 'border-transparent bg-on-surface/5 hover:bg-on-surface/10 hover:scale-[1.02]'}`}
+                    key={c.userId} onClick={() => setSelectedCol(c.userId)}
+                    className={`p-5 rounded-[2.5rem] border-2 transition-all flex flex-col items-center gap-4 relative group ${selectedCol === c.userId ? 'border-indigo-500 bg-white shadow-xl shadow-indigo-500/10' : 'border-transparent bg-on-surface/5 hover:bg-on-surface/10 hover:scale-[1.02]'}`}
                   >
-                    {selectedCol === c.id && <div className="absolute top-4 right-4 bg-indigo-500 text-white rounded-full p-1.5 shadow-lg animate-in zoom-in duration-300"><CheckCircle className="w-3.5 h-3.5" /></div>}
-                    <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol === c.id ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
+                    {selectedCol && selectedCol === c.userId && <div className="absolute top-4 right-4 bg-indigo-500 text-white rounded-full p-1.5 shadow-lg animate-in zoom-in duration-300"><CheckCircle className="w-3.5 h-3.5" /></div>}
+                    <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol && selectedCol === c.userId ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
                     <div className="text-center">
-                       <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.id ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                       <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.id ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                       <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.userId ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
+                       <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.userId ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
                          {c.phoneNumber || c.phone || "Chưa có SĐT"}
                        </p>
                     </div>
