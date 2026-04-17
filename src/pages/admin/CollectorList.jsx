@@ -1,41 +1,6 @@
 import React, { useState } from "react";
-import { Search, UserRound } from "lucide-react";
+import { Search } from "lucide-react";
 import AccountList from "../../components/ui/AccountList";
-
-const COLLECTORS = [
-  {
-    id: "COL-0001",
-    name: "Ngô Thành Đạt",
-    email: "dat.ngo@collector.vn",
-    phone: "0902 111 333",
-    status: "active",
-    createdAt: "2026-04-13",
-  },
-  {
-    id: "COL-0002",
-    name: "Đặng Thu Hà",
-    email: "ha.dang@collector.vn",
-    phone: "0938 222 444",
-    status: "active",
-    createdAt: "2026-04-09",
-  },
-  {
-    id: "COL-0003",
-    name: "Phan Quốc Bảo",
-    email: "bao.phan@collector.vn",
-    phone: "0919 555 222",
-    status: "blocked",
-    createdAt: "2026-03-25",
-  },
-  {
-    id: "COL-0004",
-    name: "Hồ Minh Khang",
-    email: "khang.ho@collector.vn",
-    phone: "0971 888 777",
-    status: "active",
-    createdAt: "2026-03-11",
-  },
-];
 
 export default function CollectorList() {
   const [query, setQuery] = useState("");
@@ -67,7 +32,7 @@ export default function CollectorList() {
       </div>
 
       <AccountList
-        items={COLLECTORS}
+        accountKind="collectors"
         emptyText="Không tìm thấy tài khoản người thu gom phù hợp."
         query={query}
         onQueryChange={setQuery}

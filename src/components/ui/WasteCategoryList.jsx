@@ -51,7 +51,7 @@ export default function WasteCategoryList({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-surface-container-high bg-surface-container-lowest py-16">
+      <div className="flex flex-col items-center justify-center gap-3 rounded-3xl bg-transparent py-16">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-sm font-semibold">Đang tải danh sách loại rác…</p>
       </div>

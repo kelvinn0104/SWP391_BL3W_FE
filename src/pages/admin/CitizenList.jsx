@@ -1,49 +1,6 @@
 import React, { useState } from "react";
-import { Search, UserRound } from "lucide-react";
+import { Search } from "lucide-react";
 import AccountList from "../../components/ui/AccountList";
-
-const CITIZENS = [
-  {
-    id: "CIT-0001",
-    name: "Nguyễn Văn An",
-    email: "an.nguyen@gmail.com",
-    phone: "0901 234 567",
-    status: "active",
-    createdAt: "2026-04-12",
-  },
-  {
-    id: "CIT-0002",
-    name: "Trần Thị Bình",
-    email: "binh.tran@gmail.com",
-    phone: "0908 888 222",
-    status: "active",
-    createdAt: "2026-04-10",
-  },
-  {
-    id: "CIT-0003",
-    name: "Lê Minh Châu",
-    email: "chau.le@gmail.com",
-    phone: "0912 555 909",
-    status: "blocked",
-    createdAt: "2026-03-29",
-  },
-  {
-    id: "CIT-0004",
-    name: "Phạm Gia Huy",
-    email: "huy.pham@gmail.com",
-    phone: "0933 101 202",
-    status: "active",
-    createdAt: "2026-03-18",
-  },
-  {
-    id: "CIT-0005",
-    name: "Võ Thảo My",
-    email: "my.vo@gmail.com",
-    phone: "0977 234 111",
-    status: "blocked",
-    createdAt: "2026-03-02",
-  },
-];
 
 export default function CitizenList() {
   const [query, setQuery] = useState("");
@@ -56,8 +13,8 @@ export default function CitizenList() {
             Danh sách dân cư
           </h1>
           <p className="text-sm text-on-surface-variant leading-relaxed max-w-2xl">
-            Quản lý tài khoản người dùng (dân cư): tìm kiếm nhanh, lọc theo
-            trạng thái và xem thông tin liên hệ.
+            Quản lý tài khoản dân cư: tìm kiếm nhanh, lọc theo trạng thái và xem
+            thông tin liên hệ.
           </p>
         </div>
 
@@ -75,7 +32,7 @@ export default function CitizenList() {
       </div>
 
       <AccountList
-        items={CITIZENS}
+        accountKind="citizens"
         emptyText="Không tìm thấy tài khoản dân cư phù hợp."
         query={query}
         onQueryChange={setQuery}
