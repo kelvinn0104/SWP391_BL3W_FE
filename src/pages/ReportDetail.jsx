@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
     AlertTriangle,
     ArrowLeft,
     CalendarDays,
+    FilePenLine,
     FileText,
     Loader2,
     Map as MapIcon,
@@ -14,9 +15,11 @@ import {
 import { getStatusLabel, statusClassName } from './Report';
 import FeedbackModal from '../components/modal/FeedbackModal';
 import { getWasteReportDetail } from '../api/WasteReportapi';
+import UpdateReportModal from '../components/modal/UpdateReportModal';
 
-function mapEmbedSrc(lat, lng) {
-    const q = `${lat},${lng}`;
+function mapEmbedSrcFromAddress(address) {
+    const q = String(address ?? '').trim();
+    if (!q) return null;
     return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=16&hl=vi&output=embed`;
 }
 
@@ -76,10 +79,17 @@ export default function ReportDetail() {
     const id = rawId ? decodeURIComponent(rawId) : '';
 
     const [report, setReport] = useState(null);
+    const [reportDetailRaw, setReportDetailRaw] = useState(null);
     const [loadingReport, setLoadingReport] = useState(true);
     const [loadError, setLoadError] = useState('');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [complaintOpen, setComplaintOpen] = useState(false);
+    const [updateModalOpen, setUpdateModalOpen] = useState(false);
+
+    const applyReportDetail = useCallback((data) => {
+        setReport(mapReportDetail(data));
+        setReportDetailRaw(data);
+    }, []);
 
     useEffect(() => {
         setActiveImageIndex(0);
@@ -91,6 +101,7 @@ export default function ReportDetail() {
         async function loadReportDetail() {
             if (!id) {
                 setReport(null);
+                setReportDetailRaw(null);
                 setLoadError('Thiếu mã báo cáo.');
                 setLoadingReport(false);
                 return;
@@ -102,10 +113,11 @@ export default function ReportDetail() {
             try {
                 const data = await getWasteReportDetail(id);
                 if (!isMounted) return;
-                setReport(mapReportDetail(data));
+                applyReportDetail(data);
             } catch (error) {
                 if (!isMounted) return;
                 setReport(null);
+                setReportDetailRaw(null);
                 setLoadError(error?.message || 'Không thể tải chi tiết báo cáo.');
             } finally {
                 if (isMounted) {
@@ -118,14 +130,13 @@ export default function ReportDetail() {
         return () => {
             isMounted = false;
         };
-    }, [id]);
+    }, [applyReportDetail, id]);
 
     const images = report?.images ?? [];
     const activeSrc = images[activeImageIndex] ?? images[0];
 
     const embedSrc = useMemo(() => {
-        if (!report?.coordinates) return null;
-        return mapEmbedSrc(report.coordinates.lat, report.coordinates.lng);
+        return mapEmbedSrcFromAddress(report?.location);
     }, [report]);
 
     if (loadingReport) {
@@ -200,6 +211,7 @@ export default function ReportDetail() {
     }
 
     const showComplaintButton = report.status === 'Collected' || report.status === 'Canceled';
+    const showEditButton = report.status === 'Pending';
     const statusLabel = getStatusLabel(report.status);
 
     return (
@@ -268,6 +280,16 @@ export default function ReportDetail() {
                                 <PackageCheck className="w-4 h-4" />
                                 {report.weight}
                             </div>
+                            {showEditButton && (
+                                <button
+                                    type="button"
+                                    onClick={() => setUpdateModalOpen(true)}
+                                    className="inline-flex w-full lg:w-auto items-center justify-center gap-2 rounded-xl bg-primary text-white px-4 py-2.5 text-sm font-extrabold shadow-sm shadow-primary/25 transition-colors hover:bg-primary-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
+                                >
+                                    <FilePenLine className="w-4 h-4" />
+                                    Chỉnh sửa báo cáo
+                                </button>
+                            )}
                             {showComplaintButton && (
                                 <button
                                     type="button"
@@ -349,6 +371,16 @@ export default function ReportDetail() {
                     onClose={() => setComplaintOpen(false)}
                     reportId={report.id}
                     reportStatusLabel={statusLabel}
+                />
+                <UpdateReportModal
+                    open={updateModalOpen}
+                    onClose={() => setUpdateModalOpen(false)}
+                    initialDetail={reportDetailRaw}
+                    onUpdated={(updatedReport) => {
+                        if (updatedReport && typeof updatedReport === 'object') {
+                            applyReportDetail(updatedReport);
+                        }
+                    }}
                 />
             </div>
         </div>

@@ -102,3 +102,29 @@ export async function cancelWasteReport(id, note) {
     }),
   });
 }
+
+export async function updateWasteReport(id, payload) {
+  if (id === undefined || id === null || String(id).trim() === '') {
+    throw new Error('Thiếu mã báo cáo để cập nhật.');
+  }
+
+  const formData = new FormData();
+  formData.append('title', payload?.title ?? '');
+  formData.append('description', payload?.description ?? '');
+  formData.append('locationText', payload?.locationText ?? '');
+
+  (payload?.wasteCategoryIds ?? []).forEach((categoryId, index) => {
+    formData.append(`wasteCategoryIds[${index}]`, String(categoryId));
+  });
+  (payload?.estimatedWeightKgs ?? []).forEach((weight, index) => {
+    formData.append(`estimatedWeightKgs[${index}]`, String(weight));
+  });
+  (payload?.images ?? []).forEach((file) => {
+    formData.append('images', file);
+  });
+
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}`, {
+    method: 'PUT',
+    body: formData,
+  });
+}
