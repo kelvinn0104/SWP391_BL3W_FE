@@ -57,9 +57,22 @@ export const getCitizens = async () => {
 };
 
 export const lockAccount = async (id, isLocked) => {
-  return await apiFetch(`/api/accounts/${id}/lock`, {
+  return await apiFetch(`/api/accounts/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify(isLocked),
+    body: JSON.stringify({ isLocked }),
+  });
+};
+
+export const updateAccount = async (id, data) => {
+  return await apiFetch(`/api/accounts/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteAccount = async (id) => {
+  return await apiFetch(`/api/accounts/${id}`, {
+    method: 'DELETE',
   });
 };
 
