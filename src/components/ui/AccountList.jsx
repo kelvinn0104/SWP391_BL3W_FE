@@ -60,16 +60,16 @@ export default function AccountList({
       const matchesTab = tab === "all" ? true : it.status === tab;
       if (!matchesTab) return false;
       if (!q) return true;
-      const hay = `${it.name ?? ""} ${it.email ?? ""} ${it.phone ?? ""} ${it.id ?? ""}`
-        .toLowerCase()
-        .trim();
+      const hay =
+        `${it.name ?? ""} ${it.email ?? ""} ${it.phone ?? ""} ${it.id ?? ""}`
+          .toLowerCase()
+          .trim();
       return hay.includes(q);
     });
   }, [items, query, tab]);
 
   return (
     <div className="w-full space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-
       <div className="flex flex-wrap gap-2">
         {tabs.map((t) => (
           <button
@@ -125,9 +125,6 @@ export default function AccountList({
                         <p className="font-extrabold text-on-surface truncate">
                           {it.name || "—"}
                         </p>
-                        <p className="text-xs text-on-surface-variant truncate font-semibold">
-                          {it.email || it.id}
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -142,9 +139,6 @@ export default function AccountList({
                   <div className="col-span-3">
                     <p className="text-sm font-bold text-on-surface">
                       {it.createdAt || "—"}
-                    </p>
-                    <p className="text-xs text-on-surface-variant font-semibold">
-                      ID: {it.id}
                     </p>
                   </div>
                   <div className="col-span-2 flex items-center justify-end">

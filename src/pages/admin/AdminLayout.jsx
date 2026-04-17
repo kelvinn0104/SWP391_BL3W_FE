@@ -291,20 +291,6 @@ export default function AdminLayout() {
                     >
                       <span className="text-sm">Người thu gom</span>
                     </NavLink>
-
-                    <NavLink
-                      to="/admin/accounts/enterprises"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
-                          isActive
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-                        }`
-                      }
-                    >
-                      <span className="text-sm">Doanh nghiệp tái chế</span>
-                    </NavLink>
                   </div>
                 </motion.div>
               )}

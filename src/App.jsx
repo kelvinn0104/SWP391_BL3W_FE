@@ -57,8 +57,7 @@ import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminFeedbackDetail from "./pages/admin/AdminFeedbackDetail";
 import CitizenList from "./pages/admin/CitizenList";
 import CollectorList from "./pages/admin/CollectorList";
-import EnterpriseList from "./pages/admin/EnterpriseList";
-import WasteCategory from "./pages/admin/WasteCatagory";
+import WasteCategory from "./pages/admin/WasteCategory";
 import Area from "./pages/admin/Area";
 
 function readAuth() {
@@ -555,7 +554,6 @@ export default function App() {
             <Route index element={<Navigate to="citizens" replace />} />
             <Route path="citizens" element={<CitizenList />} />
             <Route path="collectors" element={<CollectorList />} />
-            <Route path="enterprises" element={<EnterpriseList />} />
           </Route>
           <Route path="feedback" element={<AdminFeedback />} />
           <Route path="feedback/:id" element={<AdminFeedbackDetail />} />

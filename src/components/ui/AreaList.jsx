@@ -60,9 +60,10 @@ export default function AreaList({
       const matchesTab = tab === "all" ? true : it.status === tab;
       if (!matchesTab) return false;
       if (!q) return true;
-      const hay = `${it.name ?? ""} ${it.code ?? ""} ${it.district ?? ""} ${it.city ?? ""} ${it.id ?? ""}`
-        .toLowerCase()
-        .trim();
+      const hay =
+        `${it.name ?? ""} ${it.code ?? ""} ${it.district ?? ""} ${it.city ?? ""} ${it.id ?? ""}`
+          .toLowerCase()
+          .trim();
       return hay.includes(q);
     });
   }, [items, query, tab]);
@@ -140,9 +141,6 @@ export default function AreaList({
                   <div className="col-span-3">
                     <p className="text-sm font-bold text-on-surface">
                       {it.updatedAt || "—"}
-                    </p>
-                    <p className="text-xs text-on-surface-variant font-semibold">
-                      ID: {it.id}
                     </p>
                   </div>
                   <div className="col-span-2 flex items-center justify-end">

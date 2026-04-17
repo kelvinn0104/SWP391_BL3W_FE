@@ -57,10 +57,6 @@ export default function Area() {
     <div className="w-full space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1.5">
-          <p className="inline-flex items-center gap-2 text-primary font-extrabold text-sm">
-            <MapPin className="w-4 h-4 shrink-0" />
-            Quản lí hệ thống
-          </p>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-on-surface">
             Danh sách khu vực
           </h1>
