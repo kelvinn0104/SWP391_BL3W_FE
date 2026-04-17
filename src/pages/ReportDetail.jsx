@@ -105,7 +105,7 @@ export default function ReportDetail() {
                     <div className="space-y-3 min-w-0 flex-1">
                         <p className="text-sm font-bold text-primary">Chi tiết báo cáo</p>
                         <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">{report.title}</h1>
+                            <h1 className="text-3xl sm:text-4xl font-sans italic text-on-surface">{report.title}</h1>
                             <span
                                 className={`px-3 py-1 rounded-full text-xs font-black border ${statusClassName(report.status)}`}
                             >

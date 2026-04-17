@@ -73,7 +73,7 @@ export default function Leaderboard() {
           <header className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div className="space-y-2">
               <p className="text-sm font-extrabold text-primary">Community</p>
-              <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+              <h1 className="text-3xl sm:text-4xl font-sans italic text-on-surface">
                 Bảng <span className="not-italic text-primary">xếp hạng</span>
               </h1>
               <p className="text-on-surface-variant max-w-2xl">

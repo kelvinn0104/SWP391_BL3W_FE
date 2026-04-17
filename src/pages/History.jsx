@@ -84,7 +84,7 @@ export default function History() {
             <ClipboardList className="w-5 h-5" />
             <span>Lịch sử</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+          <h1 className="text-3xl sm:text-4xl font-sans italic text-on-surface">
             Báo cáo <span className="not-italic text-primary">đã hoàn thành</span>
           </h1>
           <p className="text-on-surface-variant max-w-2xl">
