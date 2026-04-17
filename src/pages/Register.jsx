@@ -128,7 +128,7 @@ export default function Register() {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif italic leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-sans italic leading-tight tracking-tight">
                 Bắt đầu ngay hôm nay.
                 <br />
                 <span className="not-italic text-primary-container">Tạo tài khoản</span> để tích điểm xanh.

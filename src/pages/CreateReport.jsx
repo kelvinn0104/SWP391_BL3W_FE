@@ -229,7 +229,7 @@ export default function CreateReport() {
                                 <PlusCircle className="w-5 h-5" />
                                 <span>Tạo báo cáo mới</span>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+                            <h1 className="text-3xl sm:text-4xl font-sans italic text-on-surface">
                                 Báo cáo <span className="not-italic text-primary">rác thải tái chế</span>
                             </h1>
                             <p className="text-on-surface-variant max-w-2xl">

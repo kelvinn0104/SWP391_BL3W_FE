@@ -56,13 +56,13 @@ export default function Home() {
               </span>
             </div>
 
-            <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-serif italic text-on-surface leading-[0.95] sm:leading-[0.9] tracking-tighter">
+            <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-sans italic text-on-surface leading-[0.95] sm:leading-[0.9] tracking-tighter">
               Vì một <br />
               <span className="text-primary not-italic">Tương lai</span> <br />
               <span className="pl-6 sm:pl-12 lg:pl-24">Bền vững.</span>
             </h1>
 
-            <p className="text-lg sm:text-xl md:text-2xl text-on-surface-variant leading-relaxed max-w-xl font-light italic font-serif">
+            <p className="text-lg sm:text-xl md:text-2xl text-on-surface-variant leading-relaxed max-w-xl font-light italic font-sans">
               "EcoSort không chỉ là một ứng dụng, đó là lời cam kết của chúng ta với mẹ thiên nhiên."
             </p>
 
@@ -102,7 +102,7 @@ export default function Home() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-primary">
                       Tác động toàn cầu
                     </p>
-                    <p className="text-lg font-serif italic text-on-surface">
+                    <p className="text-lg font-sans italic text-on-surface">
                       Giảm 15% rác thải nhựa đô thị
                     </p>
                   </div>
@@ -128,7 +128,7 @@ export default function Home() {
       {/* Harmful Effects Section */}
       <section className="space-y-24">
         <div className="text-center space-y-6 max-w-4xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-serif italic leading-tight">
+          <h2 className="text-5xl md:text-7xl font-sans italic leading-tight">
             Hệ lụy của <br /> <span className="not-italic text-error">Sự thờ ơ</span>
           </h2>
           <p className="text-xl text-on-surface-variant font-light leading-relaxed">
@@ -159,7 +159,7 @@ export default function Home() {
       {/* How it Works - Asymmetrical Layout */}
       <section className="space-y-24">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <h2 className="text-5xl md:text-7xl font-serif italic leading-tight">
+          <h2 className="text-5xl md:text-7xl font-sans italic leading-tight">
             Quy trình <br /> <span className="not-italic text-primary">Vận hành</span>
           </h2>
           <p className="text-xl text-on-surface-variant font-light leading-relaxed">
@@ -196,7 +196,7 @@ export default function Home() {
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div className="space-y-10">
-            <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic leading-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-sans italic leading-tight">
               Phân loại <br /> <span className="not-italic text-primary-container">Chính xác</span>
             </h2>
             <p className="text-xl text-surface/70 font-light leading-relaxed max-w-lg">
@@ -243,7 +243,7 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         <div className="space-y-10">
           <div className="flex items-end justify-between">
-            <h2 className="text-4xl font-serif italic">
+            <h2 className="text-4xl font-sans italic">
               Bảng xếp hạng <span className="not-italic text-primary">Tuần</span>
             </h2>
             <Link
@@ -283,7 +283,7 @@ export default function Home() {
 
         <div className="space-y-10">
           <div className="flex items-end justify-between">
-            <h2 className="text-4xl font-serif italic">
+            <h2 className="text-4xl font-sans italic">
               Hoạt động <span className="not-italic text-primary">Trực tiếp</span>
             </h2>
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
@@ -331,7 +331,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-primary/85 via-primary/55 to-emerald-900/35 backdrop-blur-[2px]"></div>
 
         <div className="relative z-10 max-w-4xl space-y-12 text-white">
-          <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif italic leading-tight">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-sans italic leading-tight">
             Hãy để thiên nhiên <br /> <span className="not-italic">Mỉm cười</span> trở lại.
           </h2>
           <p className="text-base sm:text-lg md:text-2xl font-light italic opacity-90 max-w-2xl mx-auto">
@@ -360,7 +360,7 @@ function ImpactStat({label, value, unit}) {
         {label}
       </p>
       <div className="flex items-baseline justify-center gap-2 tabular-nums">
-        <span className="text-5xl sm:text-6xl font-serif italic text-on-surface leading-none">
+        <span className="text-5xl sm:text-6xl font-sans italic text-on-surface leading-none">
           {value}
         </span>
         <span className="text-lg sm:text-xl font-bold text-primary leading-none">{unit}</span>
@@ -372,11 +372,11 @@ function ImpactStat({label, value, unit}) {
 function StepCard({number, title, description}) {
   return (
     <div className="space-y-8 group">
-      <div className="text-8xl font-serif italic font-bold text-primary/40 group-hover:text-primary/70 transition-colors leading-none tabular-nums">
+      <div className="text-8xl font-sans italic font-bold text-primary/40 group-hover:text-primary/70 transition-colors leading-none tabular-nums">
         {number}
       </div>
       <div className="space-y-4">
-        <h3 className="text-3xl font-serif italic">{title}</h3>
+        <h3 className="text-3xl font-sans italic">{title}</h3>
         <p className="text-lg text-on-surface-variant font-light leading-relaxed">{description}</p>
       </div>
     </div>
@@ -388,7 +388,7 @@ function LeaderboardItem({rank, name, points, avatar}) {
     <div className="flex items-center justify-between py-6 group cursor-pointer">
       <div className="flex items-center gap-6">
         <span
-          className={`w-8 text-2xl font-serif italic ${rank <= 3 ? 'text-primary' : 'text-on-surface-variant/30'}`}
+          className={`w-8 text-2xl font-sans italic ${rank <= 3 ? 'text-primary' : 'text-on-surface-variant/30'}`}
         >
           {rank}
         </span>
@@ -405,12 +405,12 @@ function LeaderboardItem({rank, name, points, avatar}) {
             </div>
           )}
         </div>
-        <span className="text-xl font-serif italic text-on-surface group-hover:text-primary transition-colors">
+        <span className="text-xl font-sans italic text-on-surface group-hover:text-primary transition-colors">
           {name}
         </span>
       </div>
       <div className="text-right">
-        <p className="text-2xl font-serif italic text-primary">{points}</p>
+        <p className="text-2xl font-sans italic text-primary">{points}</p>
         <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">
           Points
         </p>
@@ -427,7 +427,7 @@ function ActivityItem({user, action, time, icon}) {
       </div>
       <div className="space-y-1">
         <p className="text-lg text-on-surface font-light leading-snug">
-          <span className="font-serif italic font-bold text-xl">{user}</span> {action}
+          <span className="font-sans italic font-bold text-xl">{user}</span> {action}
         </p>
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">
           {time}
@@ -449,7 +449,7 @@ function HarmfulEffectCard({image, title, description}) {
         />
       </div>
       <div className="space-y-3 px-2">
-        <h3 className="text-2xl font-serif italic text-on-surface">{title}</h3>
+        <h3 className="text-2xl font-sans italic text-on-surface">{title}</h3>
         <p className="text-on-surface-variant font-light leading-relaxed">{description}</p>
       </div>
     </motion.div>
