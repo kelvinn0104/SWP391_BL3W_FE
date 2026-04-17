@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, FileText, Filter, MapPin, PackageCheck, Plus, Tag, User } from 'lucide-react';
+import { getMyWasteReports } from '../api/WasteReportapi';
 
 const FILTER_ALL = 'All';
 const REPORTS_PER_PAGE = 5;
@@ -14,93 +15,11 @@ const REPORT_STATUS_OPTIONS = [
 ];
 
 const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];
+export const MY_REPORTS = [];
 
 export function getStatusLabel(status) {
   return REPORT_STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status;
 }
-
-export const MY_REPORTS = [
-  {
-    id: 'RP-2401',
-    title: 'Nhựa và lon tại hẻm 12',
-    category: 'Kim loại',
-    description:
-      'Tập kết chai nhựa PET, lon nước ngọt đặt cạnh thùng rác tạm tại hẻm 12. Cần thu gom trong ngày để tránh vỡ vụn và ô nhiễm.',
-    location: 'Quận 3, TP.HCM',
-    coordinates: { lat: 10.7829, lng: 106.6881 },
-    images: [
-      'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=1200&q=80',
-      'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80',
-    ],
-    createdAt: '2026-04-10',
-    weight: '3.2kg',
-    status: 'Pending',
-  },
-  {
-    id: 'RP-2394',
-    title: 'Giấy carton trước cổng chung cư',
-    category: 'Giấy',
-    description:
-      'Thùng carton đóng gói đồ đạc, đã dẹp gọn và buộc dây. Đặt sát lề đường trước cổng B, không cản lối đi.',
-    location: 'Quận 7, TP.HCM',
-    coordinates: { lat: 10.7314, lng: 106.7181 },
-    images: [
-      'https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=1200&q=80',
-      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&q=80',
-    ],
-    createdAt: '2026-04-08',
-    weight: '5.1kg',
-    status: 'Accepted',
-  },
-  {
-    id: 'RP-2388',
-    title: 'Điểm tập kết chai nhựa',
-    category: 'Nhựa',
-    description:
-      'Nhiều chai nhựa đã rửa sơ, gom trong bao rác trong suốt. Khu vực có mái che nhẹ, tránh mưa làm vỡ bao.',
-    location: 'Thủ Đức, TP.HCM',
-    coordinates: { lat: 10.8494, lng: 106.7717 },
-    images: [
-      'https://images.unsplash.com/photo-1621451537084-482c73073a2f?w=1200&q=80',
-      'https://images.unsplash.com/photo-1528323273322-d81489248c40?w=1200&q=80',
-    ],
-    createdAt: '2026-04-06',
-    weight: '2.7kg',
-    status: 'Assigned',
-  },
-  {
-    id: 'RP-2379',
-    title: 'Rác tái chế tại công viên',
-    category: 'Nhựa',
-    description:
-      'Nhựa, giấy và vài mảnh kim loại nhỏ gom chung tại khu vực ghế ngồi gần lối ra. Đã phân loại sơ bộ theo túi.',
-    location: 'Bình Thạnh, TP.HCM',
-    coordinates: { lat: 10.8112, lng: 106.7093 },
-    images: [
-      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&q=80',
-      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=1200&q=80',
-    ],
-    createdAt: '2026-04-03',
-    weight: '4.4kg',
-    status: 'Collected',
-  },
-  {
-    id: 'RP-2371',
-    title: 'Kim loại vụn từ hộ gia đình',
-    category: 'Kim loại',
-    description:
-      'Mảnh kim loại mỏng từ đồ gia dụng cũ, có cạnh tù. Người báo cáo đã bọc giấy báo để tránh trầy.',
-    location: 'Gò Vấp, TP.HCM',
-    coordinates: { lat: 10.8398, lng: 106.6668 },
-    images: [
-      'https://images.unsplash.com/photo-1581092160562-40aa08c7880a?w=1200&q=80',
-      'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1200&q=80',
-    ],
-    createdAt: '2026-04-01',
-    weight: '1.8kg',
-    status: 'Canceled',
-  },
-];
 
 export function statusClassName(status) {
   switch (status) {
@@ -120,15 +39,72 @@ export function statusClassName(status) {
 }
 
 export default function Report() {
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [reportsError, setReportsError] = useState('');
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadReports() {
+      setLoadingReports(true);
+      setReportsError('');
+      try {
+        const data = await getMyWasteReports();
+        if (!isMounted) return;
+
+        const normalized = data.map((report) => {
+          const wasteItems = Array.isArray(report.wasteItems) ? report.wasteItems : [];
+          const categoryLabel = wasteItems
+            .map((item) => item?.wasteCategoryName)
+            .filter(Boolean)
+            .join(', ');
+          const totalWeight = wasteItems.reduce((sum, item) => {
+            const weight = Number(item?.estimatedWeightKg ?? 0);
+            return sum + (Number.isFinite(weight) ? weight : 0);
+          }, 0);
+          const formattedDate = report.createdAtUtc
+            ? new Date(report.createdAtUtc).toLocaleDateString('vi-VN')
+            : 'Không rõ';
+
+          return {
+            id: String(report.reportId),
+            title: report.title || `Báo cáo #${report.reportId}`,
+            category: categoryLabel || 'Chưa phân loại',
+            description: report.description || 'Không có mô tả',
+            location: report.locationText || 'Chưa có địa chỉ',
+            createdAt: formattedDate,
+            weight: `${Math.round(totalWeight * 10) / 10}kg`,
+            status: report.status || 'Pending',
+          };
+        });
+
+        setReports(normalized);
+      } catch (error) {
+        if (!isMounted) return;
+        setReports([]);
+        setReportsError(error?.message || 'Không thể tải danh sách báo cáo.');
+      } finally {
+        if (isMounted) {
+          setLoadingReports(false);
+        }
+      }
+    }
+
+    loadReports();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredReports = useMemo(
     () =>
       activeStatus === FILTER_ALL
-        ? MY_REPORTS
-        : MY_REPORTS.filter((report) => report.status === activeStatus),
-    [activeStatus]
+        ? reports
+        : reports.filter((report) => report.status === activeStatus),
+    [activeStatus, reports]
   );
 
   const totalPages = Math.ceil(filteredReports.length / REPORTS_PER_PAGE);
@@ -217,7 +193,17 @@ export default function Report() {
         </section>
 
         <section className="space-y-4">
-          {filteredReports.length === 0 ? (
+          {loadingReports && (
+            <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
+              Đang tải danh sách báo cáo...
+            </div>
+          )}
+          {!loadingReports && reportsError && (
+            <div className="bg-surface-container-lowest rounded-3xl p-8 border border-red-200 text-red-700">
+              {reportsError}
+            </div>
+          )}
+          {!loadingReports && !reportsError && filteredReports.length === 0 ? (
             <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
               {activeStatus === FILTER_ALL ? (
                 <>Chưa có báo cáo nào.</>
@@ -228,7 +214,7 @@ export default function Report() {
                 </>
               )}
             </div>
-          ) : (
+          ) : !loadingReports && !reportsError ? (
             paginatedReports.map((report) => (
               <Link
                 key={report.id}
@@ -276,9 +262,9 @@ export default function Report() {
                 </div>
               </Link>
             ))
-          )}
+          ) : null}
         </section>
-        {filteredReports.length > 0 && (
+        {!loadingReports && !reportsError && filteredReports.length > 0 && (
           <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
             <p className="text-sm text-on-surface-variant font-semibold">
               Trang {currentPage}/{totalPages}
@@ -298,8 +284,8 @@ export default function Report() {
                   type="button"
                   onClick={() => setCurrentPage(page)}
                   className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${currentPage === page
-                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
-                      : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                    : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
                     }`}
                 >
                   {page}

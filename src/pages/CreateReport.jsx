@@ -13,14 +13,7 @@ import {
     Type,
 } from 'lucide-react';
 import { getUser } from '../lib/auth';
-
-const CATEGORY_OPTIONS = [
-    'Giấy',
-    'Nhựa',
-    'Kim loại',
-];
-
-const POINTS_PER_KG = 100;
+import { createWasteReport, getWasteReportCategories } from '../api/WasteReportapi';
 
 export default function CreateReport() {
     const navigate = useNavigate();
@@ -34,6 +27,43 @@ export default function CreateReport() {
     const [submitting, setSubmitting] = useState(false);
     const [showPhoneToast, setShowPhoneToast] = useState(false);
     const [submitToast, setSubmitToast] = useState(null);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [categoryError, setCategoryError] = useState('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadCategories() {
+            setLoadingCategories(true);
+            setCategoryError('');
+            try {
+                const data = await getWasteReportCategories();
+                if (!isMounted) return;
+                const normalized = data
+                    .map((item) => ({
+                        id: item.id,
+                        name: item.name ?? '',
+                        pointsPerKg: Number(item.pointsPerKg) || 0,
+                    }))
+                    .filter((item) => item.id && item.name);
+                setCategoryOptions(normalized);
+            } catch (error) {
+                if (!isMounted) return;
+                setCategoryError(error?.message || 'Không thể tải thể loại rác.');
+                setCategoryOptions([]);
+            } finally {
+                if (isMounted) {
+                    setLoadingCategories(false);
+                }
+            }
+        }
+
+        loadCategories();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -77,7 +107,7 @@ export default function CreateReport() {
                 const { [category]: _removed, ...rest } = current;
                 return rest;
             }
-            return { ...current, [category]: { quantityKg: '', imagePreviews: [] } };
+            return { ...current, [category]: { quantityKg: '', imagePreviews: [], imageFiles: [] } };
         });
     }
 
@@ -85,7 +115,7 @@ export default function CreateReport() {
         setCategoryDetails((current) => ({
             ...current,
             [category]: {
-                ...(current[category] ?? { quantityKg: '', imagePreviews: [] }),
+                ...(current[category] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] }),
                 quantityKg: value,
             },
         }));
@@ -94,12 +124,13 @@ export default function CreateReport() {
     function onCategoryImagesChange(category, e) {
         const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/'));
         setCategoryDetails((current) => {
-            const prev = current[category] ?? { quantityKg: '', imagePreviews: [] };
+            const prev = current[category] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] };
             prev.imagePreviews.forEach((url) => URL.revokeObjectURL(url));
             return {
                 ...current,
                 [category]: {
                     ...prev,
+                    imageFiles: files,
                     imagePreviews: files.map((file) => URL.createObjectURL(file)),
                 },
             };
@@ -108,18 +139,53 @@ export default function CreateReport() {
 
     async function onSubmit(e) {
         e.preventDefault();
-        if (!title.trim()) return;
+        if (!title.trim() || !description.trim()) return;
 
         const user = getUser();
-        const hasPhone = Boolean(user?.phone && String(user.phone).trim());
+        const userPhone = user?.phone ?? user?.phoneNumber ?? user?.PhoneNumber ?? '';
+        const hasPhone = Boolean(String(userPhone).trim());
         if (!hasPhone) {
             setShowPhoneToast(true);
             return;
         }
 
+        const selectedItems = categories
+            .map((categoryId) => {
+                const numericCategoryId = Number(categoryId);
+                const rawQuantity = categoryDetails[categoryId]?.quantityKg;
+                const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+                if (!Number.isInteger(numericCategoryId) || !Number.isFinite(quantityKg) || quantityKg <= 0) {
+                    return null;
+                }
+                return { categoryId: numericCategoryId, quantityKg };
+            })
+            .filter(Boolean);
+
+        if (selectedItems.length === 0) {
+            setSubmitToast({
+                type: 'error',
+                title: 'Thiếu dữ liệu thể loại',
+                message: 'Vui lòng chọn ít nhất 1 thể loại và nhập số lượng lớn hơn 0.',
+            });
+            return;
+        }
+
         setSubmitting(true);
         try {
-            await new Promise((r) => setTimeout(r, 600));
+            const allImageFiles = categories.flatMap(
+                (categoryId) => categoryDetails[categoryId]?.imageFiles ?? []
+            );
+
+            const payload = {
+                title: title.trim(),
+                description: description.trim(),
+                locationText: address.trim(),
+                wasteCategoryIds: selectedItems.map((item) => item.categoryId),
+                estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
+                images: allImageFiles,
+            };
+
+            await createWasteReport(payload);
             setSubmitToast({
                 type: 'success',
                 title: 'Tạo báo cáo thành công',
@@ -132,14 +198,14 @@ export default function CreateReport() {
             setSubmitToast({
                 type: 'error',
                 title: 'Tạo báo cáo thất bại',
-                message: 'Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại.',
+                message: error?.message || 'Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại.',
             });
         } finally {
             setSubmitting(false);
         }
     }
 
-    const canSubmit = Boolean(title.trim()) && !submitting;
+    const canSubmit = Boolean(title.trim()) && Boolean(description.trim()) && !submitting;
 
     const hasAnyQuantity = categories.some((category) => {
         const raw = categoryDetails[category]?.quantityKg;
@@ -153,7 +219,24 @@ export default function CreateReport() {
     }, 0);
 
     const totalQuantityDisplay = hasAnyQuantity ? String(Math.round(totalQuantityKg * 10) / 10) : '';
-    const estimatedPoints = hasAnyQuantity ? Math.max(0, Math.round(totalQuantityKg * POINTS_PER_KG)) : 0;
+    const estimatedPoints = hasAnyQuantity
+        ? Math.max(
+            0,
+            Math.round(
+                categories.reduce((sum, categoryId) => {
+                    const rawQuantity = categoryDetails[categoryId]?.quantityKg;
+                    const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+                    if (!Number.isFinite(quantityKg) || quantityKg <= 0) {
+                        return sum;
+                    }
+                    const pointsPerKg = categoryOptions.find(
+                        (option) => String(option.id) === categoryId
+                    )?.pointsPerKg ?? 0;
+                    return sum + quantityKg * pointsPerKg;
+                }, 0)
+            )
+        )
+        : 0;
     const estimatedPointsDisplay = hasAnyQuantity
         ? new Intl.NumberFormat('en-US').format(estimatedPoints)
         : '';
@@ -195,11 +278,10 @@ export default function CreateReport() {
                     {submitToast && (
                         <div
                             role="status"
-                            className={`fixed right-4 top-24 z-[80] w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${
-                                submitToast.type === 'success'
+                            className={`fixed right-4 top-24 z-[80] w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${submitToast.type === 'success'
                                     ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
                                     : 'border-red-200 bg-red-50 text-red-900'
-                            }`}
+                                }`}
                         >
                             <div className="flex items-start gap-3">
                                 {submitToast.type === 'success' ? (
@@ -268,21 +350,29 @@ export default function CreateReport() {
                                         <p className="text-xs text-on-surface-variant">
                                             Chọn một hoặc nhiều thể loại phù hợp với báo cáo.
                                         </p>
+                                        {loadingCategories && (
+                                            <p className="text-xs text-on-surface-variant">Đang tải danh sách thể loại...</p>
+                                        )}
+                                        {categoryError && (
+                                            <p className="text-xs text-error">{categoryError}</p>
+                                        )}
                                         <div className="flex flex-wrap gap-2.5">
-                                            {CATEGORY_OPTIONS.map((category) => {
-                                                const isSelected = categories.includes(category);
+                                            {categoryOptions.map((category) => {
+                                                const categoryKey = String(category.id);
+                                                const isSelected = categories.includes(categoryKey);
                                                 return (
                                                     <button
-                                                        key={category}
+                                                        key={categoryKey}
                                                         type="button"
-                                                        onClick={() => toggleCategory(category)}
+                                                        onClick={() => toggleCategory(categoryKey)}
                                                         aria-pressed={isSelected}
+                                                        disabled={loadingCategories}
                                                         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${isSelected
                                                             ? 'border-primary bg-primary text-white shadow-md shadow-primary/20'
                                                             : 'border-surface-container-high bg-surface text-on-surface-variant hover:border-primary/40 hover:text-primary'
                                                             }`}
                                                     >
-                                                        {category}
+                                                        {category.name}
                                                     </button>
                                                 );
                                             })}
@@ -293,34 +383,37 @@ export default function CreateReport() {
                                         <div className="space-y-3">
                                             <p className="text-sm font-extrabold text-on-surface">Thông tin theo từng thể loại</p>
                                             <div className="space-y-3">
-                                                {categories.map((category) => {
-                                                    const detail = categoryDetails[category] ?? { quantityKg: '', imagePreviews: [] };
+                                                {categories.map((categoryId) => {
+                                                    const detail = categoryDetails[categoryId] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] };
+                                                    const categoryName = categoryOptions.find(
+                                                        (option) => String(option.id) === categoryId
+                                                    )?.name ?? categoryId;
                                                     return (
                                                         <div
-                                                            key={`detail-${category}`}
+                                                            key={`detail-${categoryId}`}
                                                             className="rounded-3xl border border-surface-container-high/70 bg-surface-container-lowest p-4 sm:p-5 space-y-3"
                                                         >
                                                             <div className="inline-flex items-center gap-2 text-sm font-extrabold text-primary">
                                                                 <Tag className="w-4 h-4" />
-                                                                <span>{category}</span>
+                                                                <span>{categoryName}</span>
                                                             </div>
 
                                                             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                                                                 <div className="rounded-2xl border border-surface-container-high bg-surface p-3 space-y-2 md:col-span-4">
                                                                     <label
-                                                                        htmlFor={`${formId}-qty-${category}`}
+                                                                        htmlFor={`${formId}-qty-${categoryId}`}
                                                                         className="text-sm font-bold text-on-surface"
                                                                     >
                                                                         Số lượng (kg)
                                                                     </label>
                                                                     <input
-                                                                        id={`${formId}-qty-${category}`}
+                                                                        id={`${formId}-qty-${categoryId}`}
                                                                         type="number"
                                                                         inputMode="decimal"
                                                                         min="0"
                                                                         step="0.1"
                                                                         value={detail.quantityKg}
-                                                                        onChange={(e) => setCategoryQuantity(category, e.target.value)}
+                                                                        onChange={(e) => setCategoryQuantity(categoryId, e.target.value)}
                                                                         placeholder="VD: 3.2"
                                                                         className="w-full rounded-2xl border border-surface-container-high bg-surface px-3 py-2.5 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                                                                     />
@@ -329,17 +422,17 @@ export default function CreateReport() {
                                                                 <div className="rounded-2xl border border-surface-container-high bg-surface p-3 space-y-2 md:col-span-8">
                                                                     <p className="text-sm font-bold text-on-surface">Hình ảnh minh họa</p>
                                                                     <label
-                                                                        htmlFor={`${formId}-images-${category}`}
+                                                                        htmlFor={`${formId}-images-${categoryId}`}
                                                                         className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-surface-container-high bg-surface-container-low/40 px-3 py-4 text-center cursor-pointer hover:border-primary/40 hover:bg-surface-container-low/70 transition-colors"
                                                                     >
                                                                         <span className="text-sm font-semibold text-on-surface">Chọn ảnh</span>
                                                                         <span className="text-xs text-on-surface-variant">PNG, JPG</span>
                                                                         <input
-                                                                            id={`${formId}-images-${category}`}
+                                                                            id={`${formId}-images-${categoryId}`}
                                                                             type="file"
                                                                             accept="image/*"
                                                                             multiple
-                                                                            onChange={(e) => onCategoryImagesChange(category, e)}
+                                                                            onChange={(e) => onCategoryImagesChange(categoryId, e)}
                                                                             className="sr-only"
                                                                         />
                                                                     </label>
@@ -388,12 +481,13 @@ export default function CreateReport() {
                                             className="flex items-center gap-2 text-sm font-bold text-on-surface"
                                         >
                                             <FileText className="w-4 h-4 text-primary" />
-                                            Mô tả
+                                            Mô tả <span className="text-error">*</span>
                                         </label>
                                         <textarea
                                             id={`${formId}-desc`}
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
+                                            required
                                             rows={4}
                                             placeholder="Mô tả ngắn vị trí đặt rác, loại vật liệu, lưu ý an toàn…"
                                             className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
@@ -439,7 +533,6 @@ export default function CreateReport() {
                                                 placeholder="Tự động tính"
                                                 className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
                                             />
-                                            <p className="text-xs text-on-surface-variant">Tạm tính theo {POINTS_PER_KG} điểm/kg.</p>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 pt-1">
