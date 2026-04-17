@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, PackageCheck, Star, ClipboardList } from 'lucide-react';
+import { ArrowLeft, PackageCheck, Star, ClipboardList, Loader2 } from 'lucide-react';
 import { getUser } from '../lib/auth';
-import { getStatusLabel, MY_REPORTS, statusClassName } from './Report';
+import { getStatusLabel, statusClassName } from './Report';
+import { getCollectedWasteReports } from '../api/WasteReportapi';
 
 const REPORTS_PER_PAGE = 5;
 
@@ -22,9 +23,33 @@ function readPointsBalance() {
   return Number.isFinite(value) ? value : 0;
 }
 
+function formatWeight(kg) {
+  const value = Number(kg);
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(safeValue)} kg`;
+}
+
+function mapCollectedReport(apiItem) {
+  const wasteItems = Array.isArray(apiItem?.wasteItems) ? apiItem.wasteItems : [];
+  const totalWeightKg = wasteItems.reduce((sum, item) => {
+    const weight = Number(item?.estimatedWeightKg);
+    return sum + (Number.isFinite(weight) ? weight : 0);
+  }, 0);
+
+  return {
+    id: String(apiItem?.reportId ?? ''),
+    title: apiItem?.title ?? 'Báo cáo không có tiêu đề',
+    status: apiItem?.status ?? 'Collected',
+    weight: formatWeight(totalWeightKg),
+  };
+}
+
 export default function History() {
   const [pointsBalance, setPointsBalance] = useState(() => readPointsBalance());
   const [currentPage, setCurrentPage] = useState(1);
+  const [completedReports, setCompletedReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const onChanged = () => setPointsBalance(readPointsBalance());
@@ -38,10 +63,35 @@ export default function History() {
     };
   }, []);
 
-  const completedReports = useMemo(
-    () => MY_REPORTS.filter((r) => r.status === 'Collected'),
-    []
-  );
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCollectedReports() {
+      setLoadingReports(true);
+      setLoadError('');
+      try {
+        const data = await getCollectedWasteReports();
+        if (!isMounted) return;
+        const mapped = data
+          .map(mapCollectedReport)
+          .filter((item) => item.id && item.status === 'Collected');
+        setCompletedReports(mapped);
+      } catch (error) {
+        if (!isMounted) return;
+        setCompletedReports([]);
+        setLoadError(error?.message || 'Không thể tải danh sách báo cáo đã hoàn thành.');
+      } finally {
+        if (isMounted) {
+          setLoadingReports(false);
+        }
+      }
+    }
+
+    loadCollectedReports();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const totalKg = completedReports.reduce((sum, r) => sum + parseWeightKg(r.weight), 0);
@@ -114,7 +164,16 @@ export default function History() {
       </section>
 
       <section className="space-y-4">
-        {completedReports.length === 0 ? (
+        {loadingReports ? (
+          <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant inline-flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            Đang tải danh sách báo cáo hoàn thành...
+          </div>
+        ) : loadError ? (
+          <div className="bg-surface-container-lowest rounded-3xl p-8 border border-red-200/60 text-red-700">
+            {loadError}
+          </div>
+        ) : completedReports.length === 0 ? (
           <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
             Chưa có báo cáo nào ở trạng thái <span className="font-bold text-primary">{getStatusLabel('Collected')}</span>.
           </div>

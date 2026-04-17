@@ -5,29 +5,119 @@ import {
     ArrowLeft,
     CalendarDays,
     FileText,
+    Loader2,
     Map as MapIcon,
     MapPin,
     PackageCheck,
     Tag,
 } from 'lucide-react';
-import { getStatusLabel, MY_REPORTS, statusClassName } from './Report';
+import { getStatusLabel, statusClassName } from './Report';
 import FeedbackModal from '../components/modal/FeedbackModal';
+import { getWasteReportDetail } from '../api/WasteReportapi';
 
 function mapEmbedSrc(lat, lng) {
     const q = `${lat},${lng}`;
     return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=16&hl=vi&output=embed`;
 }
 
+function formatDateTime(value) {
+    if (!value) return '---';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat('vi-VN', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(date);
+}
+
+function formatKg(value) {
+    const kg = Number(value);
+    if (!Number.isFinite(kg) || kg <= 0) return '0 kg';
+    return `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(kg)} kg`;
+}
+
+function normalizeImageUrls(input) {
+    if (!Array.isArray(input)) return [];
+    return input.filter((item) => typeof item === 'string' && item.trim() !== '');
+}
+
+function mapReportDetail(apiData) {
+    if (!apiData || typeof apiData !== 'object') return null;
+
+    const wasteItems = Array.isArray(apiData.wasteItems) ? apiData.wasteItems : [];
+    const categories = wasteItems
+        .map((item) => item?.wasteCategoryName)
+        .filter((name) => typeof name === 'string' && name.trim() !== '');
+    const totalWeight = wasteItems.reduce((sum, item) => {
+        const weight = Number(item?.estimatedWeightKg);
+        return sum + (Number.isFinite(weight) ? weight : 0);
+    }, 0);
+
+    const topLevelImages = normalizeImageUrls(apiData.imageUrls);
+    const itemImages = wasteItems.flatMap((item) => normalizeImageUrls(item?.imageUrls));
+    const uniqueImages = Array.from(new Set([...topLevelImages, ...itemImages]));
+
+    return {
+        id: String(apiData.reportId ?? ''),
+        title: apiData.title ?? 'Báo cáo không có tiêu đề',
+        status: apiData.status ?? 'Pending',
+        category: categories.length > 0 ? categories.join(', ') : '---',
+        location: apiData.locationText ?? '---',
+        createdAt: formatDateTime(apiData.createdAtUtc),
+        description: apiData.description ?? '---',
+        weight: formatKg(totalWeight),
+        images: uniqueImages,
+        coordinates: null,
+    };
+}
+
 export default function ReportDetail() {
     const { id: rawId } = useParams();
     const id = rawId ? decodeURIComponent(rawId) : '';
-    const report = MY_REPORTS.find((r) => r.id === id);
 
+    const [report, setReport] = useState(null);
+    const [loadingReport, setLoadingReport] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [complaintOpen, setComplaintOpen] = useState(false);
 
     useEffect(() => {
         setActiveImageIndex(0);
+    }, [id]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadReportDetail() {
+            if (!id) {
+                setReport(null);
+                setLoadError('Thiếu mã báo cáo.');
+                setLoadingReport(false);
+                return;
+            }
+
+            setLoadingReport(true);
+            setLoadError('');
+
+            try {
+                const data = await getWasteReportDetail(id);
+                if (!isMounted) return;
+                setReport(mapReportDetail(data));
+            } catch (error) {
+                if (!isMounted) return;
+                setReport(null);
+                setLoadError(error?.message || 'Không thể tải chi tiết báo cáo.');
+            } finally {
+                if (isMounted) {
+                    setLoadingReport(false);
+                }
+            }
+        }
+
+        loadReportDetail();
+        return () => {
+            isMounted = false;
+        };
     }, [id]);
 
     const images = report?.images ?? [];
@@ -37,6 +127,39 @@ export default function ReportDetail() {
         if (!report?.coordinates) return null;
         return mapEmbedSrc(report.coordinates.lat, report.coordinates.lng);
     }, [report]);
+
+    if (loadingReport) {
+        return (
+            <div className="relative min-h-full overflow-x-hidden">
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/[0.07] via-surface to-primary-container/[0.08]"
+                    aria-hidden
+                />
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]"
+                    aria-hidden
+                />
+                <div
+                    className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_100%_40%,rgba(0,108,73,0.06),transparent_50%)]"
+                    aria-hidden
+                />
+
+                <div className="relative z-0 px-4 sm:px-6 md:px-16 py-10 sm:py-14 space-y-6">
+                    <Link
+                        to="/report"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Quay lại danh sách
+                    </Link>
+                    <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        Đang tải chi tiết báo cáo...
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!report) {
         return (
@@ -64,8 +187,12 @@ export default function ReportDetail() {
                         Quay lại danh sách
                     </Link>
                     <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
-                        Không tìm thấy báo cáo với mã{' '}
-                        <span className="font-bold text-on-surface">{id || '—'}</span>.
+                        {loadError || (
+                            <>
+                                Không tìm thấy báo cáo với mã{' '}
+                                <span className="font-bold text-on-surface">{id || '---'}</span>.
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

@@ -240,6 +240,24 @@ export default function CreateReport() {
     const estimatedPointsDisplay = hasAnyQuantity
         ? new Intl.NumberFormat('en-US').format(estimatedPoints)
         : '';
+    const estimatedPointsFormulaDisplay = hasAnyQuantity
+        ? categories
+            .map((categoryId) => {
+                const rawQuantity = categoryDetails[categoryId]?.quantityKg;
+                const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+                if (!Number.isFinite(quantityKg) || quantityKg <= 0) {
+                    return null;
+                }
+
+                const pointsPerKg = categoryOptions.find(
+                    (option) => String(option.id) === categoryId
+                )?.pointsPerKg ?? 0;
+
+                return `${quantityKg} kg × ${pointsPerKg}`;
+            })
+            .filter(Boolean)
+            .join(' + ')
+        : '';
 
     return (
         <div className="relative min-h-full overflow-x-hidden">
@@ -533,6 +551,9 @@ export default function CreateReport() {
                                                 placeholder="Tự động tính"
                                                 className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
                                             />
+                                            <p className="text-xs text-on-surface-variant">
+                                                Cách tính: {estimatedPointsFormulaDisplay || 'Số kg × PointPerKg'}
+                                            </p>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 pt-1">
