@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, FileText, Filter, MapPin, PackageCheck, Plus, Tag, User } from 'lucide-react';
+import { CalendarDays, FileText, Filter, MapPin, PackageCheck, Plus, Tag, Trash2, User } from 'lucide-react';
 import { getMyWasteReports } from '../api/WasteReportapi';
+import CancelModal from '../components/modal/CancelModal';
 
 const FILTER_ALL = 'All';
 const REPORTS_PER_PAGE = 5;
@@ -11,7 +12,7 @@ const REPORT_STATUS_OPTIONS = [
   { value: 'Accepted', label: 'Đã chấp nhận' },
   { value: 'Assigned', label: 'Đã phân công' },
   { value: 'Collected', label: 'Đã thu gom' },
-  { value: 'Canceled', label: 'Đã hủy' },
+  { value: 'Cancelled', label: 'Đã hủy' },
 ];
 
 const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];
@@ -44,6 +45,8 @@ export default function Report() {
   const [reportsError, setReportsError] = useState('');
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [currentPage, setCurrentPage] = useState(1);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedReportForCancel, setSelectedReportForCancel] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,6 +126,29 @@ export default function Report() {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  function openCancelModal(report) {
+    setSelectedReportForCancel(report);
+    setCancelModalOpen(true);
+  }
+
+  function closeCancelModal() {
+    setCancelModalOpen(false);
+    setSelectedReportForCancel(null);
+  }
+
+  function handleReportCanceled(reportId, nextStatus) {
+    setReports((current) =>
+      current.map((item) =>
+        item.id === String(reportId)
+          ? {
+            ...item,
+            status: nextStatus || 'Canceled',
+          }
+          : item
+      )
+    );
+  }
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -216,51 +242,69 @@ export default function Report() {
             </div>
           ) : !loadingReports && !reportsError ? (
             paginatedReports.map((report) => (
-              <Link
+              <article
                 key={report.id}
-                to={`/report/${encodeURIComponent(report.id)}`}
-                className="block bg-surface-container-lowest rounded-3xl p-6 sm:p-7 border border-surface-container-high/60 botanical-shadow transition-all hover:border-primary/35 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+                className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 border border-surface-container-high/60 botanical-shadow"
               >
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface">{report.title}</h2>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-black border ${statusClassName(report.status)}`}
-                      >
-                        {getStatusLabel(report.status)}
-                      </span>
-                    </div>
-                    <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
-                      <Tag className="w-4 h-4 shrink-0" />
-                      <span>{report.category}</span>
-                    </div>
-                    <p className="text-sm font-semibold text-on-surface-variant">Mã reports: {report.id}</p>
-                    <p className="text-sm text-on-surface-variant line-clamp-2 leading-relaxed">
-                      <span className="inline-flex items-start gap-2">
-                        <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        <span>{report.description}</span>
-                      </span>
-                    </p>
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 bg-primary/5 text-primary rounded-xl px-3 py-2 text-sm font-bold">
-                    <PackageCheck className="w-4 h-4" />
-                    {report.weight}
-                  </div>
+                <div className="mb-4 flex items-center justify-end">
+                  {report.status === 'Pending' && (
+                    <button
+                      type="button"
+                      onClick={() => openCancelModal(report)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-700 transition-colors hover:bg-rose-100"
+                      aria-label={`Hủy báo cáo ${report.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Hủy báo cáo
+                    </button>
+                  )}
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-on-surface-variant">
-                  <div className="inline-flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <span>{report.location}</span>
+                <Link
+                  to={`/report/${encodeURIComponent(report.id)}`}
+                  className="block transition-all hover:border-primary/35 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-2xl"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface">{report.title}</h2>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-black border ${statusClassName(report.status)}`}
+                        >
+                          {getStatusLabel(report.status)}
+                        </span>
+                      </div>
+                      <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
+                        <Tag className="w-4 h-4 shrink-0" />
+                        <span>{report.category}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-on-surface-variant">Mã reports: {report.id}</p>
+                      <p className="text-sm text-on-surface-variant line-clamp-2 leading-relaxed">
+                        <span className="inline-flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <span>{report.description}</span>
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 bg-primary/5 text-primary rounded-xl px-3 py-2 text-sm font-bold">
+                      <PackageCheck className="w-4 h-4" />
+                      {report.weight}
+                    </div>
                   </div>
-                  <div className="inline-flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-primary" />
-                    <span>Ngày tạo: {report.createdAt}</span>
+
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-on-surface-variant">
+                    <div className="inline-flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span>{report.location}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-primary" />
+                      <span>Ngày tạo: {report.createdAt}</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </article>
             ))
           ) : null}
         </section>
@@ -303,6 +347,12 @@ export default function Report() {
           </section>
         )}
       </div>
+      <CancelModal
+        open={cancelModalOpen}
+        report={selectedReportForCancel}
+        onClose={closeCancelModal}
+        onCanceled={handleReportCanceled}
+      />
     </div>
   );
 }

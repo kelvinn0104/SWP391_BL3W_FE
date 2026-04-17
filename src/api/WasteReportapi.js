@@ -77,3 +77,28 @@ export async function getMyWasteReports() {
   const data = await apiFetch('/api/waste-reports/my-reports');
   return Array.isArray(data) ? data : [];
 }
+
+export async function getWasteReportDetail(id) {
+  if (id === undefined || id === null || String(id).trim() === '') {
+    throw new Error('Thiếu mã báo cáo.');
+  }
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}/detail-report`);
+}
+
+export async function getCollectedWasteReports() {
+  const data = await apiFetch('/api/waste-reports/report-collected-status');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function cancelWasteReport(id, note) {
+  if (id === undefined || id === null || String(id).trim() === '') {
+    throw new Error('Thiếu mã báo cáo để hủy.');
+  }
+
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({
+      note: typeof note === 'string' ? note : '',
+    }),
+  });
+}
