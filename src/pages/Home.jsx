@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {motion} from 'motion/react';
 import {Link} from 'react-router-dom';
 import {
@@ -21,8 +22,39 @@ import {
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
+import {getWeeklyLeaderboard} from '../api/LeaderboardApi';
 
 export default function Home() {
+  const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWeeklyLeaderboard() {
+      setIsLeaderboardLoading(true);
+      try {
+        const data = await getWeeklyLeaderboard({take: 4});
+        if (isMounted) {
+          setWeeklyLeaderboard(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setWeeklyLeaderboard([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLeaderboardLoading(false);
+        }
+      }
+    }
+
+    loadWeeklyLeaderboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="relative min-h-full overflow-x-hidden">
       {/* Nền chủ đề xanh lá: gradient + ánh sáng nhẹ, đồng bộ palette EcoSort */}
@@ -254,30 +286,15 @@ export default function Home() {
             </Link>
           </div>
           <div className="bg-surface-container-lowest rounded-[3rem] p-8 botanical-shadow border border-surface-container-high/50 divide-y divide-surface-container-high">
-            <LeaderboardItem
-              rank={1}
-              name="Nguyễn Văn A"
-              points="4,250"
-              avatar="https://picsum.photos/seed/user1/100/100"
-            />
-            <LeaderboardItem
-              rank={2}
-              name="Trần Thị B"
-              points="3,800"
-              avatar="https://picsum.photos/seed/user2/100/100"
-            />
-            <LeaderboardItem
-              rank={3}
-              name="Lê Văn C"
-              points="3,150"
-              avatar="https://picsum.photos/seed/user3/100/100"
-            />
-            <LeaderboardItem
-              rank={4}
-              name="Phạm Minh D"
-              points="2,900"
-              avatar="https://picsum.photos/seed/user4/100/100"
-            />
+            {isLeaderboardLoading ? (
+              <p className="py-6 text-sm font-semibold text-on-surface-variant">Đang tải bảng xếp hạng...</p>
+            ) : weeklyLeaderboard.length > 0 ? (
+              weeklyLeaderboard.map((item) => <LeaderboardItem key={`${item.rank}-${item.name}`} {...item} />)
+            ) : (
+              <p className="py-6 text-sm font-semibold text-on-surface-variant">
+                Chưa có dữ liệu bảng xếp hạng tuần.
+              </p>
+            )}
           </div>
         </div>
 
@@ -384,6 +401,7 @@ function StepCard({number, title, description}) {
 }
 
 function LeaderboardItem({rank, name, points, avatar}) {
+  const formattedPoints = new Intl.NumberFormat('en-US').format(Number(points) || 0);
   return (
     <div className="flex items-center justify-between py-6 group cursor-pointer">
       <div className="flex items-center gap-6">
@@ -410,7 +428,7 @@ function LeaderboardItem({rank, name, points, avatar}) {
         </span>
       </div>
       <div className="text-right">
-        <p className="text-2xl font-sans italic text-primary">{points}</p>
+        <p className="text-2xl font-sans italic text-primary">{formattedPoints}</p>
         <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40">
           Points
         </p>

@@ -18,7 +18,8 @@ import {
 } from 'lucide-react';
 import AlertModal from '../components/ui/AlertModal';
 import { getVouchers, getVoucherCategories, redeemVoucher } from '../api/voucherApi';
-import { getUser, fetchMe, getApiBaseUrl } from '../lib/auth';
+import { getApiBaseUrl } from '../lib/auth';
+import { getUserPointNow } from '../api/UserpointApi';
 
 // Small inner component for Copyable Code
 const RewardCodeCopy = ({ code }) => {
@@ -71,14 +72,14 @@ export default function Rewards() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [vData, cData, userData] = await Promise.all([
+      const [vData, cData, pointData] = await Promise.all([
         getVouchers(),
         getVoucherCategories(),
-        fetchMe()
+        getUserPointNow(),
       ]);
       setVouchers(vData || []);
       setCategories([{ id: 'all', label: 'Tất cả' }, ...(cData || []).map(c => ({ id: c.name, label: c.name }))]);
-      setUserPoints(userData?.points || 0);
+      setUserPoints(Number(pointData?.currentBalance ?? pointData?.points ?? 0));
     } catch (err) {
       console.error(err);
     } finally {

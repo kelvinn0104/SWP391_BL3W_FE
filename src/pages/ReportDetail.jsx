@@ -15,7 +15,10 @@ import {
 import { getStatusLabel, statusClassName } from './Report';
 import FeedbackModal from '../components/modal/FeedbackModal';
 import { getWasteReportDetail } from '../api/WasteReportapi';
+import { getApiBaseUrl } from '../lib/auth';
 import UpdateReportModal from '../components/modal/UpdateReportModal';
+
+const ESTIMATED_POINT_VISIBLE_STATUSES = new Set(['Pending', 'Accepted', 'Assigned']);
 
 function mapEmbedSrcFromAddress(address) {
     const q = String(address ?? '').trim();
@@ -44,6 +47,15 @@ function normalizeImageUrls(input) {
     return input.filter((item) => typeof item === 'string' && item.trim() !== '');
 }
 
+/** API thường trả đường dẫn tương đối (/report-images/...); img cần URL đầy đủ tới BE. */
+function resolveReportImageUrl(path) {
+    const s = String(path ?? '').trim();
+    if (!s) return '';
+    if (/^https?:\/\//i.test(s) || s.startsWith('//')) return s;
+    const base = getApiBaseUrl().replace(/\/$/, '');
+    return s.startsWith('/') ? `${base}${s}` : `${base}/${s}`;
+}
+
 function mapReportDetail(apiData) {
     if (!apiData || typeof apiData !== 'object') return null;
 
@@ -58,7 +70,7 @@ function mapReportDetail(apiData) {
 
     const topLevelImages = normalizeImageUrls(apiData.imageUrls);
     const itemImages = wasteItems.flatMap((item) => normalizeImageUrls(item?.imageUrls));
-    const uniqueImages = Array.from(new Set([...topLevelImages, ...itemImages]));
+    const uniqueImages = Array.from(new Set([...topLevelImages, ...itemImages])).map(resolveReportImageUrl);
 
     return {
         id: String(apiData.reportId ?? ''),
@@ -69,6 +81,8 @@ function mapReportDetail(apiData) {
         createdAt: formatDateTime(apiData.createdAtUtc),
         description: apiData.description ?? '---',
         weight: formatKg(totalWeight),
+        estimatedTotalPoints: Number(apiData.estimatedTotalPoints ?? 0),
+        finalRewardPoints: Number(apiData.finalRewardPoints ?? 0),
         images: uniqueImages,
         coordinates: null,
     };
@@ -251,6 +265,26 @@ export default function ReportDetail() {
                                     {getStatusLabel(report.status)}
                                 </span>
                             </div>
+                            {(ESTIMATED_POINT_VISIBLE_STATUSES.has(report.status) || report.status === 'Collected') && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {ESTIMATED_POINT_VISIBLE_STATUSES.has(report.status) && (
+                                        <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-black text-primary">
+                                            Điểm thưởng dự kiến:{' '}
+                                            {new Intl.NumberFormat('en-US').format(
+                                                Number.isFinite(report.estimatedTotalPoints) ? report.estimatedTotalPoints : 0
+                                            )}
+                                        </div>
+                                    )}
+                                    {report.status === 'Collected' && (
+                                        <div className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+                                            Điểm thưởng nhận được:{' '}
+                                            {new Intl.NumberFormat('en-US').format(
+                                                Number.isFinite(report.finalRewardPoints) ? report.finalRewardPoints : 0
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <p className="text-sm font-semibold text-on-surface-variant">Mã report: {report.id}</p>
                             <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
                                 <Tag className="w-4 h-4 shrink-0" />

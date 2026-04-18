@@ -17,6 +17,7 @@ const REPORT_STATUS_OPTIONS = [
 
 const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];
 export const MY_REPORTS = [];
+const ESTIMATED_POINT_VISIBLE_STATUSES = new Set(['Pending', 'Accepted', 'Assigned']);
 
 export function getStatusLabel(status) {
   return REPORT_STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status;
@@ -81,6 +82,8 @@ export default function Report() {
             createdAt: formattedDate,
             weight: `${Math.round(totalWeight * 10) / 10}kg`,
             status: report.status || 'Pending',
+            estimatedTotalPoints: Number(report.estimatedTotalPoints ?? 0),
+            finalRewardPoints: Number(report.finalRewardPoints ?? 0),
           };
         });
 
@@ -246,7 +249,25 @@ export default function Report() {
                 key={report.id}
                 className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 border border-surface-container-high/60 botanical-shadow"
               >
-                <div className="mb-4 flex items-center justify-end">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    {ESTIMATED_POINT_VISIBLE_STATUSES.has(report.status) && (
+                      <div className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-black text-primary">
+                        Điểm thưởng dự kiến:{' '}
+                        {new Intl.NumberFormat('en-US').format(
+                          Number.isFinite(report.estimatedTotalPoints) ? report.estimatedTotalPoints : 0
+                        )}
+                      </div>
+                    )}
+                    {report.status === 'Collected' && (
+                      <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                        Điểm thưởng nhận được:{' '}
+                        {new Intl.NumberFormat('en-US').format(
+                          Number.isFinite(report.finalRewardPoints) ? report.finalRewardPoints : 0
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {report.status === 'Pending' && (
                     <button
                       type="button"
