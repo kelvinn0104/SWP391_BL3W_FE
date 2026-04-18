@@ -79,11 +79,13 @@ export default function RewardManagement() {
     <div className="w-full space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       
       {/* Header Section */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
-        <div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight mb-1 md:mb-2">Cấu hình tích điểm</h1>
-          <p className="text-sm md:text-lg text-on-surface-variant font-medium">Thiết lập điểm thưởng tự động dựa trên khối lượng rác thải.</p>
-        </div>
+      <header className="flex flex-col mb-4 md:mb-6 px-2">
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
+          Cấu hình tích điểm
+        </h1>
+        <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
+          Thiết lập điểm thưởng tự động dựa trên khối lượng rác thải.
+        </p>
       </header>
 
       {/* Grid of Rules */}

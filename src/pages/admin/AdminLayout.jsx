@@ -58,7 +58,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-surface-container-low relative min-h-0">
+    <div className="flex h-dvh w-full min-w-0 overflow-hidden bg-surface-container-low relative">
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(true)}
@@ -83,8 +83,8 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         className={`
-        fixed lg:relative top-0 bottom-0 left-0 w-80 lg:w-72 bg-surface-container-lowest border-r border-surface-container-highest 
-        flex flex-col eco-glass z-50 transition-all duration-300 ease-in-out
+        fixed lg:relative top-0 bottom-0 left-0 w-[min(20rem,100vw)] lg:w-72 shrink-0 bg-surface-container-lowest border-r border-surface-container-highest 
+        flex flex-col min-h-0 h-dvh lg:h-auto lg:min-h-0 eco-glass z-50 transition-all duration-300 ease-in-out
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}
       >
@@ -309,7 +309,7 @@ export default function AdminLayout() {
             }
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-sm">Quản lí khiếu nại</span>
+            <span className="text-sm">Quản lý khiếu nại</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
@@ -380,7 +380,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-surface relative min-h-0">
+      <main className="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden bg-surface relative">
         {/* Decorative Grid Background */}
         <div
           className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none"
@@ -392,7 +392,7 @@ export default function AdminLayout() {
         ></div>
 
         {/* Content Container */}
-        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
+        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full min-w-0 max-w-full box-border">
           <Outlet context={{ user }} />
         </div>
       </main>

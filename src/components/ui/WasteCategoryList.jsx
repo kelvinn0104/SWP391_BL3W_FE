@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Layers, Loader2 } from "lucide-react";
 import { getWasteReportCategories } from "../../api/WasteReportapi";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 5;
 
 export default function WasteCategoryList({
   emptyText = "Chưa có loại rác nào.",
@@ -11,6 +14,7 @@ export default function WasteCategoryList({
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
 
   const query = queryProp ?? internalQuery;
   const setQuery = onQueryChange ?? setInternalQuery;
@@ -48,6 +52,21 @@ export default function WasteCategoryList({
       return hay.includes(q);
     });
   }, [items, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   if (loading) {
     return (
@@ -96,7 +115,7 @@ export default function WasteCategoryList({
             </div>
           ) : (
             <div className="divide-y divide-surface-container-high">
-              {filtered.map((it, index) => (
+              {pagedItems.map((it, index) => (
                 <div
                   key={
                     it.id != null ? String(it.id) : `row-${it.code ?? index}`
@@ -105,7 +124,7 @@ export default function WasteCategoryList({
                 >
                   <div className="col-span-1 flex items-center justify-center">
                     <span className="text-sm font-extrabold text-on-surface tabular-nums">
-                      {index + 1}
+                      {(page - 1) * PAGE_SIZE + index + 1}
                     </span>
                   </div>
                   <div className="col-span-2 min-w-0">
@@ -146,7 +165,7 @@ export default function WasteCategoryList({
             </div>
           ) : (
             <div className="divide-y divide-surface-container-high">
-              {filtered.map((it, index) => (
+              {pagedItems.map((it, index) => (
                 <div
                   key={
                     it.id != null ? String(it.id) : `row-${it.code ?? index}`
@@ -155,7 +174,7 @@ export default function WasteCategoryList({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className="text-sm font-extrabold text-on-surface-variant tabular-nums shrink-0">
-                      #{index + 1}
+                      #{(page - 1) * PAGE_SIZE + index + 1}
                     </span>
                     <div className="min-w-0 flex-1 text-right">
                       <p className="font-extrabold text-on-surface truncate">
@@ -190,6 +209,13 @@ export default function WasteCategoryList({
           )}
         </div>
       </div>
+
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        className="pt-2"
+      />
     </div>
   );
 }

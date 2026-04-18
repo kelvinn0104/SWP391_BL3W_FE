@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Ticket, 
@@ -509,15 +510,16 @@ export default function VoucherManagement() {
         )}
       </AnimatePresence>
 
-      {/* Detail Modal */}
+      {/* Detail Modal — portal: sidebar (z-50) stacks above main; fixed inside main stays under it */}
+      {createPortal(
       <AnimatePresence>
         {detailModal.open && (
-           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-6 bg-on-surface/50 backdrop-blur-md">
+           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 bg-on-surface/50 backdrop-blur-md overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
               exit={{ opacity: 0, scale: 0.9 }} 
-              className="bg-surface-container-lowest w-full max-w-5xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 botanical-shadow-lg border border-surface-container-high max-h-[95vh] overflow-y-auto no-scrollbar"
+              className="bg-surface-container-lowest w-full max-w-5xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 botanical-shadow-lg border border-surface-container-high max-h-[95vh] overflow-y-auto no-scrollbar my-auto"
             >
               <div className="flex justify-between items-center mb-6 md:mb-10 pb-4 md:pb-6 border-b border-surface-container-high/50">
                 <h2 className="text-xl md:text-3xl font-black text-on-surface flex items-center gap-3 md:gap-4">
@@ -621,16 +623,20 @@ export default function VoucherManagement() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
 
       {/* Voucher Add/Edit Modal */}
+      {createPortal(
       <AnimatePresence>
         {voucherModal.open && (
-           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6 bg-on-surface/40 backdrop-blur-sm">
+           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 bg-on-surface/50 backdrop-blur-sm overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, y: 20 }} 
               animate={{ opacity: 1, y: 0 }} 
-              className="bg-surface-container-lowest w-full max-w-5xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 botanical-shadow-lg max-h-[95vh] overflow-y-auto no-scrollbar border border-surface-container-high"
+              exit={{ opacity: 0, y: 12 }}
+              className="bg-surface-container-lowest w-full max-w-5xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 botanical-shadow-lg max-h-[min(95vh,100%)] overflow-y-auto no-scrollbar border border-surface-container-high my-auto"
             >
               <div className="flex justify-between items-center mb-6 md:mb-8 sticky top-0 bg-surface-container-lowest z-10 py-1 md:py-2 border-b border-surface-container-high/50">
                 <h2 className="text-xl md:text-3xl font-black text-on-surface flex items-center gap-3 md:gap-4">
@@ -745,16 +751,20 @@ export default function VoucherManagement() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
 
       {/* Category Modal */}
+      {createPortal(
       <AnimatePresence>
         {categoryModal.open && (
-           <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-on-surface/40 backdrop-blur-sm">
+           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 bg-on-surface/50 backdrop-blur-sm overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
-              className="bg-surface-container-lowest w-full max-w-2xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-surface-container-high botanical-shadow-lg"
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-surface-container-lowest w-full max-w-2xl rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-surface-container-high botanical-shadow-lg my-auto"
             >
               <div className="flex items-center justify-between mb-6 md:mb-10 pb-4 md:pb-6 border-b border-surface-container-high/50">
                 <h2 className="text-xl md:text-3xl font-black text-on-surface flex items-center gap-3 md:gap-4">
@@ -812,7 +822,9 @@ export default function VoucherManagement() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
     </div>
   );
 }

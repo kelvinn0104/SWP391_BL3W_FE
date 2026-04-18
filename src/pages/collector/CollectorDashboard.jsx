@@ -213,14 +213,11 @@ export default function CollectorDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="mb-10">
-        <h1 className="text-3xl font-serif italic text-on-surface mb-2">
-          Xin chào,{" "}
-          <span className="not-italic font-black text-primary">
-            {user?.displayName || "Nhân viên"}
-          </span>
+      <header className="flex flex-col mb-4 md:mb-6 px-2">
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
+          Xin chào, {user?.displayName || "Nhân viên"}
         </h1>
-        <p className="text-on-surface-variant font-medium">
+        <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
           Bắt đầu ngày làm việc của bạn ngay hôm nay.
         </p>
       </header>

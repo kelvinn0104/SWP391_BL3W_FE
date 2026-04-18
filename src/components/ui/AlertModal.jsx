@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Info, XCircle, CheckCircle, X } from 'lucide-react';
 
 /**
@@ -12,8 +13,6 @@ import { AlertTriangle, Info, XCircle, CheckCircle, X } from 'lucide-react';
  * @param {Function} [props.onConfirm] - Optional confirmation handler
  */
 const AlertModal = ({ isOpen, onClose, title, message, type = 'warning', onConfirm }) => {
-  if (!isOpen) return null;
-
   const isConfirm = typeof onConfirm === 'function';
 
   const themes = {
@@ -45,10 +44,12 @@ const AlertModal = ({ isOpen, onClose, title, message, type = 'warning', onConfi
 
   const theme = themes[type] || themes.info;
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
       <div 
-        className="bg-surface-container-lowest border border-surface-container-highest rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 p-10 text-center relative"
+        className="bg-surface-container-lowest border border-surface-container-highest rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 p-10 text-center relative my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -94,7 +95,8 @@ const AlertModal = ({ isOpen, onClose, title, message, type = 'warning', onConfi
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
