@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, PackageCheck, Star, ClipboardList, Loader2 } from 'lucide-react';
 import { getStatusLabel, statusClassName } from './Report';
 import { getCollectedWasteReports } from '../api/WasteReportapi';
-import { getUserPointNow } from '../api/UserpointApi';
+import { getUserPointHistory } from '../api/HistoryApi';
 
 const REPORTS_PER_PAGE = 5;
 
@@ -37,32 +37,48 @@ function mapCollectedReport(apiItem) {
 }
 
 export default function History() {
+  const [activeView, setActiveView] = useState('reports');
   const [pointsBalance, setPointsBalance] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [completedReports, setCompletedReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [pointTransactions, setPointTransactions] = useState([]);
+  const [pointHistoryLoading, setPointHistoryLoading] = useState(true);
+  const [pointHistoryError, setPointHistoryError] = useState('');
+  const [totalTransactions, setTotalTransactions] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
-    const syncUserPoints = async () => {
+    const syncPointHistory = async () => {
       try {
-        const pointData = await getUserPointNow();
+        setPointHistoryLoading(true);
+        setPointHistoryError('');
+        const pointData = await getUserPointHistory();
         if (!isMounted) return;
-        const currentBalance = Number(pointData?.currentBalance ?? pointData?.points ?? 0);
+        const currentBalance = Number(pointData?.currentBalance ?? 0);
         setPointsBalance(Number.isFinite(currentBalance) ? currentBalance : 0);
+        setTotalTransactions(Number(pointData?.totalTransactions ?? 0));
+        setPointTransactions(Array.isArray(pointData?.transactions) ? pointData.transactions : []);
       } catch (error) {
         if (!isMounted) return;
         setPointsBalance(0);
+        setTotalTransactions(0);
+        setPointTransactions([]);
+        setPointHistoryError(error?.message || 'Không thể tải lịch sử điểm.');
+      } finally {
+        if (isMounted) {
+          setPointHistoryLoading(false);
+        }
       }
     };
 
     const onChanged = () => {
-      syncUserPoints();
+      syncPointHistory();
     };
 
-    syncUserPoints();
+    syncPointHistory();
     window.addEventListener('storage', onChanged);
     window.addEventListener('ecosort_auth_changed', onChanged);
     window.addEventListener('ecosort_points_changed', onChanged);
@@ -172,9 +188,99 @@ export default function History() {
             </p>
           </div>
         </div>
+
+        <div className="inline-flex w-full sm:w-auto items-center gap-2 rounded-2xl border border-surface-container-high bg-surface p-1">
+          <button
+            type="button"
+            onClick={() => setActiveView('reports')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              activeView === 'reports'
+                ? 'bg-primary text-white shadow-md shadow-primary/25'
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            Báo cáo
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('points')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              activeView === 'points'
+                ? 'bg-primary text-white shadow-md shadow-primary/25'
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            Lịch sử điểm
+          </button>
+        </div>
       </section>
 
-      <section className="space-y-4">
+      {activeView === 'points' && (
+        <section className="bg-surface-container-lowest rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-10 border border-surface-container-high/60 botanical-shadow space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h2 className="text-2xl sm:text-3xl font-sans italic text-on-surface">
+            Lịch sử <span className="not-italic text-primary">điểm thưởng</span>
+          </h2>
+          <p className="text-sm font-semibold text-on-surface-variant">
+            Tổng giao dịch: {new Intl.NumberFormat('en-US').format(totalTransactions)}
+          </p>
+        </div>
+
+        {pointHistoryLoading ? (
+          <div className="rounded-2xl border border-surface-container-high/60 bg-surface p-5 text-sm text-on-surface-variant inline-flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            Đang tải lịch sử điểm...
+          </div>
+        ) : pointHistoryError ? (
+          <div className="rounded-2xl border border-red-200/60 bg-red-50 p-5 text-sm text-red-700">
+            {pointHistoryError}
+          </div>
+        ) : pointTransactions.length === 0 ? (
+          <div className="rounded-2xl border border-surface-container-high/60 bg-surface p-5 text-sm text-on-surface-variant">
+            Chưa có giao dịch điểm thưởng.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pointTransactions.map((tx, idx) => {
+              const amount = Number(tx?.amount ?? 0);
+              const isEarned = String(tx?.transactionType ?? '').toLowerCase() === 'earned' || amount >= 0;
+              return (
+                <div
+                  key={String(tx?.id ?? `tx-${idx}`)}
+                  className="rounded-2xl border border-surface-container-high/60 bg-surface p-4 sm:p-5"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-on-surface">
+                        {tx?.description || 'Giao dịch điểm thưởng'}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">
+                        {tx?.createdAtUtc ? new Date(tx.createdAtUtc).toLocaleString('vi-VN') : 'Không rõ thời gian'}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">
+                        Nguồn: {tx?.sourceType || '---'} {tx?.sourceRefId ? `#${tx.sourceRefId}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-base font-extrabold ${isEarned ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {isEarned ? '+' : '-'}
+                        {new Intl.NumberFormat('en-US').format(Math.abs(amount))}
+                      </p>
+                      <p className="text-xs font-semibold text-on-surface-variant">
+                        Số dư: {new Intl.NumberFormat('en-US').format(Number(tx?.balanceAfter ?? 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        </section>
+      )}
+
+      {activeView === 'reports' && (
+        <section className="space-y-4">
         {loadingReports ? (
           <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant inline-flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-primary" />
@@ -214,8 +320,9 @@ export default function History() {
             </Link>
           ))
         )}
-      </section>
-      {completedReports.length > 0 && (
+        </section>
+      )}
+      {activeView === 'reports' && completedReports.length > 0 && (
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
           <p className="text-sm text-on-surface-variant font-semibold">
             Trang {currentPage}/{totalPages}

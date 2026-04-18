@@ -43,3 +43,34 @@ export async function getWeeklyLeaderboard({ skip = 0, take = 20 } = {}) {
   if (!Array.isArray(data)) return [];
   return data.map((item, idx) => normalizeLeaderboardItem(item, idx));
 }
+
+export async function getWeeklyLeaderboardUsers({ skip = 0, take = 20 } = {}) {
+  const token = getToken();
+  const query = new URLSearchParams({
+    skip: String(skip),
+    take: String(take),
+  });
+
+  const response = await fetch(`${getApiBaseUrl()}/api/leaderboard/users?${query.toString()}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const message = `Lỗi ${response.status}: ${response.statusText}`;
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  const users = Array.isArray(data?.users)
+    ? data.users.map((item, idx) => normalizeLeaderboardItem(item, idx))
+    : [];
+
+  return {
+    totalParticipants: toNumber(data?.totalParticipants ?? data?.TotalParticipants, users.length),
+    myRank: toNumber(data?.myRank ?? data?.MyRank, 0),
+    myPoints: toNumber(data?.myPoints ?? data?.MyPoints, 0),
+    users,
+  };
+}

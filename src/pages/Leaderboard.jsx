@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Award, Medal, TrendingUp, Trophy, UserRound } from 'lucide-react';
-import { getWeeklyLeaderboard } from '../api/LeaderboardApi';
+import { getWeeklyLeaderboardUsers } from '../api/LeaderboardApi';
 
 const USERS_PER_PAGE = 5;
 
 export default function Leaderboard() {
-  const myRank = 42;
-  const myPoints = 1250;
   const [currentPage, setCurrentPage] = useState(1);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [myRank, setMyRank] = useState(0);
+  const [myPoints, setMyPoints] = useState(0);
+  const [totalParticipants, setTotalParticipants] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -19,12 +20,18 @@ export default function Leaderboard() {
       setIsLoading(true);
       setLoadError('');
       try {
-        const data = await getWeeklyLeaderboard({ skip: 0, take: 100 });
+        const data = await getWeeklyLeaderboardUsers({ skip: 0, take: 100 });
         if (!isMounted) return;
-        setLeaderboard(Array.isArray(data) ? data : []);
+        setLeaderboard(Array.isArray(data?.users) ? data.users : []);
+        setMyRank(Number(data?.myRank ?? 0));
+        setMyPoints(Number(data?.myPoints ?? 0));
+        setTotalParticipants(Number(data?.totalParticipants ?? 0));
       } catch (error) {
         if (!isMounted) return;
         setLeaderboard([]);
+        setMyRank(0);
+        setMyPoints(0);
+        setTotalParticipants(0);
         setLoadError(error instanceof Error ? error.message : 'Không thể tải bảng xếp hạng.');
       } finally {
         if (isMounted) setIsLoading(false);
@@ -87,7 +94,7 @@ export default function Leaderboard() {
                   Thứ hạng của bạn
                 </p>
                 <p className="text-lg sm:text-xl font-extrabold text-primary">
-                  #{myRank} <span className="text-on-surface-variant font-bold">/</span>{' '}
+                  #{myRank || '--'} <span className="text-on-surface-variant font-bold">/</span>{' '}
                   {new Intl.NumberFormat('en-US').format(myPoints)} pts
                 </p>
               </div>
@@ -105,7 +112,7 @@ export default function Leaderboard() {
           <div className="px-7 sm:px-10 py-6 border-b border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm font-extrabold text-on-surface">Tất cả người dùng</p>
             <p className="text-sm font-semibold text-on-surface-variant">
-              {leaderboard.length} người tham gia
+              {totalParticipants || leaderboard.length} người tham gia
             </p>
           </div>
 
