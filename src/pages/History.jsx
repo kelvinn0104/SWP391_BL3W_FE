@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, PackageCheck, Star, ClipboardList, Loader2 } from 'lucide-react';
-import { getUser } from '../lib/auth';
 import { getStatusLabel, statusClassName } from './Report';
 import { getCollectedWasteReports } from '../api/WasteReportapi';
+import { getUserPointNow } from '../api/UserpointApi';
 
 const REPORTS_PER_PAGE = 5;
 
@@ -12,14 +12,6 @@ function parseWeightKg(weight) {
   const raw = String(weight).trim().toLowerCase();
   const match = raw.match(/-?\d+(\.\d+)?/);
   const value = match ? Number.parseFloat(match[0]) : Number.NaN;
-  return Number.isFinite(value) ? value : 0;
-}
-
-function readPointsBalance() {
-  const user = getUser();
-  if (typeof user?.points === 'number') return user.points;
-  const raw = localStorage.getItem('ecosort_points');
-  const value = raw === null ? 0 : Number(raw);
   return Number.isFinite(value) ? value : 0;
 }
 
@@ -45,18 +37,37 @@ function mapCollectedReport(apiItem) {
 }
 
 export default function History() {
-  const [pointsBalance, setPointsBalance] = useState(() => readPointsBalance());
+  const [pointsBalance, setPointsBalance] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [completedReports, setCompletedReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    const onChanged = () => setPointsBalance(readPointsBalance());
+    let isMounted = true;
+
+    const syncUserPoints = async () => {
+      try {
+        const pointData = await getUserPointNow();
+        if (!isMounted) return;
+        const currentBalance = Number(pointData?.currentBalance ?? pointData?.points ?? 0);
+        setPointsBalance(Number.isFinite(currentBalance) ? currentBalance : 0);
+      } catch (error) {
+        if (!isMounted) return;
+        setPointsBalance(0);
+      }
+    };
+
+    const onChanged = () => {
+      syncUserPoints();
+    };
+
+    syncUserPoints();
     window.addEventListener('storage', onChanged);
     window.addEventListener('ecosort_auth_changed', onChanged);
     window.addEventListener('ecosort_points_changed', onChanged);
     return () => {
+      isMounted = false;
       window.removeEventListener('storage', onChanged);
       window.removeEventListener('ecosort_auth_changed', onChanged);
       window.removeEventListener('ecosort_points_changed', onChanged);

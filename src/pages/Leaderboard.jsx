@@ -1,43 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Award, Medal, TrendingUp, Trophy, UserRound } from 'lucide-react';
-
-const LEADERBOARD = [
-  {
-    rank: 1,
-    name: 'Nguyễn Văn A',
-    points: 4250,
-    actions: 124,
-    avatar: 'https://picsum.photos/seed/user1/100/100',
-  },
-  {
-    rank: 2,
-    name: 'Trần Thị B',
-    points: 3800,
-    actions: 98,
-    avatar: 'https://picsum.photos/seed/user2/100/100',
-  },
-  {
-    rank: 3,
-    name: 'Lê Văn C',
-    points: 3150,
-    actions: 85,
-    avatar: 'https://picsum.photos/seed/user3/100/100',
-  },
-  {
-    rank: 4,
-    name: 'Phạm Minh D',
-    points: 2900,
-    actions: 72,
-    avatar: 'https://picsum.photos/seed/user4/100/100',
-  },
-  {
-    rank: 5,
-    name: 'Hoàng Văn E',
-    points: 2750,
-    actions: 68,
-    avatar: 'https://picsum.photos/seed/user5/100/100',
-  },
-];
+import { getWeeklyLeaderboard } from '../api/LeaderboardApi';
 
 const USERS_PER_PAGE = 5;
 
@@ -45,12 +8,46 @@ export default function Leaderboard() {
   const myRank = 42;
   const myPoints = 1250;
   const [currentPage, setCurrentPage] = useState(1);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const totalPages = Math.ceil(LEADERBOARD.length / USERS_PER_PAGE);
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLeaderboard() {
+      setIsLoading(true);
+      setLoadError('');
+      try {
+        const data = await getWeeklyLeaderboard({ skip: 0, take: 100 });
+        if (!isMounted) return;
+        setLeaderboard(Array.isArray(data) ? data : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setLeaderboard([]);
+        setLoadError(error instanceof Error ? error.message : 'Không thể tải bảng xếp hạng.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadLeaderboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(leaderboard.length / USERS_PER_PAGE));
   const paginatedLeaderboard = useMemo(() => {
     const start = (currentPage - 1) * USERS_PER_PAGE;
-    return LEADERBOARD.slice(start, start + USERS_PER_PAGE);
-  }, [currentPage]);
+    return leaderboard.slice(start, start + USERS_PER_PAGE);
+  }, [currentPage, leaderboard]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -98,7 +95,7 @@ export default function Leaderboard() {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {LEADERBOARD.slice(0, 3).map((item) => (
+            {leaderboard.slice(0, 3).map((item) => (
               <PodiumCard key={item.rank} {...item} />
             ))}
           </div>
@@ -108,37 +105,49 @@ export default function Leaderboard() {
           <div className="px-7 sm:px-10 py-6 border-b border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm font-extrabold text-on-surface">Tất cả người dùng</p>
             <p className="text-sm font-semibold text-on-surface-variant">
-              {LEADERBOARD.length} người tham gia
+              {leaderboard.length} người tham gia
             </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[720px]">
-              <thead className="bg-surface-container-low/30">
-                <tr className="border-b border-surface-container-high/70">
-                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                    Hạng
-                  </th>
-                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                    Người dùng
-                  </th>
-                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                    Điểm tích lũy
-                  </th>
-                  <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
-                    Hành động xanh
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-container-high/60">
-                {paginatedLeaderboard.map((row) => (
-                  <LeaderboardRow key={row.rank} {...row} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {isLoading ? (
+            <p className="px-7 sm:px-10 py-8 text-sm font-semibold text-on-surface-variant">
+              Đang tải bảng xếp hạng...
+            </p>
+          ) : loadError ? (
+            <p className="px-7 sm:px-10 py-8 text-sm font-semibold text-error">{loadError}</p>
+          ) : leaderboard.length === 0 ? (
+            <p className="px-7 sm:px-10 py-8 text-sm font-semibold text-on-surface-variant">
+              Chưa có dữ liệu bảng xếp hạng.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[720px]">
+                <thead className="bg-surface-container-low/30">
+                  <tr className="border-b border-surface-container-high/70">
+                    <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                      Hạng
+                    </th>
+                    <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                      Người dùng
+                    </th>
+                    <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                      Điểm tích lũy
+                    </th>
+                    <th className="px-6 sm:px-10 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">
+                      Hành động xanh
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-container-high/60">
+                  {paginatedLeaderboard.map((row) => (
+                    <LeaderboardRow key={`${row.rank}-${row.name}`} {...row} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          {LEADERBOARD.length > 0 && (
+          {leaderboard.length > 0 && !isLoading && !loadError && (
             <div className="px-7 sm:px-10 py-5 border-t border-surface-container-high/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm font-semibold text-on-surface-variant">
                 Trang {currentPage}/{totalPages}
