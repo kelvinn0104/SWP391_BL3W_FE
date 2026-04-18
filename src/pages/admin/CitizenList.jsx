@@ -8,11 +8,11 @@ export default function CitizenList() {
   return (
     <div className="w-full space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1.5">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-on-surface">
+        <div className="flex flex-col px-2">
+          <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
             Danh sách dân cư
           </h1>
-          <p className="text-sm text-on-surface-variant leading-relaxed max-w-2xl">
+          <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60 max-w-2xl">
             Quản lý tài khoản dân cư: tìm kiếm nhanh, lọc theo trạng thái và xem
             thông tin liên hệ.
           </p>

@@ -210,14 +210,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="mb-10">
-        <h1 className="text-3xl font-serif italic text-on-surface mb-2">
-          Chào ngày mới,{" "}
-          <span className="not-italic font-black text-primary">
-            {user?.displayName || "Admin"}
-          </span>
+      <header className="flex flex-col mb-4 md:mb-6 px-2">
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
+          Chào ngày mới, {user?.displayName || "Admin"}
         </h1>
-        <p className="text-on-surface-variant font-medium">
+        <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
           Bảng điều khiển quản trị tối cao của EcoSort.
         </p>
       </header>

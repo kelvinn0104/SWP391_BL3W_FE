@@ -83,66 +83,66 @@ function HistoryTaskCard({ task }) {
       to={`/collector/tasks/${encodeURIComponent(task.id)}`}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
-    <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
-      <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
-        <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
-          <h2 className="text-lg md:text-xl font-extrabold text-on-surface leading-snug">
-            {task.title}
-          </h2>
-          <span
-            className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(
-              task.status,
-            )}`}
-          >
-            {task.status}
+      <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
+        <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+            <h2 className="text-lg md:text-xl font-extrabold text-on-surface leading-snug">
+              {task.title}
+            </h2>
+            <span
+              className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(
+                task.status,
+              )}`}
+            >
+              {task.status}
+            </span>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
+            <Package className="w-4 h-4" strokeWidth={2.25} />
+            {typeof task.weightKg === "number"
+              ? `${task.weightKg}kg`
+              : task.weightKg}
           </span>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
-          <Package className="w-4 h-4" strokeWidth={2.25} />
-          {typeof task.weightKg === "number"
-            ? `${task.weightKg}kg`
-            : task.weightKg}
-        </span>
-      </div>
 
-      <div className="space-y-2.5 text-sm text-on-surface-variant">
-        <p className="flex items-start gap-2 font-medium text-on-surface">
-          <Leaf
-            className="w-4 h-4 text-primary mt-0.5 shrink-0"
-            strokeWidth={2}
-          />
-          <span>{task.category}</span>
-        </p>
-        <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
-          Mã report:{" "}
-          <span className="text-on-surface font-mono">{task.id}</span>
-        </p>
-        <p className="flex items-start gap-2">
-          <FileText
-            className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
-            strokeWidth={2}
-          />
-          <span className="leading-relaxed">{task.description}</span>
-        </p>
-      </div>
+        <div className="space-y-2.5 text-sm text-on-surface-variant">
+          <p className="flex items-start gap-2 font-medium text-on-surface">
+            <Leaf
+              className="w-4 h-4 text-primary mt-0.5 shrink-0"
+              strokeWidth={2}
+            />
+            <span>{task.category}</span>
+          </p>
+          <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
+            Mã report:{" "}
+            <span className="text-on-surface font-mono">{task.id}</span>
+          </p>
+          <p className="flex items-start gap-2">
+            <FileText
+              className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
+              strokeWidth={2}
+            />
+            <span className="leading-relaxed">{task.description}</span>
+          </p>
+        </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm">
-        <span className="inline-flex items-center gap-2 font-semibold text-on-surface">
-          <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
-          {task.location}
-        </span>
-        <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium">
-          <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
-          Ngày tạo:{" "}
-          <time
-            dateTime={task.createdAt}
-            className="text-on-surface tabular-nums"
-          >
-            {task.createdAt}
-          </time>
-        </span>
-      </div>
-    </article>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm">
+          <span className="inline-flex items-center gap-2 font-semibold text-on-surface">
+            <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
+            {task.location}
+          </span>
+          <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium">
+            <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
+            Ngày tạo:{" "}
+            <time
+              dateTime={task.createdAt}
+              className="text-on-surface tabular-nums"
+            >
+              {task.createdAt}
+            </time>
+          </span>
+        </div>
+      </article>
     </Link>
   );
 }
@@ -169,12 +169,11 @@ export default function HistoryTasks() {
 
   return (
     <div className="w-full min-w-0 max-w-none space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header>
-        <h1 className="text-2xl md:text-3xl font-serif italic text-on-surface mb-2">
-          Lịch sử{" "}
-          <span className="not-italic font-black text-primary">công việc</span>
+      <header className="flex flex-col mb-4 md:mb-6 px-2">
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
+          Lịch sử công việc
         </h1>
-        <p className="text-on-surface-variant font-medium">
+        <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
           Các công việc đã hoàn tất thu gom
         </p>
       </header>

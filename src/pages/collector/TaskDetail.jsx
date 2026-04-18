@@ -100,7 +100,7 @@ export default function TaskDetail() {
                 Chi tiết công việc
               </p>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl sm:text-4xl font-serif italic text-on-surface">
+                <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
                   {task.title}
                 </h1>
                 <span

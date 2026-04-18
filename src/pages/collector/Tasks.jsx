@@ -195,12 +195,11 @@ export default function Tasks() {
 
   return (
     <div className="w-full min-w-0 max-w-none space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header>
-        <h1 className="text-2xl md:text-3xl font-serif italic text-on-surface mb-2">
-          Quản lý{" "}
-          <span className="not-italic font-black text-primary">công việc</span>
+      <header className="flex flex-col mb-4 md:mb-6 px-2">
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">
+          Quản lý công việc
         </h1>
-        <p className="text-on-surface-variant font-medium">
+        <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
           Các công việc đã phân công và đang trên đường thu gom
         </p>
       </header>
