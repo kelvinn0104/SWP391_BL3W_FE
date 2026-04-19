@@ -1,9 +1,42 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BadgeCheck, Ban, Loader2, ShieldCheck, UserRound } from "lucide-react";
-import { getCitizens, getCollectors } from "../../api/userApi";
+import {
+  BadgeCheck,
+  Ban,
+  Edit2,
+  Loader2,
+  Lock,
+  ShieldCheck,
+  Trash2,
+  Unlock,
+  UserRound,
+} from "lucide-react";
+import {
+  deleteAccount,
+  getCitizens,
+  getCollectors,
+  lockAccount,
+} from "../../api/userApi";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 5;
+
+/** Chỉ định nghĩa cột — dùng chung header & body; 5 cột giữa chia đều 1fr */
+const ACCOUNT_TABLE_COLS =
+  "[grid-template-columns:2.75rem_repeat(5,minmax(0,1fr))_minmax(10.5rem,max-content)]";
+
+/** @param {number} colIndex 0..6 */
+function accountTableColAlign(colIndex) {
+  if (colIndex === 0 || colIndex >= 5) return "justify-center text-center";
+  return "justify-start text-left";
+}
+
+/** @param {unknown} roleRaw */
+function getRoleKey(roleRaw) {
+  const r = String(roleRaw ?? "").trim();
+  if (r === "Citizen" || r === "1") return "citizen";
+  if (r === "Collector" || r === "2") return "collector";
+  return "other";
+}
 
 /** @param {Record<string, unknown>} p */
 function mapProfileToRow(p) {
@@ -20,6 +53,7 @@ function mapProfileToRow(p) {
     email,
     phone: phoneNumber || "—",
     role: formatRoleLabel(roleRaw),
+    roleKey: getRoleKey(roleRaw),
     status: isLocked ? "blocked" : "active",
   };
 }
@@ -41,6 +75,74 @@ const DEFAULT_TABS = [
   { id: "active", label: "Đang hoạt động" },
   { id: "blocked", label: "Bị khóa" },
 ];
+
+/**
+ * @param {object} props
+ * @param {ReturnType<typeof mapProfileToRow>} props.it
+ * @param {{ id: string | number; kind: 'lock' | 'delete' } | null} props.busy
+ * @param {(row: ReturnType<typeof mapProfileToRow>) => void} [props.onEditAccount]
+ * @param {(row: ReturnType<typeof mapProfileToRow>) => void} props.onToggleLock
+ * @param {(row: ReturnType<typeof mapProfileToRow>) => void} props.onDelete
+ */
+function AccountActions({ it, busy, onEditAccount, onToggleLock, onDelete }) {
+  const disabled = busy != null;
+  const rowBusy = busy != null && String(busy.id) === String(it.id);
+  const lockLoading = rowBusy && busy.kind === "lock";
+  const deleteLoading = rowBusy && busy.kind === "delete";
+  const allowEditDelete = it.roleKey === "collector";
+
+  return (
+    <div
+      className="flex items-center justify-center gap-1.5 shrink-0"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {allowEditDelete ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onEditAccount?.(it)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-surface-container-high/80 bg-surface-container-low text-on-surface-variant shadow-sm hover:border-primary/35 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-40"
+          aria-label="Chỉnh sửa"
+          title="Chỉnh sửa"
+        >
+          <Edit2 className="w-4.5 h-4.5" strokeWidth={2.25} />
+        </button>
+      ) : null}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onToggleLock(it)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-surface-container-high/80 bg-surface-container-low text-on-surface-variant shadow-sm hover:border-amber-400/50 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-200 transition-all disabled:opacity-40"
+        aria-label={it.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+        title={it.status === "active" ? "Khóa" : "Mở khóa"}
+      >
+        {lockLoading ? (
+          <Loader2 className="w-4.5 h-4.5 animate-spin text-primary" />
+        ) : it.status === "active" ? (
+          <Lock className="w-4.5 h-4.5" strokeWidth={2.25} />
+        ) : (
+          <Unlock className="w-4.5 h-4.5" strokeWidth={2.25} />
+        )}
+      </button>
+      {allowEditDelete ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onDelete(it)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-surface-container-high/80 bg-surface-container-low text-on-surface-variant shadow-sm hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
+          aria-label="Xóa tài khoản"
+          title="Xóa"
+        >
+          {deleteLoading ? (
+            <Loader2 className="w-4.5 h-4.5 animate-spin text-error" />
+          ) : (
+            <Trash2 className="w-4.5 h-4.5" strokeWidth={2.25} />
+          )}
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 function StatusPill({ status }) {
   const cfg =
@@ -68,9 +170,9 @@ function StatusPill({ status }) {
   const I = cfg.Icon;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-black ring-1 ${cfg.className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-black ring-1 whitespace-nowrap max-w-full ${cfg.className}`}
     >
-      <I className="w-3.5 h-3.5" />
+      <I className="w-3.5 h-3.5 shrink-0" />
       {cfg.label}
     </span>
   );
@@ -80,6 +182,7 @@ function StatusPill({ status }) {
  * @param {object} props
  * @param {"citizens" | "collectors"} props.accountKind — gọi API tương ứng
  * @param {number | null} [props.wardId] — chỉ dùng khi accountKind === "collectors"
+ * @param {(row: ReturnType<typeof mapProfileToRow>) => void} [props.onEditAccount] — chỉ áp dụng khi không phải citizen
  */
 export default function AccountList({
   accountKind,
@@ -88,6 +191,7 @@ export default function AccountList({
   emptyText = "Chưa có tài khoản nào.",
   query: queryProp,
   onQueryChange,
+  onEditAccount,
 }) {
   const [internalQuery, setInternalQuery] = useState("");
   const [tab, setTab] = useState(tabs?.[0]?.id ?? "all");
@@ -95,6 +199,8 @@ export default function AccountList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const [busy, setBusy] = useState(null);
 
   const query = queryProp ?? internalQuery;
   const setQuery = onQueryChange ?? setInternalQuery;
@@ -123,7 +229,41 @@ export default function AccountList({
     return () => {
       cancelled = true;
     };
-  }, [accountKind, wardId]);
+  }, [accountKind, wardId, refreshNonce]);
+
+  async function handleToggleLock(it) {
+    if (busy != null || it.id == null) return;
+    const nextLocked = it.status === "active";
+    setBusy({ id: it.id, kind: "lock" });
+    try {
+      await lockAccount(it.id, nextLocked);
+      setRefreshNonce((n) => n + 1);
+    } catch (e) {
+      setError(e?.message || "Không cập nhật được trạng thái khóa.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleDelete(it) {
+    if (busy != null || it.id == null) return;
+    if (
+      !window.confirm(
+        `Xóa tài khoản "${it.name}" (${it.email})? Hành động không thể hoàn tác.`,
+      )
+    ) {
+      return;
+    }
+    setBusy({ id: it.id, kind: "delete" });
+    try {
+      await deleteAccount(it.id);
+      setRefreshNonce((n) => n + 1);
+    } catch (e) {
+      setError(e?.message || "Không xóa được tài khoản.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -192,76 +332,86 @@ export default function AccountList({
         ))}
       </div>
 
-      <div className="rounded-3xl border border-surface-container-high bg-surface-container-lowest overflow-hidden">
+      <div className="rounded-3xl border border-surface-container-high/80 bg-surface-container-lowest shadow-sm overflow-hidden">
         {/* Desktop table */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-12 gap-3 px-6 py-4 border-b border-surface-container-high bg-surface">
-            <div className="col-span-1 text-xs font-black tracking-widest uppercase text-on-surface-variant/60 text-center">
-              STT
-            </div>
-            <div className="col-span-2 text-xs font-black tracking-widest uppercase text-on-surface-variant/60">
-              Tên
-            </div>
-            <div className="col-span-3 text-xs font-black tracking-widest uppercase text-on-surface-variant/60">
-              Email
-            </div>
-            <div className="col-span-2 text-xs font-black tracking-widest uppercase text-on-surface-variant/60">
-              Số điện thoại
-            </div>
-            <div className="col-span-2 text-xs font-black tracking-widest uppercase text-on-surface-variant/60">
-              Vai trò
-            </div>
-            <div className="col-span-2 text-xs font-black tracking-widest uppercase text-on-surface-variant/60 text-right">
-              Trạng thái
-            </div>
-          </div>
-
-          {filtered.length === 0 ? (
-            <div className="px-6 py-12 text-center text-on-surface-variant font-semibold">
-              {emptyText}
-            </div>
-          ) : (
-            <div className="divide-y divide-surface-container-high">
-              {pagedItems.map((it, index) => (
+        <div className="hidden md:block w-full overflow-x-auto">
+          <div className="w-full min-w-0">
+            <div
+              className={`grid items-center ${ACCOUNT_TABLE_COLS} gap-x-3 lg:gap-x-4 px-5 lg:px-8 py-4 border-b border-surface-container-high/70 bg-surface-container-low/90`}
+            >
+              {[
+                "STT",
+                "Tên",
+                "Email",
+                "Số điện thoại",
+                "Vai trò",
+                "Trạng thái",
+                "Hành động",
+              ].map((label, i) => (
                 <div
-                  key={it.id}
-                  className="grid grid-cols-12 gap-3 px-6 py-4 hover:bg-surface-container-low transition-colors"
+                  key={label}
+                  className={`min-w-0 w-full flex items-center px-1.5 ${accountTableColAlign(i)}`}
                 >
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className="text-sm font-extrabold text-on-surface tabular-nums">
-                      {(page - 1) * PAGE_SIZE + index + 1}
-                    </span>
-                  </div>
-                  <div className="col-span-2 min-w-0 flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <UserRound className="w-4 h-4" />
-                    </div>
-                    <p className="font-extrabold text-on-surface truncate min-w-0">
-                      {it.name || "—"}
-                    </p>
-                  </div>
-                  <div className="col-span-3 min-w-0">
-                    <p className="text-sm font-semibold text-on-surface truncate">
-                      {it.email || "—"}
-                    </p>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-sm font-bold text-on-surface truncate">
-                      {it.phone || "—"}
-                    </p>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-sm font-bold text-on-surface truncate">
-                      {it.role || "—"}
-                    </p>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-end">
-                    <StatusPill status={it.status} />
-                  </div>
+                  <span className="text-[11px] font-black tracking-wider uppercase text-on-surface-variant/55 leading-tight max-w-full">
+                    {label}
+                  </span>
                 </div>
               ))}
             </div>
-          )}
+
+            {filtered.length === 0 ? (
+              <div className="px-6 py-14 text-center text-on-surface-variant font-semibold">
+                {emptyText}
+              </div>
+            ) : (
+              <div>
+                {pagedItems.map((it, index) => (
+                  <div
+                    key={it.id}
+                    className={`grid items-start ${ACCOUNT_TABLE_COLS} gap-x-3 lg:gap-x-4 px-5 lg:px-8 py-4 lg:py-4.5 border-b border-surface-container-high/50 last:border-b-0 transition-colors duration-150 odd:bg-white even:bg-surface-container-low/40 dark:odd:bg-surface-container-lowest dark:even:bg-surface-container-low/25 hover:bg-primary/4`}
+                  >
+                    <div className="flex items-center justify-center min-h-11 self-center">
+                      <span className="text-sm font-black text-on-surface-variant tabular-nums">
+                        {(page - 1) * PAGE_SIZE + index + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex items-start gap-3 px-1.5 py-0.5">
+                      <p className="font-extrabold text-on-surface text-[15px] leading-snug min-w-0 wrap-break-word whitespace-normal">
+                        {it.name || "—"}
+                      </p>
+                    </div>
+                    <div className="min-w-0 px-1.5 py-0.5">
+                      <p className="text-sm font-medium text-on-surface/90 wrap-break-word whitespace-normal">
+                        {it.email || "—"}
+                      </p>
+                    </div>
+                    <div className="min-w-0 px-1.5 py-0.5">
+                      <p className="text-sm font-semibold text-on-surface tabular-nums tracking-tight break-all">
+                        {it.phone || "—"}
+                      </p>
+                    </div>
+                    <div className="min-w-0 px-1.5 py-0.5">
+                      <p className="text-sm font-bold text-on-surface/95 wrap-break-word">
+                        {it.role || "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center self-center px-1.5 py-0.5">
+                      <StatusPill status={it.status} />
+                    </div>
+                    <div className="flex items-center justify-center min-w-0 self-center px-1.5 py-0.5">
+                      <AccountActions
+                        it={it}
+                        busy={busy}
+                        onEditAccount={onEditAccount}
+                        onToggleLock={handleToggleLock}
+                        onDelete={handleDelete}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mobile cards */}
@@ -271,15 +421,21 @@ export default function AccountList({
               {emptyText}
             </div>
           ) : (
-            <div className="divide-y divide-surface-container-high">
-              {filtered.map((it, index) => (
-                <div key={it.id} className="p-5 space-y-3">
+            <div className="divide-y divide-surface-container-high/80">
+              {pagedItems.map((it, index) => (
+                <div
+                  key={it.id}
+                  className="p-5 space-y-3.5 odd:bg-white even:bg-surface-container-low/30"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <span className="text-sm font-extrabold text-on-surface-variant tabular-nums shrink-0">
-                      #{index + 1}
+                      #{(page - 1) * PAGE_SIZE + index + 1}
                     </span>
                     <div className="min-w-0 flex-1 text-right">
-                      <p className="font-extrabold text-on-surface truncate">
+                      <p
+                        className="font-extrabold text-on-surface wrap-break-word whitespace-normal text-right"
+                        title={it.name || undefined}
+                      >
                         {it.name || "—"}
                       </p>
                       <p className="text-xs text-on-surface-variant font-semibold truncate">
@@ -306,6 +462,16 @@ export default function AccountList({
                         {it.role || "—"}
                       </p>
                     </div>
+                  </div>
+
+                  <div className="flex justify-end pt-1 border-t border-surface-container-high/50">
+                    <AccountActions
+                      it={it}
+                      busy={busy}
+                      onEditAccount={onEditAccount}
+                      onToggleLock={handleToggleLock}
+                      onDelete={handleDelete}
+                    />
                   </div>
                 </div>
               ))}

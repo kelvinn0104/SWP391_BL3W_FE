@@ -13,13 +13,26 @@ import {
   PackageCheck,
   X,
 } from "lucide-react";
+import CancelTaskModal from "../../components/modal/CancelTaskModal";
 import UploadImageModal from "../../components/modal/UploadImageModal";
+import UpdateStatusModal from "../../components/modal/UpdateStatusModal";
 import { MOCK_HISTORY_TASKS } from "./HistoryTasks";
 import { MOCK_TASKS, statusBadgeClass } from "./Tasks";
 
 function mapEmbedSrc(lat, lng) {
   const q = `${lat},${lng}`;
   return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=16&hl=vi&output=embed`;
+}
+
+/** Id báo cáo số cho API — ưu tiên reportId từ backend; mock dạng RP-2401 → 2401 */
+function resolveReportIdForApi(task) {
+  if (task?.reportId != null) {
+    const n = Number(task.reportId);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const digits = String(task?.id ?? "").replace(/\D/g, "");
+  const n = digits ? Number(digits) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 const STATUS_ASSIGNED = "Đã phân công";
@@ -33,6 +46,8 @@ export default function TaskDetail() {
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [updateStatusOpen, setUpdateStatusOpen] = useState(false);
+  const [cancelTaskOpen, setCancelTaskOpen] = useState(false);
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -71,16 +86,6 @@ export default function TaskDetail() {
 
   const showAssignedActions = task.status === STATUS_ASSIGNED;
   const showConfirmPickup = task.status === STATUS_ON_THE_WAY;
-
-  function handleReject() {
-    // TODO: gọi API từ chối phân công
-    navigate("/collector/tasks");
-  }
-
-  function handleAccept() {
-    // TODO: gọi API đồng ý → chuyển sang Đang trên đường
-    navigate("/collector/tasks");
-  }
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -225,7 +230,7 @@ export default function TaskDetail() {
                 <div className="flex flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end gap-3">
                   <button
                     type="button"
-                    onClick={handleReject}
+                    onClick={() => setCancelTaskOpen(true)}
                     className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-600 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <X className="w-4 h-4 shrink-0" strokeWidth={2.5} />
@@ -233,7 +238,7 @@ export default function TaskDetail() {
                   </button>
                   <button
                     type="button"
-                    onClick={handleAccept}
+                    onClick={() => setUpdateStatusOpen(true)}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white px-5 py-3 text-sm font-extrabold shadow-md shadow-primary/25 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
@@ -266,8 +271,26 @@ export default function TaskDetail() {
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         taskId={task.id}
+        reportId={resolveReportIdForApi(task)}
         taskTitle={task.title}
         onSuccess={() => navigate("/collector/history")}
+      />
+
+      <UpdateStatusModal
+        open={updateStatusOpen}
+        onClose={() => setUpdateStatusOpen(false)}
+        reportId={resolveReportIdForApi(task)}
+        reportTitle={task.title}
+        initialStatus="Assigned"
+        onUpdated={() => navigate("/collector/tasks")}
+      />
+
+      <CancelTaskModal
+        open={cancelTaskOpen}
+        onClose={() => setCancelTaskOpen(false)}
+        reportId={resolveReportIdForApi(task)}
+        reportTitle={task.title}
+        onRejected={() => navigate("/collector/tasks")}
       />
     </div>
   );
