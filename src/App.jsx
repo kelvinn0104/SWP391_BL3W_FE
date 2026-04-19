@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   History,
+  AlertTriangle
 } from "lucide-react";
 import {
   BrowserRouter as Router,
@@ -45,6 +46,8 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Report from "./pages/Report";
 import CreateReport from "./pages/CreateReport";
 import ReportDetail from "./pages/ReportDetail";
+import Complaint from "./pages/Complaint";
+import ComplaintDetail from "./pages/ComplaintDetail";
 import HistoryVoucher from "./pages/HistoryVoucher";
 import HistoryPage from "./pages/History";
 import Tasks from "./pages/collector/Tasks";
@@ -278,13 +281,12 @@ function Layout() {
                               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                             )}
                             <div
-                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${
-                                notif.type === "warning"
-                                  ? "bg-amber-100 text-amber-600"
-                                  : notif.type === "success"
-                                    ? "bg-emerald-100 text-emerald-600"
-                                    : "bg-blue-100 text-blue-600"
-                              }`}
+                              className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center ${notif.type === "warning"
+                                ? "bg-amber-100 text-amber-600"
+                                : notif.type === "success"
+                                  ? "bg-emerald-100 text-emerald-600"
+                                  : "bg-blue-100 text-blue-600"
+                                }`}
                             >
                               {notif.type === "warning" ? (
                                 <Bell className="w-6 h-6" />
@@ -356,12 +358,12 @@ function Layout() {
                         user?.role === "3" ||
                         user?.role === "RecyclingEnterprise" ||
                         user?.role === "4") && (
-                        <img
-                          src="/verify/verified.png"
-                          alt="verified"
-                          className="w-3.5 h-3.5 object-contain shrink-0"
-                        />
-                      )}
+                          <img
+                            src="/verify/verified.png"
+                            alt="verified"
+                            className="w-3.5 h-3.5 object-contain shrink-0"
+                          />
+                        )}
                     </div>
                     <p className="text-sm font-extrabold text-primary">
                       {typeof user?.points === "number"
@@ -401,6 +403,15 @@ function Layout() {
                     >
                       <History className="w-4 h-4 text-primary" />
                       Lịch sử
+                    </Link>
+                    <Link
+                      to="/complaints"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container-low transition-colors"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-primary" />
+                      Khiếu nại
                     </Link>
                     <button
                       type="button"
@@ -499,6 +510,8 @@ export default function App() {
           <Route path="report/:id" element={<ReportDetail />} />
           <Route path="rewards/history" element={<HistoryVoucher />} />
           <Route path="history" element={<HistoryPage />} />
+          <Route path="complaints/:id" element={<ComplaintDetail />} />
+          <Route path="complaints" element={<Complaint />} />
         </Route>
 
         {/* Enterprise routes */}
