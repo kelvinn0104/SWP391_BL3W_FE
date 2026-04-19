@@ -1,5 +1,9 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { X, AlertTriangle, Send } from 'lucide-react';
+import { X, AlertTriangle, Send, Paperclip } from 'lucide-react';
+import { createComplaintForReport } from '../../api/complaintApi';
+
+const MAX_EVIDENCE_FILES = 5;
+const EVIDENCE_ACCEPT = '.jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf';
 
 const DEFAULT_REASONS = [
   'Thu gom không đúng địa điểm',
@@ -15,10 +19,13 @@ export default function FeedbackModal({
   reportId,
   reportStatusLabel,
   reasons = DEFAULT_REASONS,
+  onSuccess,
 }) {
   const modalId = useId();
   const [reason, setReason] = useState(reasons[0] ?? '');
   const [message, setMessage] = useState('');
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const titleId = useMemo(() => `${modalId}-title`, [modalId]);
@@ -28,6 +35,8 @@ export default function FeedbackModal({
     if (!open) return;
     setReason(reasons[0] ?? '');
     setMessage('');
+    setEvidenceFiles([]);
+    setSubmitError('');
     setSubmitting(false);
   }, [open, reasons]);
 
@@ -40,13 +49,53 @@ export default function FeedbackModal({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
+  const numericReportId = useMemo(() => {
+    const n = Number(reportId);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [reportId]);
+
+  function onEvidenceChange(e) {
+    const picked = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (!picked.length) return;
+    setEvidenceFiles((prev) => {
+      const next = [...prev];
+      for (const f of picked) {
+        if (next.length >= MAX_EVIDENCE_FILES) break;
+        next.push(f);
+      }
+      return next;
+    });
+  }
+
+  function removeEvidenceAt(index) {
+    setEvidenceFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
-    if (!reason) return;
+    setSubmitError('');
+    if (!reason?.trim()) return;
+    const description = message?.trim() ?? '';
+    if (!description) {
+      setSubmitError('Vui lòng nhập nội dung chi tiết.');
+      return;
+    }
+    if (numericReportId == null) {
+      setSubmitError('Không xác định được mã báo cáo.');
+      return;
+    }
     setSubmitting(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
+      await createComplaintForReport(numericReportId, {
+        reason: reason.trim(),
+        description,
+        evidenceFiles,
+      });
+      onSuccess?.();
       onClose?.();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Gửi khiếu nại thất bại.');
     } finally {
       setSubmitting(false);
     }
@@ -135,6 +184,46 @@ export default function FeedbackModal({
               Mẹo: thêm mốc thời gian, địa điểm, hoặc thông tin liên quan để xử lý nhanh hơn.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <label htmlFor={`${modalId}-evidence`} className="text-sm font-bold text-on-surface inline-flex items-center gap-2">
+              <Paperclip className="w-4 h-4 text-on-surface-variant" />
+              Minh chứng (tùy chọn)
+            </label>
+            <input
+              id={`${modalId}-evidence`}
+              type="file"
+              multiple
+              accept={EVIDENCE_ACCEPT}
+              onChange={onEvidenceChange}
+              className="block w-full text-sm text-on-surface file:mr-4 file:rounded-2xl file:border-0 file:bg-surface-container-high file:px-4 file:py-2 file:text-sm file:font-bold file:text-on-surface"
+            />
+            <p className="text-xs text-on-surface-variant">
+              Tối đa {MAX_EVIDENCE_FILES} tệp (ảnh JPG/PNG/WebP hoặc PDF), mỗi tệp tối đa 10 MB theo quy định hệ thống.
+            </p>
+            {evidenceFiles.length > 0 ? (
+              <ul className="rounded-2xl border border-surface-container-high/80 bg-surface-container-low/40 divide-y divide-surface-container-high/50 text-sm">
+                {evidenceFiles.map((f, i) => (
+                  <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <span className="truncate text-on-surface">{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeEvidenceAt(i)}
+                      className="shrink-0 text-rose-700 font-bold text-xs hover:underline"
+                    >
+                      Xóa
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+
+          {submitError ? (
+            <p className="text-sm font-semibold text-rose-700" role="alert">
+              {submitError}
+            </p>
+          ) : null}
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-1">
             <button
