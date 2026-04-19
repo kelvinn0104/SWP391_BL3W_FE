@@ -134,9 +134,6 @@ export default function WasteCategoryList({
                   </div>
                   <div className="col-span-3 min-w-0">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <Layers className="w-4 h-4" />
-                      </div>
                       <p className="font-extrabold text-on-surface truncate">
                         {it.name || "—"}
                       </p>

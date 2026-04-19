@@ -83,3 +83,16 @@ export async function createComplaintForReport(reportId, { reason, description, 
     body: formData,
   });
 }
+
+/**
+ * PUT /api/feedback/{id}/status
+ * Cập nhật trạng thái khiếu nại (Administrator / RecyclingEnterprise).
+ * Body JSON: { status, adminNote? } — ví dụ status: "Submitted" | "InReview" | "Resolved" | "Rejected"
+ */
+export async function updateComplaintStatus(id, { status, adminNote }) {
+  const safe = encodeURIComponent(String(id));
+  return apiFetch(`/api/feedback/${safe}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, adminNote }),
+  });
+}
