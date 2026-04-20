@@ -15,6 +15,22 @@ import {
 import { getUser } from '../lib/auth';
 import { createWasteReport, getWasteReportCategories } from '../api/WasteReportapi';
 
+const MAX_REPORT_TOTAL_KG = 10;
+
+function getReportLineItems(categories, categoryDetails) {
+    return categories
+        .map((categoryId) => {
+            const numericCategoryId = Number(categoryId);
+            const rawQuantity = categoryDetails[categoryId]?.quantityKg;
+            const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+            if (!Number.isInteger(numericCategoryId) || !Number.isFinite(quantityKg) || quantityKg <= 0) {
+                return null;
+            }
+            return { categoryId: numericCategoryId, quantityKg };
+        })
+        .filter(Boolean);
+}
+
 export default function CreateReport() {
     const navigate = useNavigate();
     const formId = useId();
@@ -149,23 +165,23 @@ export default function CreateReport() {
             return;
         }
 
-        const selectedItems = categories
-            .map((categoryId) => {
-                const numericCategoryId = Number(categoryId);
-                const rawQuantity = categoryDetails[categoryId]?.quantityKg;
-                const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
-                if (!Number.isInteger(numericCategoryId) || !Number.isFinite(quantityKg) || quantityKg <= 0) {
-                    return null;
-                }
-                return { categoryId: numericCategoryId, quantityKg };
-            })
-            .filter(Boolean);
+        const selectedItems = getReportLineItems(categories, categoryDetails);
 
         if (selectedItems.length === 0) {
             setSubmitToast({
                 type: 'error',
                 title: 'Thiếu dữ liệu thể loại',
                 message: 'Vui lòng chọn ít nhất 1 thể loại và nhập số lượng lớn hơn 0.',
+            });
+            return;
+        }
+
+        const totalSubmitKg = selectedItems.reduce((sum, item) => sum + item.quantityKg, 0);
+        if (totalSubmitKg > MAX_REPORT_TOTAL_KG) {
+            setSubmitToast({
+                type: 'error',
+                title: 'Vượt giới hạn khối lượng',
+                message: `Tổng khối lượng không được vượt quá ${MAX_REPORT_TOTAL_KG} kg. Hiện tại: ${String(Math.round(totalSubmitKg * 10) / 10)} kg.`,
             });
             return;
         }
@@ -205,7 +221,15 @@ export default function CreateReport() {
         }
     }
 
-    const canSubmit = Boolean(title.trim()) && Boolean(description.trim()) && !submitting;
+    const lineItems = getReportLineItems(categories, categoryDetails);
+    const totalSubmitKg = lineItems.reduce((sum, item) => sum + item.quantityKg, 0);
+    const isOverWeightLimit = totalSubmitKg > MAX_REPORT_TOTAL_KG;
+
+    const canSubmit =
+        Boolean(title.trim()) &&
+        Boolean(description.trim()) &&
+        !submitting &&
+        !isOverWeightLimit;
 
     const hasAnyQuantity = categories.some((category) => {
         const raw = categoryDetails[category]?.quantityKg;
@@ -532,7 +556,14 @@ export default function CreateReport() {
                                                 placeholder="Tự động tính"
                                                 className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
                                             />
-                                            <p className="text-xs text-on-surface-variant">Đơn vị: kg</p>
+                                            <p className="text-xs text-on-surface-variant">
+                                                Đơn vị: kg · Tối đa {MAX_REPORT_TOTAL_KG} kg (tổng các thể loại có số lượng hợp lệ)
+                                            </p>
+                                            {isOverWeightLimit && (
+                                                <p className="text-xs font-semibold text-error">
+                                                    Tổng khối lượng vượt quá {MAX_REPORT_TOTAL_KG} kg — vui lòng giảm số lượng để gửi báo cáo.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
