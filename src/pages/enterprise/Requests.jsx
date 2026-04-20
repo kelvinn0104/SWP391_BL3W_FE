@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { 
-  getRequests, 
-  updateRequestStatus, 
-  assignRequest 
-} from '../../api/collectionApi';
+  getAllWasteReports, 
+  updateWasteReportStatus, 
+  assignWasteReportCollector 
+} from '../../api/WasteReportapi';
 import { getCollectors } from '../../api/userApi';
 import Pagination from '../../components/ui/Pagination';
 import {  
@@ -50,7 +50,7 @@ export default function Requests() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [reqs, cols] = await Promise.all([getRequests(), getCollectors()]);
+      const [reqs, cols] = await Promise.all([getAllWasteReports(), getCollectors()]);
       
       // Map API response to match FE expectations if needed
       const mappedCollectors = cols.map(c => ({
@@ -75,7 +75,7 @@ export default function Requests() {
 
   const handleAssign = async (reqId, colId) => {
     try {
-      await assignRequest(reqId, colId);
+      await assignWasteReportCollector(reqId, colId);
       setRequests(prev => prev.map(r => 
         r.id === reqId ? { ...r, status: 'Assigned', collectorId: colId } : r
       ));
@@ -86,14 +86,12 @@ export default function Requests() {
 
   const handleStatus = async (reqId, status, reason = null) => {
     try {
-      await updateRequestStatus(reqId, status, reason);
+      await updateWasteReportStatus(reqId, status, reason);
       setRequests(prev => prev.map(r => 
         r.id === reqId ? { ...r, status, cancellationReason: reason } : r
       ));
-      // alert(`Cập nhật trạng thái thành công: ${status}`);
     } catch (err) {
       console.error("Status update failed", err);
-      // alert("Lỗi khi cập nhật trạng thái: " + err.message);
     }
   };
 
