@@ -1,100 +1,52 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
-import { Calendar, FileText, Leaf, MapPin, Package } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Calendar,
+  FileText,
+  Leaf,
+  MapPin,
+  Package,
+  Phone,
+} from "lucide-react";
 import Pagination from "../../components/ui/Pagination.jsx";
+import { getCollectorAssignedReports } from "../../api/collectorJobApi";
 
 const PAGE_SIZE = 5;
 
-/** Chỉ hiển thị các công việc thuộc hai trạng thái này */
-export const COLLECTOR_ACTIVE_STATUSES = ["Đã phân công", "Đang trên đường"];
+/**
+ * Trạng thái backend (WasteReportStatus) — hai trạng thái công việc đang hoạt động trên danh sách.
+ */
+export const COLLECTOR_ACTIVE_STATUSES = ["Assigned", "Accepted"];
 
-/** Demo — thay bằng API khi backend sẵn sàng */
-export const MOCK_TASKS = [
-  {
-    id: "RP-2401",
-    title: "Nhựa và lon tại hẻm 12",
-    status: "Đã phân công",
-    weightKg: 3.2,
-    category: "Kim loại",
-    description:
-      "Tập kết chai nhựa PET và lon nhôm tại sân sau, liên hệ chị Lan trước khi đến.",
-    location: "Quận 3, TP.HCM",
-    createdAt: "2026-04-10",
-    coordinates: { lat: 10.7829, lng: 106.6882 },
-    images: [
-      "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=1200&q=80",
-      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80",
-      "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=1200&q=80",
-    ],
-  },
-  {
-    id: "RP-2402",
-    title: "Giấy vụn văn phòng",
-    status: "Đang trên đường",
-    weightKg: 18.5,
-    category: "Giấy",
-    description:
-      "Thu gom thùng carton và giấy A4 đã phân loại, có sẵn cân tại chỗ.",
-    location: "Quận 1, TP.HCM",
-    createdAt: "2026-04-11",
-    coordinates: { lat: 10.7756, lng: 106.7021 },
-    images: [
-      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&q=80",
-      "https://images.unsplash.com/photo-1621451537084-482c73073a2f?w=1200&q=80",
-    ],
-  },
-  {
-    id: "RP-2398",
-    title: "Chờ duyệt — không hiện",
-    status: "Chờ duyệt",
-    weightKg: 1.0,
-    category: "Nhựa",
-    description: "Bản ghi test filter.",
-    location: "Quận 7, TP.HCM",
-    createdAt: "2026-04-08",
-    coordinates: { lat: 10.7314, lng: 106.7184 },
-    images: [
-      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&q=80",
-    ],
-  },
-  {
-    id: "RP-2405",
-    title: "Kho phế liệu Thảo Điền",
-    status: "Đã phân công",
-    weightKg: 42.0,
-    category: "Nhựa",
-    description: "Xe tải nhỏ có thể vào hẻm; bảo vệ sẽ mở cổng từ 8h–11h.",
-    location: "Thủ Đức, TP.HCM",
-    createdAt: "2026-04-12",
-    coordinates: { lat: 10.8027, lng: 106.7384 },
-    images: [
-      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=1200&q=80",
-      "https://images.unsplash.com/photo-1581092160562-40aa08c7880a?w=1200&q=80",
-    ],
-  },
-  {
-    id: "RP-2406",
-    title: "Thu gom theo ca tối",
-    status: "Đang trên đường",
-    weightKg: 7.8,
-    category: "Kim loại",
-    description: "Ưu tiên sau 18h, gọi số trên cổng khi tới nơi.",
-    location: "Bình Thạnh, TP.HCM",
-    createdAt: "2026-04-12",
-    coordinates: { lat: 10.8106, lng: 106.7092 },
-    images: [
-      "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1200&q=80",
-      "https://images.unsplash.com/photo-1528323273322-d81489248c40?w=1200&q=80",
-    ],
-  },
-];
+export function collectorStatusLabel(status) {
+  if (!status) return "—";
+  const map = {
+    Assigned: "Đã phân công",
+    Accepted: "Đang trên đường",
+    Pending: "Chờ xử lý",
+    Collected: "Đã thu gom",
+    Cancelled: "Đã hủy",
+    "Đã phân công": "Đã phân công",
+    "Đang trên đường": "Đang trên đường",
+  };
+  return map[status] ?? status;
+}
 
 export function statusBadgeClass(status) {
-  switch (status) {
+  const key =
+    status === "Đã phân công"
+      ? "Assigned"
+      : status === "Đang trên đường"
+        ? "Accepted"
+        : status;
+  switch (key) {
+    case "Assigned":
     case "Đã phân công":
       return "bg-violet-500/12 text-violet-800 ring-1 ring-violet-500/25";
+    case "Accepted":
     case "Đang trên đường":
       return "bg-sky-500/12 text-sky-800 ring-1 ring-sky-500/25";
+    case "Collected":
     case "Đã thu gom":
       return "bg-emerald-500/12 text-emerald-900 ring-1 ring-emerald-500/25";
     default:
@@ -102,31 +54,53 @@ export function statusBadgeClass(status) {
   }
 }
 
+function formatWeightKg(weightKg) {
+  if (weightKg == null || weightKg === "") return "—";
+  const n = Number(weightKg);
+  if (Number.isFinite(n)) {
+    return `${Number.isInteger(n) ? n : n.toFixed(2)}kg`;
+  }
+  return String(weightKg);
+}
+
+function resolveCreatedDate(task) {
+  if (task?.createdAt) return String(task.createdAt);
+  if (task?.createdAtUtc) {
+    const d = new Date(task.createdAtUtc);
+    if (!Number.isNaN(d.getTime()))
+      return d.toISOString().slice(0, 10);
+  }
+  return "";
+}
+
 function TaskCard({ task }) {
+  const reportKey = task.reportId ?? task.id;
+  const locationText = task.location ?? task.locationText ?? "";
+  const phone = task.citizen?.phoneNumber?.trim();
+  const created = resolveCreatedDate(task);
+
   return (
     <Link
-      to={`/collector/tasks/${encodeURIComponent(task.id)}`}
+      to={`/collector/tasks/${encodeURIComponent(String(reportKey))}`}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
       <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
         <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
           <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
             <h2 className="text-lg md:text-xl font-extrabold text-on-surface leading-snug">
-              {task.title}
+              {task.title ?? "—"}
             </h2>
             <span
               className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(
                 task.status,
               )}`}
             >
-              {task.status}
+              {collectorStatusLabel(task.status)}
             </span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
             <Package className="w-4 h-4" strokeWidth={2.25} />
-            {typeof task.weightKg === "number"
-              ? `${task.weightKg}kg`
-              : task.weightKg}
+            {formatWeightKg(task.weightKg)}
           </span>
         </div>
 
@@ -136,36 +110,44 @@ function TaskCard({ task }) {
               className="w-4 h-4 text-primary mt-0.5 shrink-0"
               strokeWidth={2}
             />
-            <span>{task.category}</span>
+            <span>{task.category ?? "—"}</span>
           </p>
           <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
             Mã report:{" "}
-            <span className="text-on-surface font-mono">{task.id}</span>
+            <span className="text-on-surface font-mono">{reportKey}</span>
           </p>
+          {phone ? (
+            <p className="flex items-start gap-2 pl-6 text-on-surface">
+              <Phone
+                className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                strokeWidth={2}
+              />
+              <span className="font-medium tabular-nums">{phone}</span>
+            </p>
+          ) : null}
           <p className="flex items-start gap-2">
             <FileText
               className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
               strokeWidth={2}
             />
-            <span className="leading-relaxed">{task.description}</span>
+            <span className="leading-relaxed">{task.description ?? "—"}</span>
           </p>
         </div>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm">
-          <span className="inline-flex items-center gap-2 font-semibold text-on-surface">
+          <span className="inline-flex items-center gap-2 font-semibold text-on-surface min-w-0">
             <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
-            {task.location}
+            <span className="truncate">{locationText || "—"}</span>
           </span>
-          <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium">
-            <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
-            Ngày tạo:{" "}
-            <time
-              dateTime={task.createdAt}
-              className="text-on-surface tabular-nums"
-            >
-              {task.createdAt}
-            </time>
-          </span>
+          {created ? (
+            <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium shrink-0">
+              <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
+              Ngày tạo:{" "}
+              <time dateTime={created} className="text-on-surface tabular-nums">
+                {created}
+              </time>
+            </span>
+          ) : null}
         </div>
       </article>
     </Link>
@@ -173,13 +155,37 @@ function TaskCard({ task }) {
 }
 
 export default function Tasks() {
-  const { user } = useOutletContext();
   const [page, setPage] = useState(1);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError("");
+    getCollectorAssignedReports()
+      .then((list) => {
+        if (!cancelled) setItems(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setLoadError(
+            err?.message || "Không tải được danh sách công việc.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const tasks = useMemo(
     () =>
-      MOCK_TASKS.filter((t) => COLLECTOR_ACTIVE_STATUSES.includes(t.status)),
-    [],
+      items.filter((t) => COLLECTOR_ACTIVE_STATUSES.includes(t.status)),
+    [items],
   );
 
   const totalPages = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE));
@@ -204,7 +210,20 @@ export default function Tasks() {
         </p>
       </header>
 
-      {tasks.length === 0 ? (
+      {loadError ? (
+        <div
+          className="rounded-2xl border border-red-200 bg-red-50/90 px-6 py-6 text-center text-sm text-red-800"
+          role="alert"
+        >
+          {loadError}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="rounded-2xl border border-surface-container-highest bg-surface-container-low/40 px-6 py-14 text-center text-on-surface-variant font-medium">
+          Đang tải danh sách…
+        </div>
+      ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
             Hiện không có công việc nào ở trạng thái &quot;Đã phân công&quot;
