@@ -2,6 +2,10 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import { acceptCollectorJob } from "../../api/collectorJobApi";
 
+/** Đồng bộ với UploadImageModal.jsx */
+const TOAST_AUTO_HIDE_MS = 2600;
+const TOAST_SUCCESS_CLOSE_MS = 2200;
+
 /**
  * PATCH /api/collector/jobs/{reportId}/accepted — body JSON: { note }
  *
@@ -9,14 +13,12 @@ import { acceptCollectorJob } from "../../api/collectorJobApi";
  * - open: boolean
  * - onClose: () => void
  * - reportId: number | string — mã báo cáo (path)
- * - reportTitle?: string — tiêu đề phụ
  * - onUpdated?: (jobDetail) => void — sau khi PATCH thành công
  */
 export default function UpdateStatusModal({
   open,
   onClose,
   reportId,
-  reportTitle,
   onUpdated,
 }) {
   const modalId = useId();
@@ -38,7 +40,7 @@ export default function UpdateStatusModal({
 
     const timer = window.setTimeout(() => {
       setSubmitToast(null);
-    }, 2600);
+    }, TOAST_AUTO_HIDE_MS);
 
     return () => window.clearTimeout(timer);
   }, [submitToast]);
@@ -46,12 +48,14 @@ export default function UpdateStatusModal({
   useEffect(() => {
     if (!submitToast || submitToast.type !== "success") return undefined;
 
+    const detail = submitToast.jobDetail;
     const timer = window.setTimeout(() => {
+      onUpdated?.(detail);
       onClose?.();
-    }, 2200);
+    }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [submitToast, onClose]);
+  }, [submitToast, onUpdated, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -87,11 +91,11 @@ export default function UpdateStatusModal({
       const jobDetail = await acceptCollectorJob(numericReportId, {
         note: trimmed ? trimmed : undefined,
       });
-      onUpdated?.(jobDetail);
       setSubmitToast({
         type: "success",
         title: "Xác nhận nhận việc thành công",
         message: "Bạn đã xác nhận nhận công việc thu gom.",
+        jobDetail,
       });
     } catch (error) {
       setSubmitToast({
@@ -105,8 +109,6 @@ export default function UpdateStatusModal({
       setSubmitting(false);
     }
   }
-
-  const heading = reportTitle?.trim() || "Công việc thu gom";
 
   return (
     <div
@@ -148,10 +150,13 @@ export default function UpdateStatusModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 min-w-0">
-            <h3 id={titleId} className="text-xl font-extrabold text-on-surface">
+            <p
+              id={titleId}
+              className="inline-flex items-center gap-2 text-lg font-extrabold text-primary"
+            >
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
               Xác nhận nhận việc
-            </h3>
-            <p className="text-sm text-on-surface-variant">{heading}</p>
+            </p>
           </div>
           <button
             type="button"

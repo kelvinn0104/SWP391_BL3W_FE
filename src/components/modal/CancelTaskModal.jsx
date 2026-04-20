@@ -2,23 +2,24 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, X } from 'lucide-react';
 import { cancelCollectorJob } from '../../api/collectorJobApi';
 
+/** Đồng bộ với UploadImageModal.jsx */
+const TOAST_AUTO_HIDE_MS = 2600;
+const TOAST_SUCCESS_CLOSE_MS = 2200;
+
 /**
  * Props:
  * - open: boolean
  * - onClose: () => void
  * - reportId: number | string | null — mã báo cáo
- * - reportTitle?: string
  * - onRejected?: (jobDetail) => void — sau khi PATCH thành công
  */
 export default function CancelTaskModal({
   open,
   onClose,
   reportId,
-  reportTitle,
   onRejected,
 }) {
   const modalId = useId();
-  const titleId = useMemo(() => `${modalId}-title`, [modalId]);
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitToast, setSubmitToast] = useState(null);
@@ -35,7 +36,7 @@ export default function CancelTaskModal({
 
     const timer = window.setTimeout(() => {
       setSubmitToast(null);
-    }, 2600);
+    }, TOAST_AUTO_HIDE_MS);
 
     return () => window.clearTimeout(timer);
   }, [submitToast]);
@@ -43,12 +44,14 @@ export default function CancelTaskModal({
   useEffect(() => {
     if (!submitToast || submitToast.type !== 'success') return undefined;
 
+    const detail = submitToast.jobDetail;
     const timer = window.setTimeout(() => {
+      onRejected?.(detail);
       onClose?.();
-    }, 2200);
+    }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [submitToast, onClose]);
+  }, [submitToast, onRejected, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -84,11 +87,11 @@ export default function CancelTaskModal({
       const jobDetail = await cancelCollectorJob(numericReportId, {
         note: trimmed ? trimmed : undefined,
       });
-      onRejected?.(jobDetail);
       setSubmitToast({
         type: 'success',
         title: 'Đã từ chối công việc',
         message: 'Báo cáo đã được cập nhật theo yêu cầu từ chối.',
+        jobDetail,
       });
     } catch (error) {
       setSubmitToast({
@@ -101,14 +104,12 @@ export default function CancelTaskModal({
     }
   }
 
-  const heading = reportTitle?.trim() || 'Công việc thu gom';
-
   return (
     <div
       className="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[1px] px-4 py-6 sm:py-10 flex justify-center items-start overflow-y-auto"
       role="dialog"
       aria-modal="true"
-      aria-labelledby={titleId}
+      aria-label="Từ chối công việc"
       onClick={onClose}
     >
       {submitToast ? (
@@ -140,15 +141,9 @@ export default function CancelTaskModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="inline-flex items-center gap-2 text-sm font-black text-rose-600">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <p className="inline-flex items-center gap-2 text-lg font-extrabold text-rose-600">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
               Từ chối công việc
-            </p>
-            <h3 id={titleId} className="text-xl font-extrabold text-on-surface">
-              {heading}
-            </h3>
-            <p className="text-sm text-on-surface-variant">
-              Báo cáo sẽ trở lại trạng thái chờ phân công. Bạn có thể ghi chú lý do (tuỳ chọn).
             </p>
           </div>
           <button
@@ -173,7 +168,7 @@ export default function CancelTaskModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              placeholder="Nhập lý do hoặc ghi chú..."
+              placeholder="Nhập lý do hoặc ghi chú (tuỳ chọn)..."
               className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>

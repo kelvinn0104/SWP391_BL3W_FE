@@ -60,8 +60,6 @@ import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminFeedbackDetail from "./pages/admin/AdminFeedbackDetail";
 import CitizenList from "./pages/admin/CitizenList";
 import CollectorList from "./pages/admin/CollectorList";
-import WasteCategory from "./pages/admin/WasteCategory";
-import Area from "./pages/admin/Area";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -558,11 +556,6 @@ export default function App() {
         {/* Admin routes */}
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-          <Route path="system" element={<Outlet />}>
-            <Route index element={<Navigate to="waste-categories" replace />} />
-            <Route path="waste-categories" element={<WasteCategory />} />
-            <Route path="areas" element={<Area />} />
-          </Route>
           <Route path="accounts" element={<Outlet />}>
             <Route index element={<Navigate to="citizens" replace />} />
             <Route path="citizens" element={<CitizenList />} />

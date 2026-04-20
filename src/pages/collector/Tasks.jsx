@@ -73,15 +73,29 @@ function resolveCreatedDate(task) {
   return "";
 }
 
+function formatDateDdMmYyyy(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    const s = String(value);
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return s;
+  }
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(d.getFullYear());
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function TaskCard({ task }) {
-  const reportKey = task.reportId ?? task.id;
   const locationText = task.location ?? task.locationText ?? "";
   const phone = task.citizen?.phoneNumber?.trim();
   const created = resolveCreatedDate(task);
 
   return (
     <Link
-      to={`/collector/tasks/${encodeURIComponent(String(reportKey))}`}
+      to={`/collector/tasks/${encodeURIComponent(String(task.id))}`}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
       <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
@@ -104,33 +118,29 @@ function TaskCard({ task }) {
           </span>
         </div>
 
-        <div className="space-y-2.5 text-sm text-on-surface-variant">
-          <p className="flex items-start gap-2 font-medium text-on-surface">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <p className="flex items-center gap-2 font-medium text-on-surface">
             <Leaf
-              className="w-4 h-4 text-primary mt-0.5 shrink-0"
+              className="w-4 h-4 text-primary shrink-0"
               strokeWidth={2}
             />
             <span>{task.category ?? "—"}</span>
           </p>
-          <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
-            Mã report:{" "}
-            <span className="text-on-surface font-mono">{reportKey}</span>
-          </p>
           {phone ? (
-            <p className="flex items-start gap-2 pl-6 text-on-surface">
+            <p className="flex items-center gap-2 text-on-surface font-medium tabular-nums">
               <Phone
-                className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                className="w-4 h-4 text-primary shrink-0"
                 strokeWidth={2}
               />
-              <span className="font-medium tabular-nums">{phone}</span>
+              <span>{phone}</span>
             </p>
           ) : null}
-          <p className="flex items-start gap-2">
+          <p className="flex items-center gap-2 text-on-surface-variant min-w-0 flex-1">
             <FileText
-              className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
+              className="w-4 h-4 text-on-surface-variant shrink-0"
               strokeWidth={2}
             />
-            <span className="leading-relaxed">{task.description ?? "—"}</span>
+            <span className="truncate">{task.description ?? "—"}</span>
           </p>
         </div>
 
@@ -144,7 +154,7 @@ function TaskCard({ task }) {
               <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
               Ngày tạo:{" "}
               <time dateTime={created} className="text-on-surface tabular-nums">
-                {created}
+                {formatDateDdMmYyyy(created)}
               </time>
             </span>
           ) : null}
