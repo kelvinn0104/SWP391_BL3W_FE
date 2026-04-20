@@ -65,29 +65,40 @@ export async function getCollectorJobDetail(reportId) {
 }
 
 /**
- * PATCH /api/collector/jobs/{reportId}/status
- * Body JSON: { status, note? } — status theo WasteReportStatus (ví dụ Assigned, Accepted, Pending, Collected).
+ * PATCH /api/collector/jobs/{reportId}/accepted
+ * Body JSON: { note }
  */
-export async function updateCollectorJobStatus(reportId, { status, note }) {
+export async function acceptCollectorJob(reportId, { note } = {}) {
   const safe = encodeURIComponent(String(reportId));
-  return apiFetch(`/api/collector/jobs/${safe}/status`, {
+  return apiFetch(`/api/collector/jobs/${safe}/accepted`, {
     method: 'PATCH',
-    body: JSON.stringify({ status, note }),
+    body: JSON.stringify({ note }),
+  });
+}
+
+/**
+ * PATCH /api/collector/jobs/{reportId}/cancelled
+ * Body JSON: { note }
+ */
+export async function cancelCollectorJob(reportId, { note }) {
+  const safe = encodeURIComponent(String(reportId));
+  return apiFetch(`/api/collector/jobs/${safe}/cancelled`, {
+    method: 'PATCH',
+    body: JSON.stringify({ note }),
   });
 }
 
 /**
  * POST /api/collector/jobs/{reportId}/complete
- * multipart/form-data:
- * - Images, ProofImages: lặp key cho từng file
- * - Note, CompletionNote, CompletedAtUtc (ISO 8601)
- * - WasteReportItemIds, ActualWeightKgs: hai mảnh song song cùng độ dài (bắt buộc theo nghiệp vụ backend)
+ * multipart/form-data (theo Swagger):
+ * - ProofImages: lặp key cho từng file
+ * - CompletionNote (string)
+ * - CompletedAtUtc (date-time, ISO 8601)
+ * - WasteReportItemIds, ActualWeightKgs: hai mảng song song cùng độ dài
  */
 export async function completeCollectorJob(reportId, payload = {}) {
   const {
-    images = [],
     proofImages = [],
-    note,
     completionNote,
     completedAtUtc,
     wasteReportItemIds = [],
@@ -97,20 +108,12 @@ export async function completeCollectorJob(reportId, payload = {}) {
   const safe = encodeURIComponent(String(reportId));
   const formData = new FormData();
 
-  (images ?? []).forEach((file) => {
-    if (file && file.size > 0) {
-      formData.append('Images', file);
-    }
-  });
   (proofImages ?? []).forEach((file) => {
     if (file && file.size > 0) {
       formData.append('ProofImages', file);
     }
   });
 
-  if (note != null && note !== '') {
-    formData.append('Note', note);
-  }
   if (completionNote != null && completionNote !== '') {
     formData.append('CompletionNote', completionNote);
   }

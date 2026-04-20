@@ -16,8 +16,9 @@ import {
 import CancelTaskModal from "../../components/modal/CancelTaskModal";
 import UploadImageModal from "../../components/modal/UploadImageModal";
 import UpdateStatusModal from "../../components/modal/UpdateStatusModal";
+import { getCollectorJobDetail } from "../../api/collectorJobApi";
 import { MOCK_HISTORY_TASKS } from "./HistoryTasks";
-import { MOCK_TASKS, statusBadgeClass } from "./Tasks";
+import { collectorStatusLabel, statusBadgeClass } from "./Tasks";
 
 function mapEmbedSrc(lat, lng) {
   const q = `${lat},${lng}`;
@@ -38,11 +39,69 @@ function resolveReportIdForApi(task) {
 const STATUS_ASSIGNED = "Đã phân công";
 const STATUS_ON_THE_WAY = "Đang trên đường";
 
+function taskMatchesRouteId(t, routeId) {
+  if (!t || routeId === "") return false;
+  return (
+    String(t.id) === routeId ||
+    String(t.reportId ?? "") === routeId
+  );
+}
+
+function isAssignedForActions(status) {
+  return (
+    status === STATUS_ASSIGNED ||
+    status === "Assigned"
+  );
+}
+
+function isOnTheWayForActions(status) {
+  return (
+    status === STATUS_ON_THE_WAY ||
+    status === "Accepted"
+  );
+}
+
 export default function TaskDetail() {
   const navigate = useNavigate();
   const { id: rawId } = useParams();
   const id = rawId ? decodeURIComponent(rawId) : "";
-  const task = [...MOCK_TASKS, ...MOCK_HISTORY_TASKS].find((t) => t.id === id);
+  const [apiDetail, setApiDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const mockTask = useMemo(
+    () =>
+      MOCK_HISTORY_TASKS.find((t) => taskMatchesRouteId(t, id)),
+    [id],
+  );
+
+  useEffect(() => {
+    if (mockTask) {
+      setApiDetail(null);
+      return;
+    }
+    const n = Number(id);
+    if (!Number.isFinite(n) || n <= 0) {
+      setApiDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setDetailLoading(true);
+    getCollectorJobDetail(n)
+      .then((d) => {
+        if (!cancelled) setApiDetail(d);
+      })
+      .catch(() => {
+        if (!cancelled) setApiDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, mockTask]);
+
+  const task = mockTask ?? apiDetail;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -53,13 +112,40 @@ export default function TaskDetail() {
     setActiveImageIndex(0);
   }, [id]);
 
-  const images = task?.images ?? [];
+  const images = useMemo(() => {
+    const a = task?.images;
+    const b = task?.imageUrls;
+    const list = [
+      ...(Array.isArray(a) ? a : []),
+      ...(Array.isArray(b) ? b : []),
+    ];
+    return list.filter(Boolean);
+  }, [task]);
   const activeSrc = images[activeImageIndex] ?? images[0];
 
   const embedSrc = useMemo(() => {
     if (!task?.coordinates) return null;
     return mapEmbedSrc(task.coordinates.lat, task.coordinates.lng);
   }, [task]);
+
+  if (detailLoading && !task) {
+    return (
+      <div className="relative min-h-full overflow-x-hidden">
+        <div className="relative z-0 px-4 sm:px-6 md:px-0 py-10 sm:py-14 space-y-6">
+          <Link
+            to="/collector/tasks"
+            className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại danh sách công việc
+          </Link>
+          <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant font-medium">
+            Đang tải chi tiết…
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!task) {
     return (
@@ -84,8 +170,9 @@ export default function TaskDetail() {
   const weightLabel =
     typeof task.weightKg === "number" ? `${task.weightKg}kg` : task.weightKg;
 
-  const showAssignedActions = task.status === STATUS_ASSIGNED;
-  const showConfirmPickup = task.status === STATUS_ON_THE_WAY;
+  const showAssignedActions = isAssignedForActions(task.status);
+  const showConfirmPickup = isOnTheWayForActions(task.status);
+  const reportDisplayId = task.reportId ?? task.id;
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -113,12 +200,14 @@ export default function TaskDetail() {
                     task.status,
                   )}`}
                 >
-                  {task.status}
+                  {collectorStatusLabel(task.status)}
                 </span>
               </div>
               <p className="text-sm font-semibold text-on-surface-variant">
                 Mã report:{" "}
-                <span className="text-on-surface font-mono">{task.id}</span>
+                <span className="text-on-surface font-mono">
+                  {reportDisplayId}
+                </span>
               </p>
               <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
                 <Leaf className="w-4 h-4 shrink-0" />
@@ -127,11 +216,21 @@ export default function TaskDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-on-surface-variant pt-1">
                 <div className="inline-flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-primary shrink-0" />
-                  <span>{task.location}</span>
+                  <span>
+                    {task.location ?? task.locationText ?? "—"}
+                  </span>
                 </div>
                 <div className="inline-flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-primary shrink-0" />
-                  <span>Ngày tạo: {task.createdAt}</span>
+                  <span>
+                    Ngày tạo:{" "}
+                    {task.createdAt ??
+                      (task.createdAtUtc
+                        ? new Date(task.createdAtUtc)
+                            .toISOString()
+                            .slice(0, 10)
+                        : "—")}
+                  </span>
                 </div>
               </div>
               <div className="rounded-2xl border border-surface-container-high/70 bg-surface-container-low/50 p-4 sm:p-5">
@@ -164,7 +263,7 @@ export default function TaskDetail() {
                   {activeSrc ? (
                     <img
                       src={activeSrc}
-                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${task.id}`}
+                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${reportDisplayId}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -176,7 +275,7 @@ export default function TaskDetail() {
                       const isActive = index === activeImageIndex;
                       return (
                         <button
-                          key={`${task.id}-img-${index}`}
+                          key={`${reportDisplayId}-img-${index}`}
                           type="button"
                           onClick={() => setActiveImageIndex(index)}
                           className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
@@ -281,7 +380,6 @@ export default function TaskDetail() {
         onClose={() => setUpdateStatusOpen(false)}
         reportId={resolveReportIdForApi(task)}
         reportTitle={task.title}
-        initialStatus="Assigned"
         onUpdated={() => navigate("/collector/tasks")}
       />
 
