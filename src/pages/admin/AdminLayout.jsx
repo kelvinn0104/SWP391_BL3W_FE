@@ -3,7 +3,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
-  Settings,
   MessageSquare,
   Ticket,
   ShieldCheck,
@@ -24,9 +23,6 @@ export default function AdminLayout() {
   const accountsActive = location.pathname.startsWith("/admin/accounts");
   const accountsMenuId = "admin-accounts-menu";
   const [accountsOpen, setAccountsOpen] = useState(accountsActive);
-  const systemActive = location.pathname.startsWith("/admin/system");
-  const systemMenuId = "admin-system-menu";
-  const [systemOpen, setSystemOpen] = useState(systemActive);
 
   useEffect(() => {
     const usr = getUser();
@@ -45,10 +41,6 @@ export default function AdminLayout() {
   useEffect(() => {
     if (accountsActive) setAccountsOpen(true);
   }, [accountsActive]);
-
-  useEffect(() => {
-    if (systemActive) setSystemOpen(true);
-  }, [systemActive]);
 
   if (!user) return null;
 
@@ -124,92 +116,6 @@ export default function AdminLayout() {
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-sm">Tổng quan</span>
           </NavLink>
-
-          <div className="space-y-1.5">
-            <div
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
-                systemActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-              }`}
-            >
-              <NavLink
-                to="/admin/system/waste-categories"
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                  setSystemOpen(true);
-                }}
-                className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none"
-              >
-                <Settings className="w-5 h-5 shrink-0" />
-                <span className="text-sm truncate whitespace-nowrap">
-                  Quản lí hệ thống
-                </span>
-              </NavLink>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setSystemOpen((v) => !v);
-                }}
-                className="p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                aria-expanded={systemOpen}
-                aria-controls={systemMenuId}
-                aria-label={systemOpen ? "Thu gọn" : "Mở rộng"}
-              >
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform ${
-                    systemOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-            </div>
-
-            <AnimatePresence initial={false}>
-              {systemOpen && (
-                <motion.div
-                  id={systemMenuId}
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="pl-8 pr-2 py-1 space-y-1">
-                    <NavLink
-                      to="/admin/system/waste-categories"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
-                          isActive
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-                        }`
-                      }
-                    >
-                      <span className="text-sm">Loại rác</span>
-                    </NavLink>
-
-                    <NavLink
-                      to="/admin/system/areas"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
-                          isActive
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-                        }`
-                      }
-                    >
-                      <span className="text-sm">Khu vực</span>
-                    </NavLink>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
           <div className="space-y-1.5">
             <div
