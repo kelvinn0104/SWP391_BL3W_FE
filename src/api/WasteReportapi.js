@@ -46,6 +46,11 @@ async function apiFetch(endpoint, options = {}) {
   return keysToCamel(data);
 }
 
+export async function getAllWasteReports() {
+  const data = await apiFetch('/api/waste-reports/get-all');
+  return Array.isArray(data) ? data : [];
+}
+
 export async function getWasteReportCategories() {
   const data = await apiFetch('/api/waste-reports/categories');
   return Array.isArray(data) ? data : [];
@@ -100,6 +105,24 @@ export async function cancelWasteReport(id, note) {
     body: JSON.stringify({
       note: typeof note === 'string' ? note : '',
     }),
+  });
+}
+
+export async function updateWasteReportStatus(id, status, note = '') {
+  if (status === 'Cancelled') {
+    return cancelWasteReport(id, note);
+  }
+  
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}/advance-status`, {
+    method: 'POST',
+    body: JSON.stringify({ note }),
+  });
+}
+
+export async function assignWasteReportCollector(id, collectorId) {
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}/assign-collector`, {
+    method: 'PATCH',
+    body: JSON.stringify({ collectorId }),
   });
 }
 
