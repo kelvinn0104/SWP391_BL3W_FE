@@ -144,11 +144,11 @@ export default function Requests() {
   );
 
   const tabs = [
-    { id: 'All', label: 'Tất cả', count: requests.length },
-    { id: 'Pending', label: 'Mới', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
-    { id: 'Assigned', label: 'Đã điều phối', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
-    { id: 'Accepted', label: 'Đang thu gom', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
-    { id: 'Collected', label: 'Đã hoàn thành', count: requests.filter(r => r.status === 'Collected').length, color: 'text-emerald-500' }
+    { id: 'All', label: 'All', count: requests.length },
+    { id: 'Pending', label: 'Pending', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
+    { id: 'Assigned', label: 'Assigned', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
+    { id: 'Accepted', label: 'Accepted', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
+    { id: 'Collected', label: 'Collected', count: requests.filter(r => r.status === 'Collected').length, color: 'text-emerald-500' }
   ];
 
   return (
@@ -320,11 +320,11 @@ export default function Requests() {
 function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel, index }) {
   const getStatusBadge = () => {
     switch(req.status) {
-      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
-      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: UsersIcon, label: 'Đã điều phối' };
-      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: Truck, label: 'Đang đi' };
-      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
-      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
+      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Pending' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: UsersIcon, label: 'Assigned' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: Truck, label: 'Accepted' };
+      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Collected' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Cancelled' };
       default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
     }
   };
@@ -532,11 +532,11 @@ function CoordinationDrawer({ req, onAssign, onClose }) {
 function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCancel, readOnly = false }) {
   const currentStatus = (() => {
     switch(req.status) {
-      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
-      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Đã duyệt' };
-      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Đang đi' };
-      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
-      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
+      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Pending' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Accepted' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Assigned' };
+      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Collected' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Cancelled' };
       default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
     }
   })();
@@ -672,9 +672,9 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                     </div>
                     <div className="flex flex-col gap-2">
                       {[
-                        { id: 'Accepted', label: 'Duyệt hồ sơ', color: 'bg-blue-500' },
-                        { id: 'Assigned', label: 'Đang vận chuyển', color: 'bg-indigo-500' },
-                        { id: 'Collected', label: 'Đã hoàn thành', color: 'bg-emerald-500' }
+                        { id: 'Accepted', label: 'Accepted', color: 'bg-blue-500' },
+                        { id: 'Assigned', label: 'Assigned', color: 'bg-indigo-500' },
+                        { id: 'Collected', label: 'Collected', color: 'bg-emerald-500' }
                       ].map(s => (
                         <button 
                           key={s.id} 

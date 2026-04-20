@@ -36,8 +36,8 @@ function resolveReportIdForApi(task) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-const STATUS_ASSIGNED = "Đã phân công";
-const STATUS_ON_THE_WAY = "Đang trên đường";
+const STATUS_ASSIGNED = "Assigned";
+const STATUS_ON_THE_WAY = "Accepted";
 
 function taskMatchesRouteId(t, routeId) {
   if (!t || routeId === "") return false;
