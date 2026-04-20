@@ -9,7 +9,7 @@ const REPORTS_PER_PAGE = 5;
 
 const REPORT_STATUS_OPTIONS = [
   { value: 'Pending', label: 'Chờ duyệt' },
-  { value: 'Accepted', label: 'Đã chấp nhận' },
+  // { value: 'Accepted', label: 'Đã chấp nhận' },
   { value: 'Assigned', label: 'Đã phân công' },
   { value: 'Collected', label: 'Đã thu gom' },
   { value: 'Cancelled', label: 'Đã hủy' },
@@ -18,6 +18,7 @@ const REPORT_STATUS_OPTIONS = [
 const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];
 export const MY_REPORTS = [];
 const ESTIMATED_POINT_VISIBLE_STATUSES = new Set(['Pending', 'Accepted', 'Assigned']);
+const CANCELED_STATUSES = new Set(['Cancelled', 'Canceled']);
 
 export function getStatusLabel(status) {
   return REPORT_STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status;
@@ -33,6 +34,7 @@ export function statusClassName(status) {
       return 'bg-violet-50 text-violet-700 border-violet-200';
     case 'Collected':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'Cancelled':
     case 'Canceled':
       return 'bg-rose-50 text-rose-700 border-rose-200';
     default:
@@ -82,6 +84,7 @@ export default function Report() {
             createdAt: formattedDate,
             weight: `${Math.round(totalWeight * 10) / 10}kg`,
             status: report.status || 'Pending',
+            cancellationReason: String(report.cancellationReason ?? report.note ?? '').trim(),
             estimatedTotalPoints: Number(report.estimatedTotalPoints ?? 0),
             finalRewardPoints: Number(report.finalRewardPoints ?? 0),
           };
@@ -146,7 +149,7 @@ export default function Report() {
         item.id === String(reportId)
           ? {
             ...item,
-            status: nextStatus || 'Canceled',
+            status: nextStatus || 'Cancelled',
           }
           : item
       )
@@ -294,6 +297,12 @@ export default function Report() {
                         >
                           {getStatusLabel(report.status)}
                         </span>
+                        {CANCELED_STATUSES.has(report.status) && Boolean(report.cancellationReason) && (
+                          <span className="inline-flex items-center rounded-full border border-surface-container-high bg-surface px-3 py-1 text-xs font-bold text-on-surface-variant">
+                            <span className="font-black text-on-surface-variant">Note:</span>
+                            <span className="ml-1">{report.cancellationReason}</span>
+                          </span>
+                        )}
                       </div>
                       <div className="inline-flex items-center gap-2 text-sm font-bold text-primary">
                         <Tag className="w-4 h-4 shrink-0" />
