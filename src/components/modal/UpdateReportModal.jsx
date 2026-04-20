@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { getWasteReportCategories, updateWasteReport } from '../../api/WasteReportapi';
+import { getCapacity } from '../../api/areaApi';
 
 const MAX_REPORT_TOTAL_KG = 10;
 const MAX_REPORT_IMAGES = 3;
@@ -40,7 +41,9 @@ function getReportLineItems(categories, categoryDetails) {
 export default function UpdateReportModal({ open, onClose, initialDetail, onUpdated }) {
   const formId = useId();
   const [title, setTitle] = useState('');
-  const [address, setAddress] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState([]);
   const [categoryDetails, setCategoryDetails] = useState({});
@@ -51,6 +54,9 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
+  const [areas, setAreas] = useState([]);
+  const [loadingAreas, setLoadingAreas] = useState(true);
+  const [areaError, setAreaError] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -80,6 +86,32 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     }
 
     loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let isMounted = true;
+
+    async function loadAreas() {
+      setLoadingAreas(true);
+      setAreaError('');
+      try {
+        const data = await getCapacity();
+        if (!isMounted) return;
+        setAreas(Array.isArray(data?.areas) ? data.areas : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setAreas([]);
+        setAreaError(error?.message || 'Không thể tải danh sách khu vực.');
+      } finally {
+        if (isMounted) setLoadingAreas(false);
+      }
+    }
+
+    loadAreas();
     return () => {
       isMounted = false;
     };
@@ -121,7 +153,22 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     }));
 
     setTitle(initialDetail?.title ?? '');
-    setAddress(initialDetail?.locationText ?? '');
+
+    const rawLocation = String(initialDetail?.locationText ?? '').trim();
+    const parts = rawLocation
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length >= 3) {
+      setStreetAddress(parts.slice(0, -2).join(', '));
+      setSelectedWard(parts[parts.length - 2]);
+      setSelectedDistrict(parts[parts.length - 1]);
+    } else {
+      setStreetAddress(rawLocation);
+      setSelectedWard('');
+      setSelectedDistrict('');
+    }
+
     setDescription(initialDetail?.description ?? '');
     setCategories(uniqueCategories);
     setCategoryDetails(details);
@@ -255,6 +302,30 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
         .join(' + ')
     : '';
 
+  const districtOptions = Array.from(
+    new Set(
+      areas
+        .map((a) => a?.district)
+        .filter((d) => typeof d === 'string' && d.trim().length > 0)
+        .map((d) => d.trim())
+    )
+  ).sort((a, b) => a.localeCompare(b, 'vi'));
+
+  const wardsForSelectedDistrict = areas.find((a) => a?.district === selectedDistrict)?.wards ?? [];
+  const wardOptions = Array.from(
+    new Set(
+      (Array.isArray(wardsForSelectedDistrict) ? wardsForSelectedDistrict : [])
+        .map((w) => (typeof w === 'string' ? w : (w?.name ?? w?.Name ?? '')))
+        .filter((name) => typeof name === 'string' && name.trim().length > 0)
+        .map((w) => w.trim())
+    )
+  ).sort((a, b) => a.localeCompare(b, 'vi'));
+
+  const locationPreview = [streetAddress, selectedWard, selectedDistrict]
+    .map((v) => String(v || '').trim())
+    .filter(Boolean)
+    .join(', ');
+
   const canSubmit =
     Boolean(title.trim()) &&
     Boolean(description.trim()) &&
@@ -292,10 +363,16 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     setSubmitSuccess('');
     try {
       const images = reportGallery.filter((g) => g.kind === 'new').map((g) => g.file);
+      const locationParts = [
+        String(streetAddress || '').trim(),
+        String(selectedWard || '').trim(),
+        String(selectedDistrict || '').trim(),
+      ].filter(Boolean);
+      const locationText = locationParts.join(', ');
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        locationText: address.trim(),
+        locationText,
         wasteCategoryIds: selectedItems.map((item) => item.categoryId),
         estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
         images,
@@ -498,22 +575,86 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
               )}
 
               <div className="space-y-2">
-                <label
-                  htmlFor={`${formId}-address`}
-                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                >
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Địa chỉ
-                </label>
-                <input
-                  id={`${formId}-address`}
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  disabled={submitting}
-                  placeholder="VD: Quận 3, TP.HCM — gần địa danh / hẻm"
-                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
-                />
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <label className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    Địa chỉ
+                  </label>
+                  {locationPreview && (
+                    <span className="text-xs font-bold text-on-surface-variant">
+                      {locationPreview}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`${formId}-district`}
+                      className="text-xs font-bold text-on-surface-variant"
+                    >
+                      Quận / Huyện
+                    </label>
+                    <select
+                      id={`${formId}-district`}
+                      value={selectedDistrict}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setSelectedDistrict(next);
+                        setSelectedWard('');
+                      }}
+                      disabled={submitting || loadingAreas}
+                      className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow disabled:opacity-60"
+                    >
+                      <option value="">
+                        {loadingAreas ? 'Đang tải...' : 'Chọn quận/huyện'}
+                      </option>
+                      {districtOptions.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    {areaError && <p className="text-xs text-error">{areaError}</p>}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor={`${formId}-ward`} className="text-xs font-bold text-on-surface-variant">
+                      Phường / Xã
+                    </label>
+                    <select
+                      id={`${formId}-ward`}
+                      value={selectedWard}
+                      onChange={(e) => setSelectedWard(e.target.value)}
+                      disabled={submitting || loadingAreas || !selectedDistrict}
+                      className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow disabled:opacity-60"
+                    >
+                      <option value="">
+                        {!selectedDistrict ? 'Chọn quận/huyện trước' : 'Chọn phường/xã'}
+                      </option>
+                      {wardOptions.map((w) => (
+                        <option key={w} value={w}>
+                          {w}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor={`${formId}-street`} className="text-xs font-bold text-on-surface-variant">
+                    Số nhà &amp; tên đường
+                  </label>
+                  <input
+                    id={`${formId}-street`}
+                    type="text"
+                    value={streetAddress}
+                    onChange={(e) => setStreetAddress(e.target.value)}
+                    disabled={submitting}
+                    placeholder="VD: 12/5 Nguyễn Trãi"
+                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
