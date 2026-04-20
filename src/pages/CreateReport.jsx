@@ -16,6 +16,7 @@ import { getUser } from '../lib/auth';
 import { createWasteReport, getWasteReportCategories } from '../api/WasteReportapi';
 
 const MAX_REPORT_TOTAL_KG = 10;
+const MAX_REPORT_IMAGES = 3;
 
 function getReportLineItems(categories, categoryDetails) {
     return categories
@@ -40,6 +41,7 @@ export default function CreateReport() {
     const [address, setAddress] = useState('');
     const [description, setDescription] = useState('');
     const [categoryDetails, setCategoryDetails] = useState({});
+    const [reportImages, setReportImages] = useState({ files: [], previews: [] });
     const [submitting, setSubmitting] = useState(false);
     const [showPhoneToast, setShowPhoneToast] = useState(false);
     const [submitToast, setSubmitToast] = useState(null);
@@ -83,11 +85,9 @@ export default function CreateReport() {
 
     useEffect(() => {
         return () => {
-            Object.values(categoryDetails).forEach((detail) => {
-                detail.imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-            });
+            reportImages.previews.forEach((url) => URL.revokeObjectURL(url));
         };
-    }, [categoryDetails]);
+    }, [reportImages]);
 
     useEffect(() => {
         if (!showPhoneToast) return undefined;
@@ -119,11 +119,10 @@ export default function CreateReport() {
         setCategoryDetails((current) => {
             const exists = Boolean(current[category]);
             if (exists) {
-                current[category].imagePreviews.forEach((url) => URL.revokeObjectURL(url));
                 const { [category]: _removed, ...rest } = current;
                 return rest;
             }
-            return { ...current, [category]: { quantityKg: '', imagePreviews: [], imageFiles: [] } };
+            return { ...current, [category]: { quantityKg: '' } };
         });
     }
 
@@ -131,25 +130,31 @@ export default function CreateReport() {
         setCategoryDetails((current) => ({
             ...current,
             [category]: {
-                ...(current[category] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] }),
+                ...(current[category] ?? { quantityKg: '' }),
                 quantityKg: value,
             },
         }));
     }
 
-    function onCategoryImagesChange(category, e) {
-        const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/'));
-        setCategoryDetails((current) => {
-            const prev = current[category] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] };
-            prev.imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    function onReportImagesChange(e) {
+        const incoming = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/'));
+        setReportImages((prev) => {
+            prev.previews.forEach((url) => URL.revokeObjectURL(url));
+            const combined = [...prev.files, ...incoming].slice(0, MAX_REPORT_IMAGES);
             return {
-                ...current,
-                [category]: {
-                    ...prev,
-                    imageFiles: files,
-                    imagePreviews: files.map((file) => URL.createObjectURL(file)),
-                },
+                files: combined,
+                previews: combined.map((file) => URL.createObjectURL(file)),
             };
+        });
+        e.target.value = '';
+    }
+
+    function removeReportImageAt(index) {
+        setReportImages((prev) => {
+            const nextFiles = prev.files.filter((_, i) => i !== index);
+            URL.revokeObjectURL(prev.previews[index]);
+            const nextPreviews = prev.previews.filter((_, i) => i !== index);
+            return { files: nextFiles, previews: nextPreviews };
         });
     }
 
@@ -188,17 +193,13 @@ export default function CreateReport() {
 
         setSubmitting(true);
         try {
-            const allImageFiles = categories.flatMap(
-                (categoryId) => categoryDetails[categoryId]?.imageFiles ?? []
-            );
-
             const payload = {
                 title: title.trim(),
                 description: description.trim(),
                 locationText: address.trim(),
                 wasteCategoryIds: selectedItems.map((item) => item.categoryId),
                 estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
-                images: allImageFiles,
+                images: reportImages.files,
             };
 
             await createWasteReport(payload);
@@ -357,8 +358,8 @@ export default function CreateReport() {
                                 Báo cáo <span className="not-italic text-primary">rác thải tái chế</span>
                             </h1>
                             <p className="text-on-surface-variant max-w-2xl">
-                                Điền tiêu đề, ảnh minh họa, thể loại, địa chỉ, số lượng (khối lượng ước tính) và mô tả để gửi
-                                yêu cầu thu gom.
+                                Điền tiêu đề, ảnh minh họa (tối đa {MAX_REPORT_IMAGES} ảnh), thể loại, địa chỉ, số lượng (khối
+                                lượng ước tính) và mô tả để gửi yêu cầu thu gom.
                             </p>
                         </div>
 
@@ -382,6 +383,53 @@ export default function CreateReport() {
                                             placeholder="VD: Nhựa và lon tại hẻm 12"
                                             className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                                         />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-bold text-on-surface">Hình ảnh minh họa</p>
+                                        <p className="text-xs text-on-surface-variant">
+                                            Tối đa {MAX_REPORT_IMAGES} ảnh (PNG, JPG). Có thể chọn nhiều lần cho đến khi đủ{' '}
+                                            {MAX_REPORT_IMAGES} ảnh.
+                                        </p>
+                                        <label
+                                            htmlFor={`${formId}-report-images`}
+                                            className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-surface-container-high bg-surface-container-low/40 px-3 py-4 text-center transition-colors ${reportImages.files.length >= MAX_REPORT_IMAGES
+                                                ? 'cursor-not-allowed opacity-60'
+                                                : 'cursor-pointer hover:border-primary/40 hover:bg-surface-container-low/70'
+                                                }`}
+                                        >
+                                            <span className="text-sm font-semibold text-on-surface">Chọn ảnh</span>
+                                            <span className="text-xs text-on-surface-variant">PNG, JPG</span>
+                                            <input
+                                                id={`${formId}-report-images`}
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                disabled={reportImages.files.length >= MAX_REPORT_IMAGES}
+                                                onChange={onReportImagesChange}
+                                                className="sr-only"
+                                            />
+                                        </label>
+                                        {reportImages.previews.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {reportImages.previews.map((src, idx) => (
+                                                    <div
+                                                        key={src}
+                                                        className="group relative h-20 w-20 overflow-hidden rounded-xl border border-surface-container-high bg-surface-container-low"
+                                                    >
+                                                        <img src={src} alt="" className="h-full w-full object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeReportImageAt(idx)}
+                                                            className="absolute inset-0 flex items-center justify-center bg-on-surface/55 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                                            aria-label="Xóa ảnh"
+                                                        >
+                                                            Xóa
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -426,7 +474,7 @@ export default function CreateReport() {
                                             <p className="text-sm font-extrabold text-on-surface">Thông tin theo từng thể loại</p>
                                             <div className="space-y-3">
                                                 {categories.map((categoryId) => {
-                                                    const detail = categoryDetails[categoryId] ?? { quantityKg: '', imagePreviews: [], imageFiles: [] };
+                                                    const detail = categoryDetails[categoryId] ?? { quantityKg: '' };
                                                     const categoryName = categoryOptions.find(
                                                         (option) => String(option.id) === categoryId
                                                     )?.name ?? categoryId;
@@ -440,57 +488,24 @@ export default function CreateReport() {
                                                                 <span>{categoryName}</span>
                                                             </div>
 
-                                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                                                                <div className="rounded-2xl border border-surface-container-high bg-surface p-3 space-y-2 md:col-span-4">
-                                                                    <label
-                                                                        htmlFor={`${formId}-qty-${categoryId}`}
-                                                                        className="text-sm font-bold text-on-surface"
-                                                                    >
-                                                                        Số lượng (kg)
-                                                                    </label>
-                                                                    <input
-                                                                        id={`${formId}-qty-${categoryId}`}
-                                                                        type="number"
-                                                                        inputMode="decimal"
-                                                                        min="0"
-                                                                        step="0.1"
-                                                                        value={detail.quantityKg}
-                                                                        onChange={(e) => setCategoryQuantity(categoryId, e.target.value)}
-                                                                        placeholder="VD: 3.2"
-                                                                        className="w-full rounded-2xl border border-surface-container-high bg-surface px-3 py-2.5 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
-                                                                    />
-                                                                </div>
-
-                                                                <div className="rounded-2xl border border-surface-container-high bg-surface p-3 space-y-2 md:col-span-8">
-                                                                    <p className="text-sm font-bold text-on-surface">Hình ảnh minh họa</p>
-                                                                    <label
-                                                                        htmlFor={`${formId}-images-${categoryId}`}
-                                                                        className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-surface-container-high bg-surface-container-low/40 px-3 py-4 text-center cursor-pointer hover:border-primary/40 hover:bg-surface-container-low/70 transition-colors"
-                                                                    >
-                                                                        <span className="text-sm font-semibold text-on-surface">Chọn ảnh</span>
-                                                                        <span className="text-xs text-on-surface-variant">PNG, JPG</span>
-                                                                        <input
-                                                                            id={`${formId}-images-${categoryId}`}
-                                                                            type="file"
-                                                                            accept="image/*"
-                                                                            multiple
-                                                                            onChange={(e) => onCategoryImagesChange(categoryId, e)}
-                                                                            className="sr-only"
-                                                                        />
-                                                                    </label>
-                                                                    {detail.imagePreviews.length > 0 && (
-                                                                        <div className="flex flex-wrap gap-2">
-                                                                            {detail.imagePreviews.map((src) => (
-                                                                                <div
-                                                                                    key={src}
-                                                                                    className="h-16 w-16 overflow-hidden rounded-xl border border-surface-container-high bg-surface-container-low"
-                                                                                >
-                                                                                    <img src={src} alt="" className="h-full w-full object-cover" />
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                            <div className="rounded-2xl border border-surface-container-high bg-surface p-3 space-y-2 max-w-md">
+                                                                <label
+                                                                    htmlFor={`${formId}-qty-${categoryId}`}
+                                                                    className="text-sm font-bold text-on-surface"
+                                                                >
+                                                                    Số lượng (kg)
+                                                                </label>
+                                                                <input
+                                                                    id={`${formId}-qty-${categoryId}`}
+                                                                    type="number"
+                                                                    inputMode="decimal"
+                                                                    min="0"
+                                                                    step="0.1"
+                                                                    value={detail.quantityKg}
+                                                                    onChange={(e) => setCategoryQuantity(categoryId, e.target.value)}
+                                                                    placeholder="VD: 3.2"
+                                                                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-3 py-2.5 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
+                                                                />
                                                             </div>
                                                         </div>
                                                     );

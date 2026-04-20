@@ -299,7 +299,7 @@ export default function Report() {
                         </span>
                         {CANCELED_STATUSES.has(report.status) && Boolean(report.cancellationReason) && (
                           <span className="inline-flex items-center rounded-full border border-surface-container-high bg-surface px-3 py-1 text-xs font-bold text-on-surface-variant">
-                            <span className="font-black text-on-surface-variant">Note:</span>
+                            <span className="font-black text-on-surface-variant">Lý do hủy:</span>
                             <span className="ml-1">{report.cancellationReason}</span>
                           </span>
                         )}
