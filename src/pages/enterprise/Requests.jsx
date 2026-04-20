@@ -145,9 +145,9 @@ export default function Requests() {
 
   const tabs = [
     { id: 'All', label: 'Tất cả', count: requests.length },
-    { id: 'Pending', label: 'Chờ duyệt', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
-    { id: 'Accepted', label: 'Đã duyệt', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
-    { id: 'Assigned', label: 'Đang vận chuyển', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
+    { id: 'Pending', label: 'Mới', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
+    { id: 'Assigned', label: 'Đã điều phối', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
+    { id: 'Accepted', label: 'Đang thu gom', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
     { id: 'Collected', label: 'Đã hoàn thành', count: requests.filter(r => r.status === 'Collected').length, color: 'text-emerald-500' }
   ];
 
@@ -321,8 +321,8 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
   const getStatusBadge = () => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
-      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Đã duyệt' };
-      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Đang đi' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: UsersIcon, label: 'Đã điều phối' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: Truck, label: 'Đang đi' };
       case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
       case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
       default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
@@ -410,14 +410,14 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
       <div className="col-span-2 flex items-center justify-center gap-2">
         {req.status === 'Pending' && (
           <div className="flex gap-1.5">
-            <button onClick={(e) => { e.stopPropagation(); onStatus(req.id, 'Accepted'); }} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Duyệt</button>
+            <button onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/10 active:scale-95 transition-all flex items-center gap-1">Điều phối</button>
             <button onClick={(e) => { e.stopPropagation(); onCancel(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10 active:scale-95 transition-all">Hủy</button>
           </div>
         )}
-        {req.status === 'Accepted' && (
-           <button onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">Điều phối <ChevronRight className="w-3 h-3" /></button>
+        {req.status === 'Assigned' && (
+           <button onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-50 transition-colors">Sửa điều phối</button>
         )}
-        {(req.status === 'Assigned' || req.status === 'Collected') && (
+        {(req.status === 'Accepted' || req.status === 'Collected') && (
           <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
         )}
         {req.status === 'Cancelled' && (
