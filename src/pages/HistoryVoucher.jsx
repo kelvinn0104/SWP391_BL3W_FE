@@ -2,19 +2,22 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, Loader2, ReceiptText, Star } from 'lucide-react';
 import { getRedemptionHistory } from '../api/voucherApi';
+import { getUserPointNow } from '../api/UserpointApi';
 
 export default function HistoryVoucher() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userPoints, setUserPoints] = useState(null);
 
   useEffect(() => {
     async function loadHistory() {
       setLoading(true);
       setError('');
       try {
-        const data = await getRedemptionHistory();
+        const [data, pointData] = await Promise.all([getRedemptionHistory(), getUserPointNow()]);
         setRows(Array.isArray(data) ? data : []);
+        setUserPoints(Number(pointData?.currentBalance ?? pointData?.points ?? 0));
       } catch (err) {
         setError(err?.message || 'Không tải được lịch sử đổi quà.');
       } finally {
@@ -49,7 +52,7 @@ export default function HistoryVoucher() {
         </div>
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-surface rounded-2xl border border-surface-container-highest p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
             <ReceiptText className="w-6 h-6" />
@@ -57,6 +60,20 @@ export default function HistoryVoucher() {
           <div>
             <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">Số lần đổi</p>
             <p className="text-2xl font-black text-on-surface">{totalRedemptions}</p>
+          </div>
+        </div>
+
+        <div className="bg-surface rounded-2xl border border-surface-container-highest p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+            <Star className="w-6 h-6" fill="currentColor" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">
+              Điểm hiện tại của bạn
+            </p>
+            <p className="text-2xl font-black text-on-surface">
+              {userPoints === null ? '...' : userPoints.toLocaleString()}
+            </p>
           </div>
         </div>
 

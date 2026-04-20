@@ -342,6 +342,11 @@ export default function Rewards() {
                     <p className="text-primary font-bold">{selectedReward.points.toLocaleString()} Eco Points</p>
                  </div>
                  <div className="bg-surface-container p-5 rounded-2xl space-y-3 text-sm border border-surface-container-highest">
+                   <div className="flex justify-between font-medium">
+                     <span className="text-on-surface-variant">Số điểm hiện có:</span>
+                     <span className="text-on-surface font-bold">{userPoints.toLocaleString()}</span>
+                   </div>
+                   <div className="h-px bg-surface-container-highest"></div>
                     <div className="flex justify-between font-medium">
                       <span className="text-on-surface-variant">Sử dụng điểm:</span>
                       <span className="text-error">-{selectedReward.points.toLocaleString()}</span>
