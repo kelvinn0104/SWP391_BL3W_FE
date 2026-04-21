@@ -7,7 +7,7 @@ import { getApiBaseUrl, getToken } from '../lib/auth';
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const isFormData = options.body instanceof FormData;
-  
+
   const headers = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -50,7 +50,7 @@ export const updateProfile = async (profileData) => {
 };
 
 export const getMe = async () => {
-    return await apiFetch('/api/users/me');
+  return await apiFetch('/api/users/me');
 };
 
 /**

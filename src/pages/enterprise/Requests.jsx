@@ -77,8 +77,15 @@ export default function Requests() {
   const handleAssign = async (reqId, colId) => {
     try {
       await assignWasteReportCollector(reqId, colId);
+      const selectedCol = collectors.find(c => (c.userId || c.id) === colId);
       setRequests(prev => prev.map(r => 
-        r.id === reqId ? { ...r, status: 'Assigned', collectorId: colId } : r
+        r.id === reqId ? { 
+          ...r, 
+          status: 'Assigned', 
+          collectorId: colId,
+          collectorName: selectedCol?.name || selectedCol?.displayName || selectedCol?.fullName || 'N/A',
+          collectorPhone: selectedCol?.phoneNumber || selectedCol?.phone || 'Chưa có SĐT'
+        } : r
       ));
     } catch (err) {
       console.error("Assignment failed", err);
@@ -416,10 +423,8 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
             <button type="button" onClick={(e) => { e.stopPropagation(); onCancel(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10 active:scale-95 transition-all">Hủy</button>
           </div>
         )}
-        {req.status === 'Assigned' && (
-           <button type="button" onClick={(e) => { e.stopPropagation(); onOpenCoordination(); }} className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-50 transition-colors">Sửa điều phối</button>
-        )}
-        {(req.status === 'Accepted' || req.status === 'Collected') && (
+
+        {(req.status === 'Assigned' || req.status === 'Accepted' || req.status === 'Collected') && (
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
         )}
         {req.status === 'Cancelled' && (
@@ -531,10 +536,35 @@ function CoordinationDrawer({ req, onAssign, onClose }) {
   );
 }
 
-function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCancel, readOnly = false }) {
+function RequestDetailModal({ req, onClose, collectors: allCollectors, onAssign, onStatus, onCancel, readOnly = false }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = req.images || req.imageUrls || [];
   console.log("Images in ReportModal:", images);
+
+  // Load ward-specific collectors when in edit mode
+  const [wardCollectors, setWardCollectors] = useState([]);
+  const [collectorsLoading, setCollectorsLoading] = useState(false);
+
+  useEffect(() => {
+    if (readOnly) return; // no need to load in view mode
+    const fetchWardCollectors = async () => {
+      setCollectorsLoading(true);
+      try {
+        const cols = await getCollectors(req.wardId || null);
+        setWardCollectors(cols.map(c => ({ ...c, name: c.displayName || c.fullName || 'N/A' })));
+      } catch (err) {
+        console.error("Failed to load ward collectors", err);
+        // fallback to parent collectors
+        setWardCollectors(allCollectors);
+      } finally {
+        setCollectorsLoading(false);
+      }
+    };
+    fetchWardCollectors();
+  }, [req.wardId, readOnly]);
+
+  // In view mode use parent collectors (already loaded), in edit mode use ward-specific
+  const collectors = readOnly ? allCollectors : wardCollectors;
 
   const currentStatus = (() => {
     switch(req.status) {
@@ -691,38 +721,10 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
             {/* Interaction Grid: Status & Staff Selection */}
             {req.status !== 'Cancelled' && (
               <div className="grid grid-cols-12 gap-8">
-                {/* Status Updates */}
-                {!readOnly && (
-                  <div className="col-span-4 space-y-4">
-                    <div className="flex items-center gap-3 px-2">
-                      <h4 className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] whitespace-nowrap">Cập nhật tiến độ</h4>
-                      <div className="flex-1 h-[1px] bg-on-surface/5" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { id: 'Accepted', label: 'Duyệt hồ sơ', color: 'bg-blue-500' },
-                        { id: 'Assigned', label: 'Đang vận chuyển', color: 'bg-indigo-500' },
-                        { id: 'Collected', label: 'Đã hoàn thành', color: 'bg-emerald-500' }
-                      ].map(s => (
-                        <button 
-                          key={s.id} 
-                          type="button"
-                          onClick={() => onStatus(req.id, s.id)}
-                          className={`w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                            req.status === s.id 
-                              ? `${s.color} text-white shadow-lg shadow-on-surface/5 scale-[1.02]` 
-                              : 'bg-surface-container-high text-on-surface-variant/40 hover:bg-surface-container-highest'
-                          }`}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
               
            {/* Staff Selection Area */}
-                <div className={`${readOnly ? 'col-span-12' : 'col-span-8'} space-y-4`}>
+                <div className="col-span-12 space-y-4">
                   <div className="flex items-center gap-3 px-2">
                      <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] whitespace-nowrap">
                        {readOnly ? 'Nhân viên phụ trách' : 'Điều phối nhân viên'}
@@ -730,13 +732,18 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                      <div className="flex-1 h-[1px] bg-on-surface/5" />
                   </div>
                   
-                  <div className={`grid ${readOnly ? 'grid-cols-4' : 'grid-cols-3'} gap-3`}>
-                    {(() => {
-                      const filtered = collectors.filter(c => {
-                        if (readOnly && req.collectorId === (c.userId || c.id)) return true;
-                        // Check if collector is assigned to this ward
-                        return c.wardIds && c.wardIds.includes(Number(req.wardId));
-                      });
+                  <div className="grid grid-cols-4 gap-3">
+                    {collectorsLoading ? (
+                      <div className="col-span-12 py-8 flex flex-col items-center justify-center gap-3 opacity-50">
+                        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Đang tải nhân viên khu vực...</p>
+                      </div>
+                    ) : (() => {
+                      // Edit mode: wardCollectors already filtered by ward from API — show all
+                      // View mode: allCollectors passed in, only show the assigned one
+                      const filtered = readOnly
+                        ? collectors.filter(c => req.collectorId === (c.userId || c.id))
+                        : collectors;
 
                       if (filtered.length === 0) {
                         return (
