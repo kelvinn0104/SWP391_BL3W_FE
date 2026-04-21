@@ -18,7 +18,7 @@ import {
   Edit2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { clearAuth, getUser } from '../lib/auth';
+import { clearAuth, getUser, resolveImageUrl } from '../lib/auth';
 import { updateProfile } from '../api/userApi';
 import { motion } from 'framer-motion';
 import AlertModal from '../components/ui/AlertModal';
@@ -30,6 +30,9 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = React.useRef(null);
   
   // Role categorisation: 3, 4 are Simple UI. 1, 2 are Detailed UI.
   const isSimpleUI = user ? (user.role === 'Administrator' || user.role === '3' || 
@@ -53,13 +56,31 @@ export default function Profile() {
       fullName: user.fullName || '',
       displayName: user.displayName || user.name || '',
       gender: user.gender || 'Male',
-      dob: user.dob || user.dateOfBirth || '1990-01-01',
+      dob: user.dob || (user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '1990-01-01'),
       phone: user.phone || user.phoneNumber || '',
       email: user.email || user.gmail || '',
       address: user.address || 'Hồ Chí Minh, Việt Nam',
       language: user.language || 'Tiếng Việt'
     });
     setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setAvatarFile(null);
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSave = async () => {
@@ -91,14 +112,15 @@ export default function Profile() {
     try {
       // Map FE field names to BE field names
       const requestData = {
-        fullName: formData.fullName,
-        displayName: formData.displayName,
-        gender: formData.gender,
-        dateOfBirth: formData.dob,
-        phoneNumber: formData.phone,
-        address: formData.address,
-        language: formData.language,
-        avatarUrl: user.avatar || user.avatarUrl
+        DisplayName: formData.displayName,
+        FullName: formData.fullName,
+        Gender: formData.gender,
+        DateOfBirth: formData.dob,
+        PhoneNumber: formData.phone,
+        Address: formData.address,
+        Language: formData.language,
+        AvatarUrl: user.avatar || user.avatarUrl,
+        AvatarFile: avatarFile
       };
 
       const updatedUser = await updateProfile(requestData);
@@ -109,18 +131,22 @@ export default function Profile() {
       localStorage.setItem('ecosort_user', JSON.stringify(updatedUser));
       window.dispatchEvent(new Event('ecosort_auth_changed'));
       
-      setIsEditing(false);
       setAlertConfig({
         isOpen: true,
         title: "Thành công",
-        message: "Thông tin hồ sơ của bạn đã được cập nhật.",
+        message: "Hồ sơ của bạn đã được cập nhật thành công.",
         type: "success"
       });
+      setIsEditing(false);
+      setAvatarFile(null);
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
     } catch (err) {
+      console.error("Profile update error:", err);
       setAlertConfig({
         isOpen: true,
-        title: "Thất bại",
-        message: err.message || "Không thể cập nhật hồ sơ lúc này.",
+        title: "Lỗi cập nhật",
+        message: err.message || "Đã có lỗi xảy ra khi lưu hồ sơ. Vui lòng thử lại.",
         type: "error"
       });
     } finally {
@@ -197,12 +223,27 @@ export default function Profile() {
             className="eco-glass bg-surface rounded-[3rem] p-8 border border-surface-container-high botanical-shadow-lg text-center space-y-6"
           >
             <div className="relative inline-block">
-               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-2xl overflow-hidden mx-auto bg-surface-container-low ring-1 ring-surface-container-highest">
+               <input 
+                 type="file" 
+                 ref={fileInputRef} 
+                 onChange={handleAvatarChange} 
+                 className="hidden" 
+                 accept="image/*"
+               />
+               <div 
+                 className={`w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-2xl overflow-hidden mx-auto bg-surface-container-low ring-1 ring-surface-container-highest transition-all ${isEditing ? 'cursor-pointer ring-primary ring-offset-2 hover:scale-105 active:scale-95 group' : ''}`}
+                 onClick={() => isEditing && fileInputRef.current?.click()}
+               >
                   <img 
-                    src={user.avatar || user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} 
+                    src={avatarPreview || ((user?.avatarUrl || user?.AvatarUrl || user?.avatar) ? `${resolveImageUrl(user?.avatarUrl || user?.AvatarUrl || user?.avatar)}${ (user?.avatarUrl || user?.AvatarUrl || user?.avatar).includes('?') ? '&' : '?' }t=${new Date().getTime()}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`)} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Edit2 className="w-8 h-8 text-white" />
+                    </div>
+                  )}
                </div>
                <div className="absolute -bottom-2 -right-2 p-3 bg-primary text-white rounded-2xl shadow-xl">
                   <UserCircle2 className="w-6 h-6" />
@@ -263,12 +304,12 @@ export default function Profile() {
                  </button>
                ) : (
                  <div className="flex items-center gap-2 shrink-0">
-                   <button 
-                     onClick={() => setIsEditing(false)}
-                     className="px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-on-surface-variant hover:bg-surface-container transition-all"
-                   >
-                     Hủy
-                   </button>
+                    <button 
+                      onClick={handleCancel}
+                      className="px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-on-surface-variant hover:bg-[#ffffff] transition-all"
+                    >
+                      Hủy
+                    </button>
                    <button 
                      onClick={handleSave}
                      disabled={isSaving}

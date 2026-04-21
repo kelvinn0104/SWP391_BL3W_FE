@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import {getWeeklyLeaderboard} from '../api/LeaderboardApi';
+import {resolveImageUrl} from '../lib/auth';
 
 export default function Home() {
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
@@ -412,7 +413,7 @@ function LeaderboardItem({rank, name, points, avatar}) {
         </span>
         <div className="relative">
           <img
-            src={avatar}
+            src={resolveImageUrl(avatar)}
             alt={name}
             className="w-14 h-14 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all"
             referrerPolicy="no-referrer"

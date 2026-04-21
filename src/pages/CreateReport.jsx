@@ -39,9 +39,7 @@ export default function CreateReport() {
 
     const [title, setTitle] = useState('');
     const [categories, setCategories] = useState([]);
-    const [selectedDistrict, setSelectedDistrict] = useState('');
-    const [selectedWard, setSelectedWard] = useState('');
-    const [streetAddress, setStreetAddress] = useState('');
+    const [address, setAddress] = useState('');
     const [description, setDescription] = useState('');
     const [categoryDetails, setCategoryDetails] = useState({});
     const [reportImages, setReportImages] = useState({ files: [], previews: [] });
@@ -51,56 +49,38 @@ export default function CreateReport() {
     const [categoryOptions, setCategoryOptions] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [categoryError, setCategoryError] = useState('');
-    const [areas, setAreas] = useState([]);
-    const [loadingAreas, setLoadingAreas] = useState(true);
-    const [areaError, setAreaError] = useState('');
+    const [districts, setDistricts] = useState([]);
+    const [selectedDistrictId, setSelectedDistrictId] = useState('');
+    const [selectedWardId, setSelectedWardId] = useState('');
+    const [streetAddress, setStreetAddress] = useState('');
 
     useEffect(() => {
         let isMounted = true;
 
-        async function loadAreas() {
-            setLoadingAreas(true);
-            setAreaError('');
-            try {
-                const data = await getCapacity();
-                if (!isMounted) return;
-                setAreas(Array.isArray(data?.areas) ? data.areas : []);
-            } catch (error) {
-                if (!isMounted) return;
-                setAreas([]);
-                setAreaError(error?.message || 'Không thể tải danh sách khu vực.');
-            } finally {
-                if (isMounted) setLoadingAreas(false);
-            }
-        }
-
-        loadAreas();
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        async function loadCategories() {
+        async function loadData() {
             setLoadingCategories(true);
             setCategoryError('');
             try {
-                const data = await getWasteReportCategories();
+                const [catData, areaData] = await Promise.all([
+                    getWasteReportCategories(),
+                    getCapacity()
+                ]);
+                
                 if (!isMounted) return;
-                const normalized = data
+                
+                const normalizedCats = catData
                     .map((item) => ({
                         id: item.id,
                         name: item.name ?? '',
                         pointsPerKg: Number(item.pointsPerKg) || 0,
                     }))
                     .filter((item) => item.id && item.name);
-                setCategoryOptions(normalized);
+                setCategoryOptions(normalizedCats);
+                
+                setDistricts(areaData.areas || []);
             } catch (error) {
                 if (!isMounted) return;
-                setCategoryError(error?.message || 'Không thể tải thể loại rác.');
-                setCategoryOptions([]);
+                setCategoryError(error?.message || 'Không thể tải dữ liệu ban đầu.');
             } finally {
                 if (isMounted) {
                     setLoadingCategories(false);
@@ -108,7 +88,7 @@ export default function CreateReport() {
             }
         }
 
-        loadCategories();
+        loadData();
         return () => {
             isMounted = false;
         };
@@ -224,17 +204,11 @@ export default function CreateReport() {
 
         setSubmitting(true);
         try {
-            const locationParts = [
-                String(streetAddress || '').trim(),
-                String(selectedWard || '').trim(),
-                String(selectedDistrict || '').trim(),
-            ].filter(Boolean);
-            const locationText = locationParts.join(', ');
-
             const payload = {
                 title: title.trim(),
                 description: description.trim(),
-                locationText,
+                locationText: streetAddress.trim(),
+                wardId: selectedWardId ? Number(selectedWardId) : null,
                 wasteCategoryIds: selectedItems.map((item) => item.categoryId),
                 estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
                 images: reportImages.files,
@@ -321,30 +295,6 @@ export default function CreateReport() {
             .filter(Boolean)
             .join(' + ')
         : '';
-
-    const districtOptions = Array.from(
-        new Set(
-            areas
-                .map((a) => a?.district)
-                .filter((d) => typeof d === 'string' && d.trim().length > 0)
-                .map((d) => d.trim())
-        )
-    ).sort((a, b) => a.localeCompare(b, 'vi'));
-
-    const wardsForSelectedDistrict = areas.find((a) => a?.district === selectedDistrict)?.wards ?? [];
-    const wardOptions = Array.from(
-        new Set(
-            (Array.isArray(wardsForSelectedDistrict) ? wardsForSelectedDistrict : [])
-                .map((w) => (typeof w === 'string' ? w : (w?.name ?? w?.Name ?? '')))
-                .filter((name) => typeof name === 'string' && name.trim().length > 0)
-                .map((w) => w.trim())
-        )
-    ).sort((a, b) => a.localeCompare(b, 'vi'));
-
-    const locationPreview = [streetAddress, selectedWard, selectedDistrict]
-        .map((v) => String(v || '').trim())
-        .filter(Boolean)
-        .join(', ');
 
     return (
         <div className="relative min-h-full overflow-x-hidden">
@@ -576,91 +526,53 @@ export default function CreateReport() {
                                         </div>
                                     )}
 
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                                            <label className="flex items-center gap-2 text-sm font-bold text-on-surface">
-                                                <MapPin className="w-4 h-4 text-primary" />
-                                                Địa chỉ
-                                            </label>
-                                            {locationPreview && (
-                                                <span className="text-xs font-bold text-on-surface-variant">
-                                                    {locationPreview}
-                                                </span>
-                                            )}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                                            <MapPin className="w-4 h-4 text-primary" />
+                                            Địa chỉ thu gom
                                         </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div className="space-y-1.5">
-                                                <label
-                                                    htmlFor={`${formId}-district`}
-                                                    className="text-xs font-bold text-on-surface-variant"
-                                                >
-                                                    Quận / Huyện
-                                                </label>
+                                        
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-on-surface-variant">Quận / Huyện</label>
                                                 <select
-                                                    id={`${formId}-district`}
-                                                    value={selectedDistrict}
+                                                    value={selectedDistrictId}
                                                     onChange={(e) => {
-                                                        const next = e.target.value;
-                                                        setSelectedDistrict(next);
-                                                        setSelectedWard('');
+                                                        setSelectedDistrictId(e.target.value);
+                                                        setSelectedWardId('');
                                                     }}
-                                                    disabled={loadingAreas}
-                                                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow disabled:opacity-60"
+                                                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary"
                                                 >
-                                                    <option value="">
-                                                        {loadingAreas ? 'Đang tải...' : 'Chọn quận/huyện'}
-                                                    </option>
-                                                    {districtOptions.map((d) => (
-                                                        <option key={d} value={d}>
-                                                            {d}
-                                                        </option>
+                                                    <option value="">Chọn Quận/Huyện</option>
+                                                    {districts.map(d => (
+                                                        <option key={d.id} value={d.id}>{d.district}</option>
                                                     ))}
                                                 </select>
-                                                {areaError && (
-                                                    <p className="text-xs text-error">{areaError}</p>
-                                                )}
                                             </div>
 
-                                            <div className="space-y-1.5">
-                                                <label
-                                                    htmlFor={`${formId}-ward`}
-                                                    className="text-xs font-bold text-on-surface-variant"
-                                                >
-                                                    Phường / Xã
-                                                </label>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-on-surface-variant">Phường / Xã</label>
                                                 <select
-                                                    id={`${formId}-ward`}
-                                                    value={selectedWard}
-                                                    onChange={(e) => setSelectedWard(e.target.value)}
-                                                    disabled={!selectedDistrict || loadingAreas}
-                                                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow disabled:opacity-60"
+                                                    value={selectedWardId}
+                                                    onChange={(e) => setSelectedWardId(e.target.value)}
+                                                    disabled={!selectedDistrictId}
+                                                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary disabled:opacity-50"
                                                 >
-                                                    <option value="">
-                                                        {!selectedDistrict ? 'Chọn quận/huyện trước' : 'Chọn phường/xã'}
-                                                    </option>
-                                                    {wardOptions.map((w) => (
-                                                        <option key={w} value={w}>
-                                                            {w}
-                                                        </option>
+                                                    <option value="">Chọn Phường/Xã</option>
+                                                    {districts.find(d => String(d.id) === String(selectedDistrictId))?.wards.map(w => (
+                                                        <option key={w.id} value={w.id}>{w.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-1.5">
-                                            <label
-                                                htmlFor={`${formId}-street`}
-                                                className="text-xs font-bold text-on-surface-variant"
-                                            >
-                                                Số nhà &amp; tên đường
-                                            </label>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-on-surface-variant">Số nhà, tên đường, hẻm...</label>
                                             <input
-                                                id={`${formId}-street`}
                                                 type="text"
                                                 value={streetAddress}
                                                 onChange={(e) => setStreetAddress(e.target.value)}
-                                                placeholder="VD: 12/5 Nguyễn Trãi"
+                                                placeholder="VD: 123 Nguyễn Huệ, hẻm 4..."
                                                 className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                                             />
                                         </div>

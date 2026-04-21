@@ -2,8 +2,21 @@ const TOKEN_KEY = 'ecosort_token';
 const USER_KEY = 'ecosort_user';
 
 export function getApiBaseUrl() {
-  // Tạm thời dùng BE local; có thể chuyển sang env sau.
-  return 'http://localhost:5040';
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5040';
+}
+
+/**
+ * Resolve relative image URLs from the API.
+ */
+export function resolveImageUrl(path) {
+  const s = String(path ?? '').trim();
+  if (!s) return '';
+  // If it's already an absolute URL (http/https) or a base64 string or a blob, return it.
+  if (/^(https?:\/\/|data:|blob:)/i.test(s) || s.startsWith('//')) {
+    return s;
+  }
+  const base = getApiBaseUrl().replace(/\/$/, '');
+  return s.startsWith('/') ? `${base}${s}` : `${base}/${s}`;
 }
 
 export function getToken() {

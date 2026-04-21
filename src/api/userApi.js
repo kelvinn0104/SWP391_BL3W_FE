@@ -6,8 +6,10 @@ import { getApiBaseUrl, getToken } from '../lib/auth';
 
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
+  const isFormData = options.body instanceof FormData;
+  
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -34,9 +36,16 @@ async function apiFetch(endpoint, options = {}) {
 }
 
 export const updateProfile = async (profileData) => {
+  const formData = new FormData();
+  Object.keys(profileData).forEach(key => {
+    if (profileData[key] !== undefined && profileData[key] !== null) {
+      formData.append(key, profileData[key]);
+    }
+  });
+
   return await apiFetch('/api/users/profile', {
     method: 'PUT',
-    body: JSON.stringify(profileData),
+    body: formData,
   });
 };
 
