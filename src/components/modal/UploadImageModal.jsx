@@ -562,46 +562,54 @@ export default function UploadImageModal({
               ))}
             </div>
 
-            <div className="rounded-2xl border border-surface-container-high/70 bg-surface p-4 space-y-3">
+            <div className="rounded-2xl px-0 py-4 space-y-3">
               <div className="space-y-2">
-                <label
-                  htmlFor={`${modalId}-total-kg`}
-                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                >
-                  <Tag className="w-4 h-4 text-primary shrink-0" />
-                  Tổng khối lượng
-                </label>
-                <input
-                  id={`${modalId}-total-kg`}
-                  type="text"
-                  readOnly
-                  value={weightSummary.totalKgDisplay}
-                  placeholder="Tự động tính"
-                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
-                />
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                  <div className="flex-1 min-w-0">
+                    <label
+                      htmlFor={`${modalId}-total-kg`}
+                      className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                    >
+                      <Tag className="w-4 h-4 text-primary shrink-0" />
+                      Tổng khối lượng
+                    </label>
+                  </div>
+                  <input
+                    id={`${modalId}-total-kg`}
+                    type="text"
+                    readOnly
+                    value={weightSummary.totalKgDisplay}
+                    placeholder="Tự động tính"
+                    className="flex-1 min-w-0 sm:max-w-[160px] rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary text-left"
+                  />
+                </div>
                 <p className="text-xs text-on-surface-variant">
                   Đơn vị: kg (tổng các dòng có khối lượng hợp lệ)
                 </p>
               </div>
               <div className="space-y-2">
-                <label
-                  htmlFor={`${modalId}-official-points`}
-                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                >
-                  <Star
-                    className="w-4 h-4 text-primary shrink-0"
-                    fill="currentColor"
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                  <div className="flex-1 min-w-0">
+                    <label
+                      htmlFor={`${modalId}-official-points`}
+                      className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                    >
+                      <Star
+                        className="w-4 h-4 text-primary shrink-0"
+                        fill="currentColor"
+                      />
+                      Điểm thưởng chính thức
+                    </label>
+                  </div>
+                  <input
+                    id={`${modalId}-official-points`}
+                    type="text"
+                    readOnly
+                    value={weightSummary.pointsDisplay}
+                    placeholder="Tự động tính"
+                    className="flex-1 min-w-0 sm:max-w-[160px] rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary text-left"
                   />
-                  Điểm thưởng chính thức
-                </label>
-                <input
-                  id={`${modalId}-official-points`}
-                  type="text"
-                  readOnly
-                  value={weightSummary.pointsDisplay}
-                  placeholder="Tự động tính"
-                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
-                />
+                </div>
                 <p className="text-xs text-on-surface-variant">
                   Cách tính:{" "}
                   {weightSummary.formulaDisplay
