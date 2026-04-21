@@ -34,10 +34,7 @@ function mapEmbedSrcFromAddress(address) {
 function proofUrlSetFromTask(task) {
   const a = task?.proofImages;
   const b = task?.proofImageUrls;
-  const list = [
-    ...(Array.isArray(a) ? a : []),
-    ...(Array.isArray(b) ? b : []),
-  ];
+  const list = [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])];
   const set = new Set();
   for (const src of list) {
     const key = String(src ?? "").trim();
@@ -227,8 +224,17 @@ export default function TaskDetail() {
   const weightLabel =
     typeof task.weightKg === "number" ? `${task.weightKg}kg` : task.weightKg;
 
+  const actualTotalWeightLabel =
+    task.actualTotalWeightKg == null || task.actualTotalWeightKg === ""
+      ? "—"
+      : typeof task.actualTotalWeightKg === "number"
+        ? `${task.actualTotalWeightKg}kg`
+        : String(task.actualTotalWeightKg);
+
   const showAssignedActions = isAssignedForActions(task.status);
   const showConfirmPickup = isOnTheWayForActions(task.status);
+  const showActualTotalWeight =
+    task.status === "Collected" || task.status === "Đã thu gom";
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -260,18 +266,48 @@ export default function TaskDetail() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm pt-1">
-                <p className="flex items-center gap-2 font-medium text-on-surface">
+              <div
+                className={`flex text-sm pt-1 min-w-0 gap-x-4 sm:gap-x-6 ${
+                  showActualTotalWeight
+                    ? "flex-nowrap items-start overflow-x-auto overflow-y-visible pb-0.5 [scrollbar-width:thin]"
+                    : "flex-wrap items-center gap-y-2"
+                }`}
+              >
+                <p
+                  className={`flex items-center gap-2 font-medium text-on-surface shrink-0 ${
+                    showActualTotalWeight ? "self-center" : ""
+                  }`}
+                >
                   <Leaf className="w-4 h-4 shrink-0 text-primary" />
                   <span>{task.category ?? "—"}</span>
                 </p>
-                <p className="flex items-center gap-2 text-on-surface-variant min-w-0 max-w-[28rem]">
-                  <MapPin className="w-4 h-4 text-primary shrink-0" />
-                  <span className="truncate">
+                <p
+                  className={`flex gap-2 text-on-surface-variant shrink-0 ${
+                    showActualTotalWeight
+                      ? "items-start max-w-none"
+                      : "items-center min-w-0 max-w-md"
+                  }`}
+                  title={
+                    String(task.location ?? task.locationText ?? "").trim() ||
+                    undefined
+                  }
+                >
+                  <MapPin className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+                  <span
+                    className={
+                      showActualTotalWeight
+                        ? "wrap-break-word leading-snug"
+                        : "truncate"
+                    }
+                  >
                     {task.location ?? task.locationText ?? "—"}
                   </span>
                 </p>
-                <p className="flex items-center gap-2 text-on-surface-variant shrink-0">
+                <p
+                  className={`flex items-center gap-2 text-on-surface-variant shrink-0 whitespace-nowrap ${
+                    showActualTotalWeight ? "self-center" : ""
+                  }`}
+                >
                   <CalendarDays className="w-4 h-4 text-primary shrink-0" />
                   <span>
                     Ngày tạo:{" "}
@@ -280,6 +316,17 @@ export default function TaskDetail() {
                     </span>
                   </span>
                 </p>
+                {showActualTotalWeight ? (
+                  <p className="flex items-center gap-2 text-on-surface-variant shrink-0 self-center whitespace-nowrap">
+                    <Package className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      Tổng khối lượng thực tế:{" "}
+                      <span className="text-on-surface tabular-nums">
+                        {actualTotalWeightLabel}
+                      </span>
+                    </span>
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -308,7 +355,7 @@ export default function TaskDetail() {
                 Hình ảnh hiện trường
               </h2>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
-                <div className="min-w-0 w-full max-w-full lg:flex-1 overflow-hidden rounded-2xl border border-surface-container-high/60 bg-surface-container-low aspect-4/3 sm:aspect-video">
+                <div className="min-w-0 w-full max-w-lg sm:max-w-xl overflow-hidden rounded-2xl border border-surface-container-high/60 bg-surface-container-low aspect-video">
                   {activeSrc ? (
                     <img
                       src={activeSrc}
@@ -357,7 +404,7 @@ export default function TaskDetail() {
                 Hình ảnh bằng chứng
               </h2>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
-                <div className="min-w-0 w-full max-w-full lg:flex-1 overflow-hidden rounded-2xl border border-surface-container-high/60 bg-surface-container-low aspect-4/3 sm:aspect-video">
+                <div className="min-w-0 w-full max-w-lg sm:max-w-xl overflow-hidden rounded-2xl border border-surface-container-high/60 bg-surface-container-low aspect-video max-h-52 sm:max-h-60">
                   {activeProofSrc ? (
                     <img
                       src={activeProofSrc}
