@@ -62,6 +62,7 @@ import CitizenList from "./pages/admin/CitizenList";
 import CollectorList from "./pages/admin/CollectorList";
 import WasteCategory from "./pages/admin/WasteCategory";
 import Area from "./pages/admin/Area";
+import notificationApi from "./api/notificationApi";
 
 function readAuth() {
   return Boolean(getToken()) || localStorage.getItem("ecosort_auth") === "1";
@@ -78,33 +79,43 @@ function Layout() {
   const syncIdRef = useRef(0);
 
   const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Công suất tới hạn",
-      message: "Khu vực Quận 1 đã đạt 95% công suất xử lý tháng này.",
-      time: "5 phút trước",
-      type: "warning",
-      isRead: false,
-    },
-    {
-      id: 2,
-      title: "Đơn hàng hoàn tất",
-      message: "Yêu cầu thu gom mã #REQ-2024 tại Phường 5 đã xong.",
-      time: "2 giờ trước",
-      type: "success",
-      isRead: false,
-    },
-    {
-      id: 3,
-      title: "Thông báo hệ thống",
-      message: "Cập nhật chính sách phần thưởng mới cho tháng 4 đã sẵn sàng.",
-      time: "1 ngày trước",
-      type: "info",
-      isRead: true,
-    },
-  ]);
+  // Polling unread count
+  useEffect(() => {
+    if (!isAuthed || !user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await notificationApi.getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {
+        console.error("Failed to fetch unread count", err);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // 30s
+    return () => clearInterval(interval);
+  }, [isAuthed, user]);
+
+  // Fetch full list when opening notification dropdown
+  useEffect(() => {
+    if (notifOpen && isAuthed) {
+      const fetchNotifs = async () => {
+        try {
+          const data = await notificationApi.getNotifications();
+          setNotifications(data);
+          setUnreadCount(data.filter((n) => !n.isRead).length);
+        } catch (err) {
+          console.error("Failed to fetch notifications", err);
+        }
+      };
+      fetchNotifs();
+    }
+  }, [notifOpen, isAuthed]);
 
   useEffect(() => {
     const sync = () => {
@@ -247,11 +258,17 @@ function Layout() {
                     </h3>
                     {unreadCount > 0 && (
                       <button
-                        onClick={() =>
-                          setNotifications((prev) =>
-                            prev.map((n) => ({ ...n, isRead: true })),
-                          )
-                        }
+                        onClick={async () => {
+                          try {
+                            await notificationApi.markAllAsRead();
+                            setNotifications((prev) =>
+                              prev.map((n) => ({ ...n, isRead: true }))
+                            );
+                            setUnreadCount(0);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
                         className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
                       >
                         <CheckCheck className="w-3 h-3" />
@@ -267,14 +284,22 @@ function Layout() {
                           <div
                             key={notif.id}
                             className={`p-5 flex gap-4 hover:bg-surface-container-low transition-colors group cursor-pointer relative ${!notif.isRead ? "bg-primary/[0.02]" : ""}`}
-                            onClick={() => {
-                              setNotifications((prev) =>
-                                prev.map((n) =>
-                                  n.id === notif.id
-                                    ? { ...n, isRead: true }
-                                    : n,
-                                ),
-                              );
+                            onClick={async () => {
+                              if (!notif.isRead) {
+                                try {
+                                  await notificationApi.markAsRead(notif.id);
+                                  setNotifications((prev) =>
+                                    prev.map((n) =>
+                                      n.id === notif.id
+                                        ? { ...n, isRead: true }
+                                        : n
+                                    )
+                                  );
+                                  setUnreadCount((prev) => Math.max(0, prev - 1));
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }
                             }}
                           >
                             {!notif.isRead && (
