@@ -78,7 +78,9 @@ function Layout() {
   const notifRef = useRef(null);
   const syncIdRef = useRef(0);
 
-  const [notifications, setNotifications] = useState([
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // Polling unread count
   useEffect(() => {
     if (!isAuthed || !user) {
