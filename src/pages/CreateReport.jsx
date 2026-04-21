@@ -65,9 +65,9 @@ export default function CreateReport() {
                     getWasteReportCategories(),
                     getCapacity()
                 ]);
-                
+
                 if (!isMounted) return;
-                
+
                 const normalizedCats = catData
                     .map((item) => ({
                         id: item.id,
@@ -76,7 +76,7 @@ export default function CreateReport() {
                     }))
                     .filter((item) => item.id && item.name);
                 setCategoryOptions(normalizedCats);
-                
+
                 const allAreas = areaData.areas || [];
                 setDistricts(allAreas);
 
@@ -226,10 +226,24 @@ export default function CreateReport() {
 
         setSubmitting(true);
         try {
+            const selectedDistrict = districts.find(
+                (district) => String(district.id) === String(selectedDistrictId)
+            );
+            const selectedWard = selectedDistrict?.wards?.find(
+                (ward) => String(ward.id) === String(selectedWardId)
+            );
+            const locationText = [
+                streetAddress.trim(),
+                String(selectedWard?.name ?? '').trim(),
+                String(selectedDistrict?.district ?? '').trim(),
+            ]
+                .filter(Boolean)
+                .join(', ');
+
             const payload = {
                 title: title.trim(),
                 description: description.trim(),
-                locationText: streetAddress.trim(),
+                locationText,
                 wardId: selectedWardId ? Number(selectedWardId) : null,
                 wasteCategoryIds: selectedItems.map((item) => item.categoryId),
                 estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
@@ -357,8 +371,8 @@ export default function CreateReport() {
                         <div
                             role="status"
                             className={`fixed right-4 top-24 z-[80] w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${submitToast.type === 'success'
-                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                                    : 'border-red-200 bg-red-50 text-red-900'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                                : 'border-red-200 bg-red-50 text-red-900'
                                 }`}
                         >
                             <div className="flex items-start gap-3">
@@ -399,8 +413,8 @@ export default function CreateReport() {
                         </div>
 
                         <form id={formId} onSubmit={onSubmit}>
-                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                                <div className="space-y-5 xl:col-span-9">
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="space-y-5">
                                     <div className="space-y-2">
                                         <label
                                             htmlFor={`${formId}-title`}
@@ -507,7 +521,7 @@ export default function CreateReport() {
                                     {categories.length > 0 && (
                                         <div className="space-y-3">
                                             <p className="text-sm font-extrabold text-on-surface">Thông tin theo từng thể loại</p>
-                                            <div className="space-y-3">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                                 {categories.map((categoryId) => {
                                                     const detail = categoryDetails[categoryId] ?? { quantityKg: '' };
                                                     const categoryName = categoryOptions.find(
@@ -549,12 +563,63 @@ export default function CreateReport() {
                                         </div>
                                     )}
 
+                                    <div className="rounded-3xl border border-surface-container-high/70 bg-surface p-4 sm:p-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                            <label
+                                                htmlFor={`${formId}-total-qty`}
+                                                className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                                            >
+                                                <Tag className="w-4 h-4 text-primary" />
+                                                Tổng khối lượng
+                                            </label>
+                                            <input
+                                                id={`${formId}-total-qty`}
+                                                type="text"
+                                                value={totalQuantityDisplay}
+                                                readOnly
+                                                placeholder="Tự động tính"
+                                                className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                                            />
+                                            <p className="text-xs text-on-surface-variant">
+                                                Đơn vị: kg · Tối đa {MAX_REPORT_TOTAL_KG} kg (tổng các thể loại có số lượng hợp lệ)
+                                            </p>
+                                            {isOverWeightLimit && (
+                                                <p className="text-xs font-semibold text-error">
+                                                    Tổng khối lượng vượt quá {MAX_REPORT_TOTAL_KG} kg — vui lòng giảm số lượng để gửi báo cáo.
+                                                </p>
+                                            )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                            <label
+                                                htmlFor={`${formId}-estimated-points`}
+                                                className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                                            >
+                                                <Star className="w-4 h-4 text-primary" fill="currentColor" />
+                                                Điểm thưởng dự kiến
+                                            </label>
+                                            <input
+                                                id={`${formId}-estimated-points`}
+                                                type="text"
+                                                value={estimatedPointsDisplay}
+                                                readOnly
+                                                placeholder="Tự động tính"
+                                                className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                                            />
+                                            <p className="text-xs text-on-surface-variant">
+                                                Cách tính: {estimatedPointsFormulaDisplay || 'Số kg × PointPerKg'}
+                                            </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
                                             <MapPin className="w-4 h-4 text-primary" />
                                             Địa chỉ thu gom <span className="text-error">*</span>
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-on-surface-variant">Quận / Huyện <span className="text-error">*</span></label>
@@ -619,82 +684,29 @@ export default function CreateReport() {
                                             className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                                         />
                                     </div>
-                                </div>
-
-                                <aside className="xl:col-span-3">
-                                    <div className="rounded-3xl border border-surface-container-high/70 bg-surface p-4 sm:p-5 space-y-4 xl:sticky xl:top-6">
-                                        <p className="text-sm font-extrabold text-on-surface">Tổng quan báo cáo</p>
-                                        <div className="space-y-2">
-                                            <label
-                                                htmlFor={`${formId}-total-qty`}
-                                                className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                                            >
-                                                <Tag className="w-4 h-4 text-primary" />
-                                                Tổng khối lượng
-                                            </label>
-                                            <input
-                                                id={`${formId}-total-qty`}
-                                                type="text"
-                                                value={totalQuantityDisplay}
-                                                readOnly
-                                                placeholder="Tự động tính"
-                                                className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
-                                            />
-                                            <p className="text-xs text-on-surface-variant">
-                                                Đơn vị: kg · Tối đa {MAX_REPORT_TOTAL_KG} kg (tổng các thể loại có số lượng hợp lệ)
-                                            </p>
-                                            {isOverWeightLimit && (
-                                                <p className="text-xs font-semibold text-error">
-                                                    Tổng khối lượng vượt quá {MAX_REPORT_TOTAL_KG} kg — vui lòng giảm số lượng để gửi báo cáo.
-                                                </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                        <Link
+                                            to="/report"
+                                            className="inline-flex items-center justify-center rounded-2xl border border-surface-container-high px-5 py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                                        >
+                                            Hủy
+                                        </Link>
+                                        <button
+                                            type="submit"
+                                            disabled={!canSubmit}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 disabled:pointer-events-none text-white px-6 py-3 text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.99]"
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Đang gửi…
+                                                </>
+                                            ) : (
+                                                'Gửi báo cáo'
                                             )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label
-                                                htmlFor={`${formId}-estimated-points`}
-                                                className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                                            >
-                                                <Star className="w-4 h-4 text-primary" fill="currentColor" />
-                                                Điểm thưởng dự kiến
-                                            </label>
-                                            <input
-                                                id={`${formId}-estimated-points`}
-                                                type="text"
-                                                value={estimatedPointsDisplay}
-                                                readOnly
-                                                placeholder="Tự động tính"
-                                                className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
-                                            />
-                                            <p className="text-xs text-on-surface-variant">
-                                                Cách tính: {estimatedPointsFormulaDisplay || 'Số kg × PointPerKg'}
-                                            </p>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 pt-1">
-                                            <Link
-                                                to="/report"
-                                                className="inline-flex items-center justify-center rounded-2xl border border-surface-container-high px-5 py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
-                                            >
-                                                Hủy
-                                            </Link>
-                                            <button
-                                                type="submit"
-                                                disabled={!canSubmit}
-                                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 disabled:pointer-events-none text-white px-6 py-3 text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.99]"
-                                            >
-                                                {submitting ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                        Đang gửi…
-                                                    </>
-                                                ) : (
-                                                    'Gửi báo cáo'
-                                                )}
-                                            </button>
-                                        </div>
+                                        </button>
                                     </div>
-                                </aside>
+                                </div>
                             </div>
                         </form>
                     </section>
