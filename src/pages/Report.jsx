@@ -63,14 +63,19 @@ export default function Report() {
 
         const normalized = data.map((report) => {
           const wasteItems = Array.isArray(report.wasteItems) ? report.wasteItems : [];
+          const normalizedStatus = String(report.status ?? 'Pending');
           const categoryLabel = wasteItems
             .map((item) => item?.wasteCategoryName)
             .filter(Boolean)
             .join(', ');
-          const totalWeight = wasteItems.reduce((sum, item) => {
+          const estimatedTotalWeightKg = wasteItems.reduce((sum, item) => {
             const weight = Number(item?.estimatedWeightKg ?? 0);
             return sum + (Number.isFinite(weight) ? weight : 0);
           }, 0);
+          const actualTotalWeightKg = Number(report.actualTotalWeightKg);
+          const usesActualWeight =
+            normalizedStatus.toLowerCase() === 'collected' && Number.isFinite(actualTotalWeightKg);
+          const displayWeightKg = usesActualWeight ? actualTotalWeightKg : estimatedTotalWeightKg;
           const formattedDate = report.createdAtUtc
             ? new Date(report.createdAtUtc).toLocaleDateString('vi-VN')
             : 'Không rõ';
@@ -82,8 +87,9 @@ export default function Report() {
             description: report.description || 'Không có mô tả',
             location: report.locationText || 'Chưa có địa chỉ',
             createdAt: formattedDate,
-            weight: `${Math.round(totalWeight * 10) / 10}kg`,
-            status: report.status || 'Pending',
+            weightText: `${Math.round(displayWeightKg * 10) / 10}kg`,
+            weightLabel: usesActualWeight ? 'Khối lượng thực tế:' : 'Khối lượng ước tính:',
+            status: normalizedStatus,
             cancellationReason: String(report.cancellationReason ?? report.note ?? '').trim(),
             estimatedTotalPoints: Number(report.estimatedTotalPoints ?? 0),
             finalRewardPoints: Number(report.finalRewardPoints ?? 0),
@@ -319,7 +325,9 @@ export default function Report() {
 
                     <div className="inline-flex items-center gap-2 bg-primary/5 text-primary rounded-xl px-3 py-2 text-sm font-bold">
                       <PackageCheck className="w-4 h-4" />
-                      {report.weight}
+                      <span>
+                        {report.weightLabel} {report.weightText}
+                      </span>
                     </div>
                   </div>
 

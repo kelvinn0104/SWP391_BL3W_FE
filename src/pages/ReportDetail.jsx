@@ -56,13 +56,18 @@ function mapReportDetail(apiData) {
     if (!apiData || typeof apiData !== 'object') return null;
 
     const wasteItems = Array.isArray(apiData.wasteItems) ? apiData.wasteItems : [];
+    const normalizedStatus = String(apiData.status ?? 'Pending');
     const categories = wasteItems
         .map((item) => item?.wasteCategoryName)
         .filter((name) => typeof name === 'string' && name.trim() !== '');
-    const totalWeight = wasteItems.reduce((sum, item) => {
+    const estimatedTotalWeightKg = wasteItems.reduce((sum, item) => {
         const weight = Number(item?.estimatedWeightKg);
         return sum + (Number.isFinite(weight) ? weight : 0);
     }, 0);
+    const actualTotalWeightKg = Number(apiData.actualTotalWeightKg);
+    const usesActualWeight =
+        normalizedStatus.toLowerCase() === 'collected' && Number.isFinite(actualTotalWeightKg);
+    const displayWeightKg = usesActualWeight ? actualTotalWeightKg : estimatedTotalWeightKg;
 
     const topLevelImages = normalizeImageUrls(apiData.imageUrls);
     const itemImages = wasteItems.flatMap((item) => normalizeImageUrls(item?.imageUrls));
@@ -71,12 +76,13 @@ function mapReportDetail(apiData) {
     return {
         id: String(apiData.reportId ?? ''),
         title: apiData.title ?? 'Báo cáo không có tiêu đề',
-        status: apiData.status ?? 'Pending',
+        status: normalizedStatus,
         category: categories.length > 0 ? categories.join(', ') : '---',
         location: apiData.locationText ?? '---',
         createdAt: formatDateTime(apiData.createdAtUtc),
         description: apiData.description ?? '---',
-        weight: formatKg(totalWeight),
+        weightText: formatKg(displayWeightKg),
+        weightLabel: usesActualWeight ? 'Khối lượng thực tế:' : 'Khối lượng ước tính:',
         estimatedTotalPoints: Number(apiData.estimatedTotalPoints ?? 0),
         finalRewardPoints: Number(apiData.finalRewardPoints ?? 0),
         images: uniqueImages,
@@ -308,7 +314,9 @@ export default function ReportDetail() {
                         <div className="self-start shrink-0 w-full lg:w-auto lg:min-w-[14rem] space-y-3">
                             <div className="inline-flex w-full lg:w-auto items-center justify-center gap-2 bg-primary/5 text-primary rounded-xl px-4 py-2.5 text-sm font-bold">
                                 <PackageCheck className="w-4 h-4" />
-                                {report.weight}
+                                <span>
+                                    {report.weightLabel} {report.weightText}
+                                </span>
                             </div>
                             {showEditButton && (
                                 <button

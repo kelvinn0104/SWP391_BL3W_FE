@@ -23,16 +23,20 @@ function formatWeight(kg) {
 
 function mapCollectedReport(apiItem) {
   const wasteItems = Array.isArray(apiItem?.wasteItems) ? apiItem.wasteItems : [];
+  const normalizedStatus = String(apiItem?.status ?? '').toLowerCase();
   const totalWeightKg = wasteItems.reduce((sum, item) => {
     const weight = Number(item?.estimatedWeightKg);
     return sum + (Number.isFinite(weight) ? weight : 0);
   }, 0);
+  const actualTotalWeightKg = Number(apiItem?.actualTotalWeightKg);
+  const shouldUseActualWeight = normalizedStatus === 'collected' && Number.isFinite(actualTotalWeightKg);
+  const displayWeightKg = shouldUseActualWeight ? actualTotalWeightKg : totalWeightKg;
 
   return {
     id: String(apiItem?.reportId ?? ''),
     title: apiItem?.title ?? 'Báo cáo không có tiêu đề',
     status: apiItem?.status ?? 'Collected',
-    weight: formatWeight(totalWeightKg),
+    weight: formatWeight(displayWeightKg),
   };
 }
 
