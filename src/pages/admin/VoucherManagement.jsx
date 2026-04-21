@@ -272,7 +272,7 @@ export default function VoucherManagement() {
                       className="hover:bg-primary/[0.02] transition-colors cursor-pointer group"
                     >
                       <td className="px-8 py-4 text-center opacity-40 font-mono text-xs">#{v.id}</td>
-                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={v.image?.startsWith('http') || v.image?.startsWith('/voucher') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
+                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={v.image?.startsWith('http') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
                       <td className="px-8 py-4"><span className="px-2.5 py-1 bg-surface-container-high rounded-full text-[10px] text-on-surface-variant uppercase">{v.category}</span></td>
                       <td className="px-8 py-4 text-primary font-black"><div className="flex items-center gap-1.5"><Star className="w-4 h-4" fill="currentColor" />{v.points}</div></td>
                       <td className="px-8 py-4 text-on-surface-variant">{v.stock}</td>
@@ -305,7 +305,7 @@ export default function VoucherManagement() {
                   className="bg-surface-container-lowest p-4 rounded-3xl border border-surface-container-high botanical-shadow relative group active:scale-[0.98] transition-all"
                 >
                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 shadow-sm bg-surface-container-low">
-                      <img src={v.image?.startsWith('http') || v.image?.startsWith('/voucher') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} />
+                      <img src={v.image?.startsWith('http') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} />
                       <div className="absolute top-2 right-2 px-3 py-1 bg-primary text-white text-xs font-black rounded-full shadow-lg flex items-center gap-1">
                         <Star className="w-3 h-3" fill="currentColor" /> {v.points}
                       </div>
@@ -535,7 +535,7 @@ export default function VoucherManagement() {
                   <div className="lg:w-2/5 space-y-6 md:space-y-8">
                     <div className="relative group overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border-4 border-white shadow-2xl aspect-video">
                       <img 
-                        src={detailModal.data.image?.startsWith('http') || detailModal.data.image?.startsWith('/voucher') || detailModal.data.image?.startsWith('/src/assets') ? detailModal.data.image : `${getApiBaseUrl()}${detailModal.data.image?.startsWith('/') ? '' : '/'}${detailModal.data.image}`}
+                        src={detailModal.data.image?.startsWith('http') || detailModal.data.image?.startsWith('/src/assets') ? detailModal.data.image : `${getApiBaseUrl()}${detailModal.data.image?.startsWith('/') ? '' : '/'}${detailModal.data.image}`}
                         alt="" 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                         onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=800&auto=format&fit=crop'}
@@ -676,7 +676,7 @@ export default function VoucherManagement() {
                            }
                          }} />
                          {voucherForm.imagePreview ? (
-                           <img src={voucherForm.imagePreview?.startsWith('blob') || voucherForm.imagePreview?.startsWith('http') || voucherForm.imagePreview?.startsWith('/voucher') || voucherForm.imagePreview?.startsWith('/src/assets') 
+                           <img src={voucherForm.imagePreview?.startsWith('blob') || voucherForm.imagePreview?.startsWith('http') || voucherForm.imagePreview?.startsWith('/src/assets') 
                               ? voucherForm.imagePreview 
                               : `${getApiBaseUrl()}${voucherForm.imagePreview?.startsWith('/') ? '' : '/'}${voucherForm.imagePreview}`} 
                               className="absolute inset-0 w-full h-full object-cover" alt="" />

@@ -73,7 +73,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
       } catch (error) {
         if (!isMounted) return;
         setCategoryOptions([]);
-        setCategoryError(error?.message || 'Không thể tải thể loại rác.');
+        setCategoryError(error?.message || 'Unable to load waste categories.');
       } finally {
         if (isMounted) setLoadingCategories(false);
       }
@@ -409,7 +409,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                           className="absolute inset-0 flex items-center justify-center bg-on-surface/55 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:pointer-events-none"
                           aria-label="Xóa ảnh"
                         >
-                          Xóa
+                          Remove
                         </button>
                       </div>
                     ))}
@@ -420,15 +420,15 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
                   <Tag className="w-4 h-4 text-primary" />
-                  Thể loại
+                  Category
                 </div>
                 <p className="text-xs text-on-surface-variant">
-                  Chọn một hoặc nhiều thể loại phù hợp với báo cáo.
+                  Select one or more categories that match the report.
                 </p>
                 {loadingCategories && (
                   <p className="text-xs text-on-surface-variant inline-flex items-center gap-2">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Đang tải danh sách thể loại...
+                    Loading categories...
                   </p>
                 )}
                 {categoryError && <p className="text-xs text-error">{categoryError}</p>}
@@ -456,7 +456,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
 
               {categories.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-sm font-extrabold text-on-surface">Thông tin theo từng thể loại</p>
+                  <p className="text-sm font-extrabold text-on-surface">Information by Category</p>
                   <div className="space-y-3 max-h-[38vh] overflow-y-auto pr-1">
                     {categories.map((categoryId) => {
                       const detail = categoryDetails[categoryId] ?? { quantityKg: '' };
@@ -475,7 +475,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                               htmlFor={`${formId}-qty-${categoryId}`}
                               className="text-sm font-bold text-on-surface"
                             >
-                              Số lượng (kg)
+                              Quantity (kg)
                             </label>
                             <input
                               id={`${formId}-qty-${categoryId}`}
@@ -486,7 +486,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                               value={detail.quantityKg}
                               onChange={(e) => setCategoryQuantity(categoryId, e.target.value)}
                               disabled={submitting}
-                              placeholder="VD: 3.2"
+                              placeholder="Ex: 3.2"
                               className="w-full rounded-2xl border border-surface-container-high bg-surface px-3 py-2.5 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                             />
                           </div>
@@ -503,7 +503,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                   className="flex items-center gap-2 text-sm font-bold text-on-surface"
                 >
                   <MapPin className="w-4 h-4 text-primary" />
-                  Địa chỉ
+                  Address
                 </label>
                 <input
                   id={`${formId}-address`}
@@ -511,7 +511,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   disabled={submitting}
-                  placeholder="VD: Quận 3, TP.HCM — gần địa danh / hẻm"
+                  placeholder="Ex: District 3, HCMC — near landmark / alley"
                   className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                 />
               </div>
@@ -522,7 +522,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                   className="flex items-center gap-2 text-sm font-bold text-on-surface"
                 >
                   <FileText className="w-4 h-4 text-primary" />
-                  Mô tả <span className="text-error">*</span>
+                  Description <span className="text-error">*</span>
                 </label>
                 <textarea
                   id={`${formId}-description`}
@@ -531,7 +531,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                   rows={4}
                   required
                   disabled={submitting}
-                  placeholder="Mô tả ngắn vị trí đặt rác, loại vật liệu, lưu ý an toàn…"
+                  placeholder="Briefly describe the waste location, material type, safety notes..."
                   className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
                 />
               </div>
@@ -552,14 +552,14 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
 
             <aside className="xl:col-span-3">
               <div className="rounded-3xl border border-surface-container-high/70 bg-surface p-4 sm:p-5 space-y-4 xl:sticky xl:top-6">
-                <p className="text-sm font-extrabold text-on-surface">Tổng quan báo cáo</p>
+                <p className="text-sm font-extrabold text-on-surface">Report Overview</p>
                 <div className="space-y-2">
                   <label
                     htmlFor={`${formId}-total-qty`}
                     className="flex items-center gap-2 text-sm font-bold text-on-surface"
                   >
                     <Tag className="w-4 h-4 text-primary" />
-                    Tổng khối lượng
+                    Total Weight
                   </label>
                   <input
                     id={`${formId}-total-qty`}
@@ -570,11 +570,11 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                     className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
                   />
                   <p className="text-xs text-on-surface-variant">
-                    Đơn vị: kg · Tối đa {MAX_REPORT_TOTAL_KG} kg (tổng các thể loại có số lượng hợp lệ)
+                    Unit: kg · Max {MAX_REPORT_TOTAL_KG} kg (total of categories with valid quantities)
                   </p>
                   {isOverWeightLimit && (
                     <p className="text-xs font-semibold text-error">
-                      Tổng khối lượng vượt quá {MAX_REPORT_TOTAL_KG} kg — vui lòng giảm số lượng để lưu.
+                      Total weight exceeds {MAX_REPORT_TOTAL_KG} kg — please reduce to save.
                     </p>
                   )}
                 </div>
@@ -585,7 +585,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                     className="flex items-center gap-2 text-sm font-bold text-on-surface"
                   >
                     <Star className="w-4 h-4 text-primary" fill="currentColor" />
-                    Điểm thưởng dự kiến
+                    Estimated Reward Points
                   </label>
                   <input
                     id={`${formId}-estimated-points`}
@@ -607,7 +607,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                     disabled={submitting}
                     className="inline-flex items-center justify-center rounded-2xl border border-surface-container-high px-5 py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-50"
                   >
-                    Đóng
+                    Close
                   </button>
                   <button
                     type="submit"
@@ -617,10 +617,10 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                     {submitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Đang lưu…
+                        Saving...
                       </>
                     ) : (
-                      'Lưu thay đổi'
+                      'Save Changes'
                     )}
                   </button>
                 </div>

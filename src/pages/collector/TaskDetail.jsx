@@ -79,8 +79,8 @@ function resolveReportIdForApi(task) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-const STATUS_ASSIGNED = "Đã phân công";
-const STATUS_ON_THE_WAY = "Đang trên đường";
+const STATUS_ASSIGNED = "Assigned";
+const STATUS_ON_THE_WAY = "Accepted";
 
 function isAssignedForActions(status) {
   return status === STATUS_ASSIGNED || status === "Assigned";
@@ -478,7 +478,7 @@ export default function TaskDetail() {
                     className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-600 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <X className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                    Từ chối
+                    Reject
                   </button>
                   <button
                     type="button"
@@ -486,7 +486,7 @@ export default function TaskDetail() {
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white px-5 py-3 text-sm font-extrabold shadow-md shadow-primary/25 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                    Đồng ý
+                    Accept
                   </button>
                 </div>
               )}
@@ -502,7 +502,7 @@ export default function TaskDetail() {
                       className="w-4 h-4 shrink-0"
                       strokeWidth={2.5}
                     />
-                    Xác nhận thu gom
+                    Confirm Collection
                   </button>
                 </div>
               )}

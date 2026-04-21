@@ -14,13 +14,13 @@ export const COLLECTOR_ACTIVE_STATUSES = ["Assigned", "Accepted"];
 export function collectorStatusLabel(status) {
   if (!status) return "—";
   const map = {
-    Assigned: "Đã phân công",
-    Accepted: "Đang trên đường",
-    Pending: "Chờ xử lý",
-    Collected: "Đã thu gom",
-    Cancelled: "Đã hủy",
-    "Đã phân công": "Đã phân công",
-    "Đang trên đường": "Đang trên đường",
+    Assigned: "Assigned",
+    Accepted: "Accepted",
+    Pending: "Pending",
+    Collected: "Collected",
+    Cancelled: "Cancelled",
+    "Đã phân công": "Assigned",
+    "Đang trên đường": "Accepted",
   };
   return map[status] ?? status;
 }
@@ -199,7 +199,7 @@ export default function Tasks() {
           Quản lý công việc
         </h1>
         <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
-          Các công việc đã phân công và đang trên đường thu gom
+           Assigned and Accepted tasks in progress.
         </p>
       </header>
 
@@ -219,8 +219,7 @@ export default function Tasks() {
       ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
-            Hiện không có công việc nào ở trạng thái &quot;Đã phân công&quot;
-            hoặc &quot;Đang trên đường&quot;.
+            Currently no tasks in "Assigned" or "Accepted" status.
           </p>
         </div>
       ) : (

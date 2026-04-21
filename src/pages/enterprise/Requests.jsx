@@ -147,10 +147,10 @@ export default function Requests() {
 
   const tabs = [
     { id: 'All', label: 'Tất cả', count: requests.length },
-    { id: 'Pending', label: 'Mới', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
-    { id: 'Assigned', label: 'Đã điều phối', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
-    { id: 'Accepted', label: 'Đang thu gom', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
-    { id: 'Collected', label: 'Đã hoàn thành', count: requests.filter(r => r.status === 'Collected').length, color: 'text-emerald-500' }
+    { id: 'Pending', label: 'Pending', count: requests.filter(r => r.status === 'Pending').length, color: 'text-orange-500' },
+    { id: 'Assigned', label: 'Assigned', count: requests.filter(r => r.status === 'Assigned').length, color: 'text-indigo-500' },
+    { id: 'Accepted', label: 'Accepted', count: requests.filter(r => r.status === 'Accepted').length, color: 'text-blue-500' },
+    { id: 'Collected', label: 'Collected', count: requests.filter(r => r.status === 'Collected').length, color: 'text-emerald-500' }
   ];
 
   return (
@@ -323,12 +323,12 @@ export default function Requests() {
 function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel, index }) {
   const getStatusBadge = () => {
     switch(req.status) {
-      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
-      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: UsersIcon, label: 'Đã điều phối' };
-      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: Truck, label: 'Đang đi' };
-      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
-      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
-      default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
+      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Pending' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: UsersIcon, label: 'Assigned' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: Truck, label: 'Accepted' };
+      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Collected' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Cancelled' };
+      default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: req.status };
     }
   };
 
@@ -466,7 +466,7 @@ function CoordinationDrawer({ req, onAssign, onClose }) {
           <div className="flex justify-between items-start mb-6">
             <div>
               <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2 font-mono">Trung tâm điều phối</p>
-              <h2 className="text-2xl font-black text-on-surface tracking-tight">Khu vực: {req.wardName || 'Chưa xác định'}</h2>
+              <h2 className="text-2xl font-black text-on-surface tracking-tight">Khu vực: {req.wardName || req.address || req.locationText || 'Chưa xác định'}</h2>
             </div>
             <button onClick={onClose} className="p-3 hover:bg-surface-container-highest rounded-2xl transition-all"><X className="w-6 h-6 text-on-surface-variant/30" /></button>
           </div>
@@ -539,12 +539,12 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
 
   const currentStatus = (() => {
     switch(req.status) {
-      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Mới' };
-      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Đã duyệt' };
-      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Đang đi' };
-      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Xong' };
-      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Đã hủy' };
-      default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: 'N/A' };
+      case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Pending' };
+      case 'Accepted': return { color: 'text-blue-500 bg-blue-50', icon: CheckCircle2, label: 'Accepted' };
+      case 'Assigned': return { color: 'text-indigo-500 bg-indigo-50', icon: Truck, label: 'Assigned' };
+      case 'Collected': return { color: 'text-emerald-500 bg-emerald-50', icon: CheckCircle, label: 'Collected' };
+      case 'Cancelled': return { color: 'text-red-500 bg-red-50', icon: X, label: 'Cancelled' };
+      default: return { color: 'text-on-surface-variant/40 bg-surface-container', icon: HelpCircle, label: req.status };
     }
   })();
 
@@ -726,7 +726,7 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                 <div className={`${readOnly ? 'col-span-12' : 'col-span-8'} space-y-4`}>
                   <div className="flex items-center gap-3 px-2">
                      <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] whitespace-nowrap">
-                       {readOnly ? 'Nhân viên phụ trách' : 'Điều phối nhân viên'}
+                       {req.collectorId ? (readOnly ? 'Nhân viên phụ trách' : 'Đơn đã điều phối cho') : (readOnly ? 'Chưa có nhân viên phụ trách' : 'Điều phối nhân viên')}
                      </h4>
                      <div className="flex-1 h-[1px] bg-on-surface/5" />
                   </div>
@@ -734,8 +734,12 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                   <div className={`grid ${readOnly ? 'grid-cols-4' : 'grid-cols-3'} gap-3`}>
                     {(() => {
                       const filtered = collectors.filter(c => {
-                        if (readOnly && req.collectorId === (c.userId || c.id)) return true;
-                        // Check if collector is assigned to this ward
+                        const cId = c.userId || c.id;
+                        if (readOnly) {
+                           return req.collectorId ? req.collectorId === cId : false;
+                        }
+                        // Otherwise (unassigned or edit mode), show all collectors suitable for this ward
+                        if (!req.wardId) return true; // If no ward specified, show all
                         return c.wardIds && c.wardIds.includes(Number(req.wardId));
                       });
 
@@ -748,30 +752,36 @@ function RequestDetailModal({ req, onClose, collectors, onAssign, onStatus, onCa
                         );
                       }
 
-                      return filtered.map(c => (
-                        <button 
-                          key={c.userId || c.id} 
-                          type="button"
-                          onClick={() => !readOnly && onAssign(req.id, c.userId || c.id)}
-                          className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
-                            req.collectorId === (c.userId || c.id)
-                            ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
-                            : 'border-transparent bg-on-surface-variant/5'
-                          } ${readOnly ? 'cursor-default' : 'hover:bg-on-surface-variant/10 cursor-pointer'}`}
-                        >
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            req.collectorId === (c.userId || c.id) ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
-                          }`}>
-                            <User className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 text-left">
-                            <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${req.collectorId === (c.userId || c.id) ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name || c.displayName}</p>
-                            <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${req.collectorId === (c.userId || c.id) ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
-                              {c.phoneNumber || c.phone || "Chưa có SĐT"}
-                            </p>
-                          </div>
-                        </button>
-                      ));
+                      return filtered.map(c => {
+                        const cId = c.userId || c.id;
+                        // A collector is highlighted ONLY if their ID matches the report's collectorId
+                        const isSelected = Boolean(req.collectorId) && req.collectorId === cId;
+                        
+                        return (
+                          <button 
+                            key={cId} 
+                            type="button"
+                            onClick={() => !readOnly && onAssign(req.id, cId)}
+                            className={`p-3 rounded-[1.8rem] flex items-center gap-3 border-2 transition-all group ${
+                              isSelected
+                              ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10' 
+                              : 'border-transparent bg-on-surface-variant/5'
+                            } ${readOnly ? 'cursor-default' : 'hover:bg-on-surface-variant/10 cursor-pointer'}`}
+                          >
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                              isSelected ? 'bg-indigo-500 text-white' : 'bg-surface-container-high text-on-surface-variant/40'
+                            }`}>
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 text-left">
+                              <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${isSelected ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name || c.displayName || "N/A"}</p>
+                              <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${isSelected ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                                {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      });
                     })()}
                   </div>
                 </div>
@@ -842,7 +852,7 @@ function CancellationDialog({ req, onClose, onConfirm }) {
           <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <X className="w-8 h-8" />
           </div>
-          <h3 className="text-2xl font-black text-on-surface mb-2">Hủy đơn thu gom?</h3>
+          <h3 className="text-2xl font-black text-on-surface mb-2">Cancel Report?</h3>
           <p className="text-sm font-bold text-on-surface-variant/60 leading-relaxed mb-8">
             Vui lòng cho biết lý do hủy đơn của <span className="text-on-surface font-black">{req.citizenName}</span>.
           </p>
