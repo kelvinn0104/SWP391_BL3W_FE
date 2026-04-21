@@ -48,6 +48,7 @@ function HistoryTaskCard({ task }) {
   return (
     <Link
       to={`/collector/tasks/${encodeURIComponent(String(task.id))}`}
+      state={{ from: "history" }}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
       <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
