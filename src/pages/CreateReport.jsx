@@ -77,7 +77,20 @@ export default function CreateReport() {
                     .filter((item) => item.id && item.name);
                 setCategoryOptions(normalizedCats);
                 
-                setDistricts(areaData.areas || []);
+                const allAreas = areaData.areas || [];
+                setDistricts(allAreas);
+
+                // Auto-select user's ward if available
+                const user = getUser();
+                if (user && user.wards && user.wards.length > 0) {
+                    const userWard = user.wards[0];
+                    // Find which district this ward belongs to
+                    const district = allAreas.find(d => d.wards.some(w => Number(w.id) === Number(userWard.id)));
+                    if (district) {
+                        setSelectedDistrictId(String(district.id));
+                        setSelectedWardId(String(userWard.id));
+                    }
+                }
             } catch (error) {
                 if (!isMounted) return;
                 setCategoryError(error?.message || 'Không thể tải dữ liệu ban đầu.');
@@ -181,6 +194,15 @@ export default function CreateReport() {
             return;
         }
 
+        if (!selectedWardId) {
+            setSubmitToast({
+                type: 'error',
+                title: 'Thiếu thông tin khu vực',
+                message: 'Vui lòng chọn Phường/Xã nơi thu gom rác.',
+            });
+            return;
+        }
+
         const selectedItems = getReportLineItems(categories, categoryDetails);
 
         if (selectedItems.length === 0) {
@@ -241,6 +263,7 @@ export default function CreateReport() {
     const canSubmit =
         Boolean(title.trim()) &&
         Boolean(description.trim()) &&
+        Boolean(selectedWardId) &&
         !submitting &&
         !isOverWeightLimit;
 
@@ -529,12 +552,12 @@ export default function CreateReport() {
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
                                             <MapPin className="w-4 h-4 text-primary" />
-                                            Địa chỉ thu gom
+                                            Địa chỉ thu gom <span className="text-error">*</span>
                                         </div>
                                         
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-on-surface-variant">Quận / Huyện</label>
+                                                <label className="text-xs font-bold text-on-surface-variant">Quận / Huyện <span className="text-error">*</span></label>
                                                 <select
                                                     value={selectedDistrictId}
                                                     onChange={(e) => {
@@ -551,7 +574,7 @@ export default function CreateReport() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-on-surface-variant">Phường / Xã</label>
+                                                <label className="text-xs font-bold text-on-surface-variant">Phường / Xã <span className="text-error">*</span></label>
                                                 <select
                                                     value={selectedWardId}
                                                     onChange={(e) => setSelectedWardId(e.target.value)}

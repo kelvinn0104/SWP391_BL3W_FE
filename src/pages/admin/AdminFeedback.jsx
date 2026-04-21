@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,52 +8,7 @@ import {
   User,
 } from "lucide-react";
 
-export const FEEDBACK_ITEMS = [
-  {
-    id: "FB-2026-001",
-    sender: "Nguyễn Văn A",
-    email: "nguyenvana@gmail.com",
-    subject: "Không nhận được điểm sau khi hoàn thành thu gom",
-    message:
-      "Tôi đã xác nhận đơn REQ-121 thành công từ hôm qua nhưng điểm vẫn chưa cộng vào tài khoản. Nhờ admin kiểm tra lại giúp.",
-    status: "open",
-    priority: "high",
-    createdAt: "2026-04-16 08:20",
-  },
-  {
-    id: "FB-2026-002",
-    sender: "Trần Thị B",
-    email: "tranthib@gmail.com",
-    subject: "Không mở được mã voucher sau khi đổi",
-    message:
-      "Tôi đổi voucher Highland nhưng khi vào lịch sử quà tặng thì mã hiển thị trắng. Mong được hỗ trợ sớm.",
-    status: "in_progress",
-    priority: "medium",
-    createdAt: "2026-04-15 19:02",
-  },
-  {
-    id: "FB-2026-003",
-    sender: "Lê Văn C",
-    email: "levanc@gmail.com",
-    subject: "Địa chỉ thu gom bị sai vị trí",
-    message:
-      "Tôi chọn đúng địa chỉ nhưng khi lên bản đồ ở report detail thì lệch sang khu vực khác khoảng 2km.",
-    status: "resolved",
-    priority: "low",
-    createdAt: "2026-04-14 14:35",
-  },
-  {
-    id: "FB-2026-004",
-    sender: "Phạm Minh D",
-    email: "phamminhd@gmail.com",
-    subject: "Không đăng nhập được sau khi reset mật khẩu",
-    message:
-      "Sau khi reset thành công, app vẫn báo sai mật khẩu ở lần đăng nhập tiếp theo. Tôi đã thử nhiều lần.",
-    status: "open",
-    priority: "high",
-    createdAt: "2026-04-14 09:11",
-  },
-];
+export const FEEDBACK_ITEMS = [];
 
 const STATUS_TABS = [
   { id: "all", label: "Tất cả" },
@@ -88,6 +43,9 @@ function priorityText(priority) {
 }
 
 export default function AdminFeedback() {
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/enterprise";
+
   const [activeStatus, setActiveStatus] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -185,7 +143,7 @@ export default function AdminFeedback() {
             filteredItems.map((item) => (
               <Link
                 key={item.id}
-                to={`/admin/feedback/${encodeURIComponent(item.id)}`}
+                to={`${basePath}/feedback/${encodeURIComponent(item.id)}`}
                 className="block rounded-2xl border border-surface-container-high bg-surface p-5 space-y-3 hover:border-primary/40 hover:shadow-md transition-all"
               >
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">

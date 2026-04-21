@@ -168,7 +168,7 @@ export default function HistoryTasks() {
           Lịch sử công việc
         </h1>
         <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
-          Các công việc đã hoàn tất thu gom
+          Tasks that have been successfully collected.
         </p>
       </header>
 
@@ -188,7 +188,7 @@ export default function HistoryTasks() {
       ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
-            Chưa có công việc nào ở trạng thái &quot;Đã thu gom&quot;.
+            No tasks in "Collected" status yet.
           </p>
         </div>
       ) : (

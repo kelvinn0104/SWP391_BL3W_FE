@@ -79,8 +79,8 @@ export default function UpdateStatusModal({
     if (!numericReportId) {
       setSubmitToast({
         type: "error",
-        title: "Thiếu mã báo cáo",
-        message: "Không xác định được mã báo cáo để gửi yêu cầu.",
+        title: "Missing Report ID",
+        message: "Unable to identify the report ID to submit the request.",
       });
       return;
     }
@@ -93,17 +93,17 @@ export default function UpdateStatusModal({
       });
       setSubmitToast({
         type: "success",
-        title: "Xác nhận nhận việc thành công",
-        message: "Bạn đã xác nhận nhận công việc thu gom.",
+        title: "Acceptance Confirmed",
+        message: "You have successfully accepted the collection task.",
         jobDetail,
       });
     } catch (error) {
       setSubmitToast({
         type: "error",
-        title: "Xác nhận thất bại",
+        title: "Confirmation Failed",
         message:
           error?.message ||
-          "Không thể xác nhận nhận việc. Vui lòng thử lại.",
+          "Unable to confirm the task. Please try again.",
       });
     } finally {
       setSubmitting(false);
@@ -155,7 +155,7 @@ export default function UpdateStatusModal({
               className="inline-flex items-center gap-2 text-lg font-extrabold text-primary"
             >
               <CheckCircle2 className="w-5 h-5 shrink-0" />
-              Xác nhận nhận việc
+              Accept Task
             </p>
           </div>
           <button
@@ -175,7 +175,7 @@ export default function UpdateStatusModal({
               htmlFor={noteId}
               className="text-sm font-bold text-on-surface"
             >
-              Ghi chú
+              Note
             </label>
             <textarea
               id={noteId}
@@ -184,7 +184,7 @@ export default function UpdateStatusModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              placeholder="Nhập ghi chú kèm khi xác nhận (tuỳ chọn)…"
+              placeholder="Enter a note when confirming (optional)..."
               className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>
@@ -196,7 +196,7 @@ export default function UpdateStatusModal({
               disabled={submitting}
               className="rounded-2xl border border-surface-container-high py-3 text-sm font-bold text-on-surface hover:bg-surface-container-high/40 transition-colors disabled:opacity-50"
             >
-              Hủy
+              Cancel
             </button>
             <button
               type="submit"
@@ -206,10 +206,10 @@ export default function UpdateStatusModal({
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Đang gửi…
+                  Sending...
                 </>
               ) : (
-                "Xác nhận"
+                "Confirm"
               )}
             </button>
           </div>

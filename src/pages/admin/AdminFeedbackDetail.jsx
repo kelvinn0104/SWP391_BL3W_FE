@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -21,6 +21,9 @@ function statusText(status) {
 }
 
 export default function AdminFeedbackDetail() {
+  const location = useLocation();
+  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/enterprise";
+
   const { id = "" } = useParams();
   const decodedId = decodeURIComponent(id);
   const feedback = useMemo(
@@ -36,7 +39,7 @@ export default function AdminFeedbackDetail() {
     return (
       <div className="space-y-6">
         <Link
-          to="/admin/feedback"
+          to={`${basePath}/feedback`}
           className="inline-flex items-center gap-2 text-primary font-bold hover:underline"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -59,7 +62,7 @@ export default function AdminFeedbackDetail() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <header className="flex flex-col gap-3 mb-4 md:mb-6 px-2">
         <Link
-          to="/admin/feedback"
+          to={`${basePath}/feedback`}
           className="inline-flex items-center gap-2 text-primary font-bold hover:underline w-fit"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -135,7 +138,7 @@ export default function AdminFeedbackDetail() {
 
         <div className="space-y-2">
           <label className="text-sm font-bold text-on-surface">
-            Ghi chú phản hồi admin
+            Ghi chú phản hồi
           </label>
           <textarea
             rows={4}

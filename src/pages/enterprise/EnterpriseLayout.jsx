@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Scale, 
@@ -8,20 +8,28 @@ import {
   Gift, 
   Briefcase, 
   Users, 
-  Settings, 
-  MessageSquare, 
+  AlertTriangle, 
   Ticket,
   LogOut,
   Menu,
-  X 
+  X,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clearAuth, getUser, resolveImageUrl } from '../../lib/auth';
 
 export default function EnterpriseLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const accountsActive = location.pathname.startsWith("/enterprise/accounts");
+  const accountsMenuId = "enterprise-accounts-menu";
+  const [accountsOpen, setAccountsOpen] = useState(accountsActive);
+
+  useEffect(() => {
+    if (accountsActive) setAccountsOpen(true);
+  }, [accountsActive]);
 
   useEffect(() => {
     const usr = getUser();
@@ -130,19 +138,6 @@ export default function EnterpriseLayout() {
             <span className="text-sm">Năng lực & Khu vực</span>
           </NavLink>
 
-          <NavLink
-            to="/enterprise/system"
-            onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
-              }`
-            }
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-sm">Quản lí hệ thống</span>
-          </NavLink>
 
           <NavLink
             to="/enterprise/tasks"
@@ -158,32 +153,103 @@ export default function EnterpriseLayout() {
             <span className="text-sm">Quản lí công việc</span>
           </NavLink>
 
-          <NavLink
-            to="/enterprise/accounts"
-            onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
-              }`
-            }
-          >
-            <Users className="w-5 h-5" />
-            <span className="text-sm">Quản lí Account</span>
-          </NavLink>
+          <div className="space-y-1.5">
+            <div
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
+                accountsActive
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+              }`}
+            >
+              <NavLink
+                to="/enterprise/accounts/citizens"
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  setAccountsOpen(true);
+                }}
+                className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none"
+              >
+                <Users className="w-5 h-5 shrink-0" />
+                <span className="text-sm truncate whitespace-nowrap">
+                  Quản lý tài khoản
+                </span>
+              </NavLink>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setAccountsOpen((v) => !v);
+                }}
+                className="p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                aria-expanded={accountsOpen}
+                aria-controls={accountsMenuId}
+                aria-label={accountsOpen ? "Thu gọn" : "Mở rộng"}
+              >
+                <ChevronDown
+                  className={`w-5 h-5 transition-transform ${
+                    accountsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {accountsOpen && (
+                <motion.div
+                  id={accountsMenuId}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-8 pr-2 py-1 space-y-1">
+                    <NavLink
+                      to="/enterprise/accounts/citizens"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
+                          isActive
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+                        }`
+                      }
+                    >
+                      <span className="text-sm">Dân cư</span>
+                    </NavLink>
+                    <NavLink
+                      to="/enterprise/accounts/collectors"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
+                          isActive
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+                        }`
+                      }
+                    >
+                      <span className="text-sm">Người thu gom</span>
+                    </NavLink>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <NavLink
             to="/enterprise/feedback"
             onClick={() => setIsSidebarOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive
+              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive || window.location.pathname.startsWith('/enterprise/feedback')
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
                 : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
               }`
             }
           >
-            <MessageSquare className="w-5 h-5" />
-            <span className="text-sm">Quản lí Feedback</span>
+            <AlertTriangle className="w-5 h-5" />
+            <span className="text-sm">Quản lí khiếu nại</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
