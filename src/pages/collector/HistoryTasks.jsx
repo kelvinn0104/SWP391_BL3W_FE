@@ -12,10 +12,7 @@ const HISTORY_STATUS = "Collected";
 
 function formatWeightKg(weightKg) {
   if (weightKg == null || weightKg === "") return "—";
-  const n = Number(weightKg);
-  if (Number.isFinite(n)) {
-    return `${Number.isInteger(n) ? n : n.toFixed(2)}kg`;
-  }
+  if (typeof weightKg === "number") return `${weightKg}kg`;
   return String(weightKg);
 }
 
@@ -67,18 +64,15 @@ function HistoryTaskCard({ task }) {
               {collectorStatusLabel(task.status)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
-            <Package className="w-4 h-4" strokeWidth={2.25} />
+          <span className="inline-flex items-center gap-2 rounded-xl bg-primary/5 text-primary px-4 py-2.5 text-sm font-bold shrink-0">
+            <Package className="w-4 h-4" />
             {formatWeightKg(task.weightKg)}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <p className="flex items-center gap-2 font-medium text-on-surface">
-            <Leaf
-              className="w-4 h-4 text-primary shrink-0"
-              strokeWidth={2}
-            />
+            <Leaf className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
             <span>{task.category ?? "—"}</span>
           </p>
           {phone ? (

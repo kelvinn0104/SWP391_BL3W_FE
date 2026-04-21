@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Calendar,
-  FileText,
-  Leaf,
-  MapPin,
-  Package,
-  Phone,
-} from "lucide-react";
+import { Calendar, FileText, Leaf, MapPin, Package, Phone } from "lucide-react";
 import Pagination from "../../components/ui/Pagination.jsx";
 import { getCollectorAssignedReports } from "../../api/collectorJobApi";
 
@@ -56,10 +49,7 @@ export function statusBadgeClass(status) {
 
 function formatWeightKg(weightKg) {
   if (weightKg == null || weightKg === "") return "—";
-  const n = Number(weightKg);
-  if (Number.isFinite(n)) {
-    return `${Number.isInteger(n) ? n : n.toFixed(2)}kg`;
-  }
+  if (typeof weightKg === "number") return `${weightKg}kg`;
   return String(weightKg);
 }
 
@@ -67,8 +57,7 @@ function resolveCreatedDate(task) {
   if (task?.createdAt) return String(task.createdAt);
   if (task?.createdAtUtc) {
     const d = new Date(task.createdAtUtc);
-    if (!Number.isNaN(d.getTime()))
-      return d.toISOString().slice(0, 10);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
   }
   return "";
 }
@@ -112,18 +101,15 @@ function TaskCard({ task }) {
               {collectorStatusLabel(task.status)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
-            <Package className="w-4 h-4" strokeWidth={2.25} />
+          <span className="inline-flex items-center gap-2 rounded-xl bg-primary/5 text-primary px-4 py-2.5 text-sm font-bold shrink-0">
+            <Package className="w-4 h-4" />
             {formatWeightKg(task.weightKg)}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <p className="flex items-center gap-2 font-medium text-on-surface">
-            <Leaf
-              className="w-4 h-4 text-primary shrink-0"
-              strokeWidth={2}
-            />
+            <Leaf className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
             <span>{task.category ?? "—"}</span>
           </p>
           {phone ? (
@@ -180,9 +166,7 @@ export default function Tasks() {
       })
       .catch((err) => {
         if (!cancelled)
-          setLoadError(
-            err?.message || "Không tải được danh sách công việc.",
-          );
+          setLoadError(err?.message || "Không tải được danh sách công việc.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -193,8 +177,7 @@ export default function Tasks() {
   }, []);
 
   const tasks = useMemo(
-    () =>
-      items.filter((t) => COLLECTOR_ACTIVE_STATUSES.includes(t.status)),
+    () => items.filter((t) => COLLECTOR_ACTIVE_STATUSES.includes(t.status)),
     [items],
   );
 
