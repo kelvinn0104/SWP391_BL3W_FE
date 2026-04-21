@@ -5,10 +5,15 @@ import {
   ImagePlus,
   PackageCheck,
   Plus,
+  Star,
+  Tag,
   Upload,
   X,
 } from "lucide-react";
 import { completeCollectorJob } from "../../api/collectorJobApi";
+
+const TOAST_AUTO_HIDE_MS = 2600;
+const TOAST_SUCCESS_CLOSE_MS = 2200;
 
 function resolveReportId(taskId, reportIdProp) {
   if (reportIdProp != null) {
@@ -20,22 +25,66 @@ function resolveReportId(taskId, reportIdProp) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+function nowForDatetimeLocal() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+/** Một dòng: danh mục cố định từ API (locked) hoặc nhập tay. */
+function rowsFromWasteItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const rows = items
+    .map((item) => {
+      const name = String(item?.wasteCategoryName ?? "").trim();
+      const est = item?.estimatedWeightKg;
+      const weightStr =
+        est != null && est !== "" && Number.isFinite(Number(est))
+          ? String(Number(est))
+          : "";
+      const estKg = Number(item?.estimatedWeightKg);
+      const estPts = Number(item?.estimatedPoints);
+      const pointsPerKg =
+        Number.isFinite(estKg) &&
+        estKg > 0 &&
+        Number.isFinite(estPts) &&
+        estPts >= 0
+          ? estPts / estKg
+          : undefined;
+      return {
+        categoryName: name,
+        weight: weightStr,
+        lockedCategory: true,
+        rowKey: item?.wasteReportItemId ?? name,
+        pointsPerKg,
+      };
+    })
+    .filter((r) => r.categoryName);
+  return rows.length > 0 ? rows : null;
+}
+
 export default function UploadImageModal({
   open,
   onClose,
   taskId,
   reportId: reportIdProp,
-  taskTitle,
+  wasteItems,
   onSuccess,
 }) {
   const modalId = useId();
   const titleId = `${modalId}-title`;
-  const descId = `${modalId}-desc`;
 
   const [proofFiles, setProofFiles] = useState([]);
   const [completionNote, setCompletionNote] = useState("");
   const [completedAtUtc, setCompletedAtUtc] = useState("");
-  const [weightRows, setWeightRows] = useState([{ itemId: "", weight: "" }]);
+  const [weightRows, setWeightRows] = useState([
+    { categoryName: "", weight: "", lockedCategory: false },
+  ]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitToast, setSubmitToast] = useState(null);
@@ -52,16 +101,53 @@ export default function UploadImageModal({
     };
   }, [previewUrls]);
 
+  const presetRows = useMemo(
+    () => rowsFromWasteItems(wasteItems),
+    [wasteItems],
+  );
+  const fixedCategoriesFromApi = Boolean(presetRows?.length);
+
+  const weightSummary = useMemo(() => {
+    let totalKg = 0;
+    let pointsSum = 0;
+    const formulaParts = [];
+    for (const row of weightRows) {
+      const raw = String(row.weight ?? "").trim();
+      if (raw === "") continue;
+      const kg = Number.parseFloat(raw.replace(",", "."));
+      if (!Number.isFinite(kg) || kg <= 0) continue;
+      totalKg += kg;
+      const rate = row.pointsPerKg;
+      if (Number.isFinite(rate) && rate > 0) {
+        pointsSum += kg * rate;
+        const rateRounded = Math.round(rate * 100) / 100;
+        formulaParts.push(`${Math.round(kg * 10) / 10} kg × ${rateRounded}`);
+      }
+    }
+    const hasKg = totalKg > 0;
+    const roundedPts = Math.max(0, Math.round(pointsSum));
+    return {
+      totalKgDisplay: hasKg ? String(Math.round(totalKg * 10) / 10) : "",
+      pointsDisplay:
+        hasKg && formulaParts.length > 0
+          ? new Intl.NumberFormat("vi-VN").format(roundedPts)
+          : "",
+      formulaDisplay: formulaParts.join(" + "),
+    };
+  }, [weightRows]);
+
   useEffect(() => {
     if (!open) return;
     setProofFiles([]);
     setCompletionNote("");
-    setCompletedAtUtc("");
-    setWeightRows([{ itemId: "", weight: "" }]);
+    setCompletedAtUtc(nowForDatetimeLocal());
+    setWeightRows(
+      presetRows ?? [{ categoryName: "", weight: "", lockedCategory: false }],
+    );
     setSubmitting(false);
     setSubmitToast(null);
     setDragOverProof(false);
-  }, [open]);
+  }, [open, presetRows]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +163,7 @@ export default function UploadImageModal({
 
     const timer = window.setTimeout(() => {
       setSubmitToast(null);
-    }, 2600);
+    }, TOAST_AUTO_HIDE_MS);
 
     return () => window.clearTimeout(timer);
   }, [submitToast]);
@@ -88,13 +174,15 @@ export default function UploadImageModal({
     const timer = window.setTimeout(() => {
       onSuccess?.();
       onClose?.();
-    }, 2200);
+    }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
   }, [submitToast, onSuccess, onClose]);
 
   function addFilesTo(setter, fileList) {
-    const next = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    const next = Array.from(fileList).filter((f) =>
+      f.type.startsWith("image/"),
+    );
     if (next.length === 0) return;
     setter((prev) => [...prev, ...next]);
     setSubmitToast(null);
@@ -111,7 +199,8 @@ export default function UploadImageModal({
     return (e) => {
       e.preventDefault();
       setDrag(false);
-      if (e.dataTransfer.files?.length) addFilesTo(setter, e.dataTransfer.files);
+      if (e.dataTransfer.files?.length)
+        addFilesTo(setter, e.dataTransfer.files);
     };
   }
 
@@ -134,23 +223,23 @@ export default function UploadImageModal({
       setSubmitToast({
         type: "error",
         title: "Thiếu ảnh minh chứng",
-        message: "Vui lòng tải ít nhất một ảnh (ProofImages).",
+        message: "Vui lòng tải ít nhất một ảnh minh chứng.",
       });
       return;
     }
 
     const pairs = [];
     for (const row of weightRows) {
-      const idRaw = row.itemId.trim();
+      const nameRaw = row.categoryName.trim();
       const wRaw = row.weight.trim();
-      if (!idRaw && !wRaw) continue;
-      const wasteId = Number(idRaw);
+      if (!nameRaw && !wRaw) continue;
       const weight = Number(wRaw.replace(",", "."));
-      if (!Number.isFinite(wasteId) || wasteId <= 0) {
+      if (!nameRaw) {
         setSubmitToast({
           type: "error",
-          title: "Mã dòng rác không hợp lệ",
-          message: "Mỗi dòng đã nhập cần có mã dòng rác (số nguyên dương).",
+          title: "Thiếu danh mục",
+          message:
+            "Mỗi dòng đã nhập cần có tên danh mục (không được để trống).",
         });
         return;
       }
@@ -162,20 +251,20 @@ export default function UploadImageModal({
         });
         return;
       }
-      pairs.push({ wasteReportItemId: wasteId, actualWeightKg: weight });
+      pairs.push({ categoryName: nameRaw, actualWeightKg: weight });
     }
 
     if (pairs.length === 0) {
       setSubmitToast({
         type: "error",
-        title: "Thiếu khối lượng theo dòng",
+        title: "Thiếu danh mục và khối lượng",
         message:
-          "Vui lòng nhập ít nhất một cặp mã dòng rác và khối lượng thực tế.",
+          "Vui lòng nhập ít nhất một cặp danh mục và khối lượng thực tế.",
       });
       return;
     }
 
-    const wasteReportItemIds = pairs.map((p) => p.wasteReportItemId);
+    const categoryNames = pairs.map((p) => p.categoryName);
     const actualWeightKgs = pairs.map((p) => p.actualWeightKg);
 
     let completedIso;
@@ -203,7 +292,7 @@ export default function UploadImageModal({
         proofImages: proofFiles,
         completionNote: completionNotePayload,
         completedAtUtc: completedIso,
-        wasteReportItemIds,
+        categoryNames,
         actualWeightKgs,
       });
       setSubmitToast({
@@ -216,8 +305,7 @@ export default function UploadImageModal({
         type: "error",
         title: "Hoàn tất thất bại",
         message:
-          err?.message ||
-          "Không thể hoàn tất thu gom. Vui lòng thử lại.",
+          err?.message || "Không thể hoàn tất thu gom. Vui lòng thử lại.",
       });
     } finally {
       setSubmitting(false);
@@ -232,7 +320,6 @@ export default function UploadImageModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={descId}
     >
       {submitToast ? (
         <div
@@ -269,32 +356,13 @@ export default function UploadImageModal({
       <div className="relative w-full max-w-lg rounded-3xl border border-surface-container-high/70 bg-surface-container-lowest botanical-shadow overflow-hidden max-h-[min(92vh,720px)] flex flex-col">
         <div className="flex items-start justify-between gap-4 p-6 sm:p-7 border-b border-surface-container-high/60 shrink-0">
           <div className="space-y-1.5 min-w-0">
-            <p className="inline-flex items-center gap-2 text-primary font-extrabold text-sm">
-              <PackageCheck className="w-4 h-4 shrink-0" />
+            <p
+              id={titleId}
+              className="inline-flex items-center gap-2 text-lg font-extrabold text-primary"
+            >
+              <PackageCheck className="w-5 h-5 shrink-0" />
               Xác nhận thu gom
             </p>
-            <h2
-              id={titleId}
-              className="text-xl sm:text-2xl font-extrabold text-on-surface"
-            >
-              Hoàn tất thu gom
-            </h2>
-            <p id={descId} className="text-sm text-on-surface-variant leading-relaxed">
-              Form <span className="font-mono text-xs">multipart/form-data</span>: ProofImages, CompletionNote,
-              CompletedAtUtc, WasteReportItemIds và ActualWeightKgs (hai mảng id và kg cùng thứ tự).
-            </p>
-            {taskId ? (
-              <p className="text-xs font-semibold text-on-surface-variant pt-1">
-                Mã:{" "}
-                <span className="font-mono text-on-surface">{taskId}</span>
-                {taskTitle ? (
-                  <>
-                    {" "}
-                    • <span className="text-on-surface">{taskTitle}</span>
-                  </>
-                ) : null}
-              </p>
-            ) : null}
           </div>
 
           <button
@@ -314,14 +382,8 @@ export default function UploadImageModal({
           <div className="space-y-2">
             <label className="text-sm font-bold text-on-surface inline-flex items-center gap-2">
               <ImagePlus className="w-4 h-4 text-primary" />
-              Ảnh minh chứng{" "}
-              <span className="text-xs font-mono font-normal text-on-surface-variant">
-                (ProofImages)
-              </span>
+              Ảnh minh chứng
             </label>
-            <p className="text-xs text-on-surface-variant">
-              Mỗi file gửi một phần cùng tên trường ProofImages (multipart/form-data).
-            </p>
             <label
               htmlFor={`${modalId}-proof`}
               onDragOver={(e) => {
@@ -337,8 +399,12 @@ export default function UploadImageModal({
               }`}
             >
               <Upload className="w-7 h-7 text-primary/80" />
-              <span className="text-sm font-bold text-on-surface">Chọn hoặc kéo thả ảnh</span>
-              <span className="text-xs text-on-surface-variant">PNG, JPG — có thể chọn nhiều ảnh</span>
+              <span className="text-sm font-bold text-on-surface">
+                Chọn hoặc kéo thả ảnh
+              </span>
+              <span className="text-xs text-on-surface-variant">
+                PNG, JPG — có thể chọn nhiều ảnh
+              </span>
             </label>
             <input
               id={`${modalId}-proof`}
@@ -363,7 +429,9 @@ export default function UploadImageModal({
                     <button
                       type="button"
                       onClick={() =>
-                        setProofFiles((prev) => prev.filter((_, i) => i !== index))
+                        setProofFiles((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
                       }
                       className="absolute top-1 right-1 inline-flex items-center justify-center rounded-lg bg-on-surface/70 text-white p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                       aria-label={`Xóa ảnh ${index + 1}`}
@@ -382,9 +450,6 @@ export default function UploadImageModal({
               className="text-sm font-bold text-on-surface"
             >
               Ghi chú hoàn tất{" "}
-              <span className="text-xs font-mono font-normal text-on-surface-variant">
-                (CompletionNote)
-              </span>
             </label>
             <textarea
               id={`${modalId}-completion-note`}
@@ -398,84 +463,94 @@ export default function UploadImageModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor={`${modalId}-completed-at`} className="text-sm font-bold text-on-surface">
+            <label
+              htmlFor={`${modalId}-completed-at`}
+              className="text-sm font-bold text-on-surface"
+            >
               Thời điểm hoàn tất{" "}
-              <span className="text-xs font-mono font-normal text-on-surface-variant">
-                (CompletedAtUtc)
-              </span>
             </label>
             <input
               id={`${modalId}-completed-at`}
               type="datetime-local"
               value={completedAtUtc}
               onChange={(e) => setCompletedAtUtc(e.target.value)}
+              disabled
               className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
-            <p className="text-xs text-on-surface-variant">
-              ISO 8601 khi gửi API. Để trống sẽ dùng thời điểm hiện tại (UTC).
-            </p>
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-sm font-bold text-on-surface">
-                Mã dòng rác / Khối lượng (kg)
+                Danh mục / Khối lượng (kg)
               </span>
-              <span className="text-[11px] font-mono text-on-surface-variant sm:text-xs">
-                WasteReportItemIds / ActualWeightKgs
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  setWeightRows((prev) => [...prev, { itemId: "", weight: "" }])
-                }
-                className="inline-flex items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/15 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Thêm dòng
-              </button>
+              {!fixedCategoriesFromApi ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setWeightRows((prev) => [
+                      ...prev,
+                      { categoryName: "", weight: "", lockedCategory: false },
+                    ])
+                  }
+                  className="inline-flex items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/15 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Thêm dòng
+                </button>
+              ) : null}
             </div>
-            <p className="text-xs text-on-surface-variant">
-              Mỗi dòng gồm một mã dòng rác và một khối lượng thực tế (kg), khớp với báo cáo.
-            </p>
+
             <div className="space-y-2">
               {weightRows.map((row, index) => (
                 <div
-                  key={`row-${index}`}
+                  key={String(row.rowKey ?? `row-${index}`)}
                   className="flex flex-col sm:flex-row gap-2 sm:items-center"
                 >
                   <input
                     type="text"
-                    inputMode="numeric"
-                    value={row.itemId}
+                    value={row.categoryName}
+                    readOnly={row.lockedCategory}
+                    disabled={row.lockedCategory}
                     onChange={(e) => {
+                      if (row.lockedCategory) return;
                       const v = e.target.value;
                       setWeightRows((prev) =>
-                        prev.map((r, i) => (i === index ? { ...r, itemId: v } : r)),
+                        prev.map((r, i) =>
+                          i === index ? { ...r, categoryName: v } : r,
+                        ),
                       );
                     }}
-                    placeholder="Mã dòng rác"
-                    className="flex-1 min-w-0 rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary"
+                    placeholder="Tên danh mục"
+                    className={`flex-1 min-w-0 rounded-2xl border border-surface-container-high px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary ${
+                      row.lockedCategory
+                        ? "bg-surface-container-high/40 text-on-surface cursor-not-allowed"
+                        : "bg-surface"
+                    }`}
                   />
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.1"
                     value={row.weight}
                     onChange={(e) => {
                       const v = e.target.value;
                       setWeightRows((prev) =>
-                        prev.map((r, i) => (i === index ? { ...r, weight: v } : r)),
+                        prev.map((r, i) =>
+                          i === index ? { ...r, weight: v } : r,
+                        ),
                       );
                     }}
                     placeholder="Khối lượng (kg)"
                     className="flex-1 min-w-0 sm:max-w-[160px] rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary"
                   />
-                  {weightRows.length > 1 ? (
+                  {!fixedCategoriesFromApi && weightRows.length > 1 ? (
                     <button
                       type="button"
                       onClick={() =>
-                        setWeightRows((prev) => prev.filter((_, i) => i !== index))
+                        setWeightRows((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
                       }
                       className="sm:self-stretch inline-flex items-center justify-center rounded-xl border border-surface-container-high px-3 py-2 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface text-sm font-bold shrink-0"
                       aria-label="Xóa dòng"
@@ -485,6 +560,55 @@ export default function UploadImageModal({
                   ) : null}
                 </div>
               ))}
+            </div>
+
+            <div className="rounded-2xl border border-surface-container-high/70 bg-surface p-4 space-y-3">
+              <div className="space-y-2">
+                <label
+                  htmlFor={`${modalId}-total-kg`}
+                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                >
+                  <Tag className="w-4 h-4 text-primary shrink-0" />
+                  Tổng khối lượng
+                </label>
+                <input
+                  id={`${modalId}-total-kg`}
+                  type="text"
+                  readOnly
+                  value={weightSummary.totalKgDisplay}
+                  placeholder="Tự động tính"
+                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                />
+                <p className="text-xs text-on-surface-variant">
+                  Đơn vị: kg (tổng các dòng có khối lượng hợp lệ)
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor={`${modalId}-official-points`}
+                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
+                >
+                  <Star
+                    className="w-4 h-4 text-primary shrink-0"
+                    fill="currentColor"
+                  />
+                  Điểm thưởng chính thức
+                </label>
+                <input
+                  id={`${modalId}-official-points`}
+                  type="text"
+                  readOnly
+                  value={weightSummary.pointsDisplay}
+                  placeholder="Tự động tính"
+                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                />
+                <p className="text-xs text-on-surface-variant">
+                  Cách tính:{" "}
+                  {weightSummary.formulaDisplay
+                    ? `${weightSummary.formulaDisplay} (kg × điểm/kg theo từng danh mục)`
+                    : "Số kg × điểm mỗi kg theo báo cáo (khi có dữ liệu danh mục)"}
+                </p>
+              </div>
             </div>
           </div>
 
