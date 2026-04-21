@@ -15,7 +15,7 @@ import {
 import { getStatusLabel, statusClassName } from './Report';
 import FeedbackModal from '../components/modal/FeedbackModal';
 import { getWasteReportDetail } from '../api/WasteReportapi';
-import { getApiBaseUrl } from '../lib/auth';
+import { getApiBaseUrl, resolveImageUrl } from '../lib/auth';
 import UpdateReportModal from '../components/modal/UpdateReportModal';
 
 const ESTIMATED_POINT_VISIBLE_STATUSES = new Set(['Pending', 'Accepted', 'Assigned']);
@@ -49,11 +49,7 @@ function normalizeImageUrls(input) {
 
 /** API thường trả đường dẫn tương đối (/report-images/...); img cần URL đầy đủ tới BE. */
 function resolveReportImageUrl(path) {
-    const s = String(path ?? '').trim();
-    if (!s) return '';
-    if (/^https?:\/\//i.test(s) || s.startsWith('//')) return s;
-    const base = getApiBaseUrl().replace(/\/$/, '');
-    return s.startsWith('/') ? `${base}${s}` : `${base}/${s}`;
+    return resolveImageUrl(path);
 }
 
 function mapReportDetail(apiData) {
