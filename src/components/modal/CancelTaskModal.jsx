@@ -1,7 +1,14 @@
-import { useEffect, useId, useMemo, useState } from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, X } from 'lucide-react';
-import { cancelCollectorJob } from '../../api/collectorJobApi';
+import { useEffect, useId, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  X,
+} from "lucide-react";
+import { cancelCollectorJob } from "../../api/collectorJobApi";
 
+/** Đồng bộ với UploadImageModal.jsx */
 const TOAST_AUTO_HIDE_MS = 2600;
 const TOAST_SUCCESS_CLOSE_MS = 2200;
 
@@ -10,25 +17,22 @@ const TOAST_SUCCESS_CLOSE_MS = 2200;
  * - open: boolean
  * - onClose: () => void
  * - reportId: number | string | null — mã báo cáo
- * - reportTitle?: string
  * - onRejected?: (jobDetail) => void — sau khi PATCH thành công
  */
 export default function CancelTaskModal({
   open,
   onClose,
   reportId,
-  reportTitle,
   onRejected,
 }) {
   const modalId = useId();
-  const titleId = useMemo(() => `${modalId}-title`, [modalId]);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitToast, setSubmitToast] = useState(null);
 
   useEffect(() => {
     if (!open) return;
-    setNote('');
+    setNote("");
     setSubmitting(false);
     setSubmitToast(null);
   }, [open]);
@@ -44,22 +48,24 @@ export default function CancelTaskModal({
   }, [submitToast]);
 
   useEffect(() => {
-    if (!submitToast || submitToast.type !== 'success') return undefined;
+    if (!submitToast || submitToast.type !== "success") return undefined;
 
+    const detail = submitToast.jobDetail;
     const timer = window.setTimeout(() => {
+      onRejected?.(detail);
       onClose?.();
     }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [submitToast, onClose]);
+  }, [submitToast, onRejected, onClose]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === "Escape") onClose?.();
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   const numericReportId = useMemo(() => {
@@ -74,9 +80,9 @@ export default function CancelTaskModal({
     setSubmitToast(null);
     if (!numericReportId) {
       setSubmitToast({
-        type: 'error',
-        title: 'Thiếu mã báo cáo',
-        message: 'Không xác định được mã báo cáo để gửi yêu cầu.',
+        type: "error",
+        title: "Thiếu mã báo cáo",
+        message: "Không xác định được mã báo cáo để gửi yêu cầu.",
       });
       return;
     }
@@ -87,31 +93,30 @@ export default function CancelTaskModal({
       const jobDetail = await cancelCollectorJob(numericReportId, {
         note: trimmed ? trimmed : undefined,
       });
-      onRejected?.(jobDetail);
       setSubmitToast({
-        type: 'success',
-        title: 'Đã từ chối công việc',
-        message: 'Báo cáo đã được cập nhật theo yêu cầu từ chối.',
+        type: "success",
+        title: "Đã từ chối công việc",
+        message: "Báo cáo đã được cập nhật theo yêu cầu từ chối.",
+        jobDetail,
       });
     } catch (error) {
       setSubmitToast({
-        type: 'error',
-        title: 'Từ chối thất bại',
-        message: error?.message || 'Không thể từ chối công việc. Vui lòng thử lại.',
+        type: "error",
+        title: "Từ chối thất bại",
+        message:
+          error?.message || "Không thể từ chối công việc. Vui lòng thử lại.",
       });
     } finally {
       setSubmitting(false);
     }
   }
 
-  const heading = reportTitle?.trim() || 'Công việc thu gom';
-
   return (
     <div
       className="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[1px] px-4 py-6 sm:py-10 flex justify-center items-start overflow-y-auto"
       role="dialog"
       aria-modal="true"
-      aria-labelledby={titleId}
+      aria-label="Từ chối công việc"
       onClick={onClose}
     >
       {submitToast ? (
@@ -119,20 +124,22 @@ export default function CancelTaskModal({
           role="status"
           onClick={(e) => e.stopPropagation()}
           className={`fixed right-4 top-24 z-[100] w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${
-            submitToast.type === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-              : 'border-red-200 bg-red-50 text-red-900'
+            submitToast.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-red-200 bg-red-50 text-red-900"
           }`}
         >
           <div className="flex items-start gap-3">
-            {submitToast.type === 'success' ? (
+            {submitToast.type === "success" ? (
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
             ) : (
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
             )}
             <div className="space-y-1">
               <p className="text-sm font-bold">{submitToast.title}</p>
-              <p className="text-xs leading-relaxed opacity-90">{submitToast.message}</p>
+              <p className="text-xs leading-relaxed opacity-90">
+                {submitToast.message}
+              </p>
             </div>
           </div>
         </div>
@@ -143,15 +150,9 @@ export default function CancelTaskModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="inline-flex items-center gap-2 text-sm font-black text-rose-600">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <p className="inline-flex items-center gap-2 text-lg font-extrabold text-rose-600">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
               Từ chối công việc
-            </p>
-            <h3 id={titleId} className="text-xl font-extrabold text-on-surface">
-              {heading}
-            </h3>
-            <p className="text-sm text-on-surface-variant">
-              Báo cáo sẽ trở lại trạng thái chờ phân công. Bạn có thể ghi chú lý do (tuỳ chọn).
             </p>
           </div>
           <button
@@ -167,7 +168,10 @@ export default function CancelTaskModal({
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div className="space-y-2">
-            <label htmlFor={`${modalId}-note`} className="text-sm font-bold text-on-surface">
+            <label
+              htmlFor={`${modalId}-note`}
+              className="text-sm font-bold text-on-surface"
+            >
               Ghi chú
             </label>
             <textarea
@@ -176,7 +180,7 @@ export default function CancelTaskModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              placeholder="Nhập lý do hoặc ghi chú..."
+              placeholder="Nhập lý do hoặc ghi chú (tuỳ chọn)..."
               className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>
@@ -201,7 +205,7 @@ export default function CancelTaskModal({
                   Đang gửi...
                 </>
               ) : (
-                'Xác nhận từ chối'
+                "Xác nhận từ chối"
               )}
             </button>
           </div>
