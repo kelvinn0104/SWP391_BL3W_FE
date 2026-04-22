@@ -77,7 +77,7 @@ function HistoryTaskCard({ task }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-on-surface-variant">
-          <p className="inline-flex items-center gap-2 font-semibold text-on-surface">
+          <p className="inline-flex items-center gap-2">
             <Leaf
               className="w-4 h-4 text-primary shrink-0"
               strokeWidth={2}
@@ -85,7 +85,7 @@ function HistoryTaskCard({ task }) {
             <span>{task.category || "-"}</span>
           </p>
           {phone ? (
-            <p className="inline-flex items-center gap-2 text-on-surface font-semibold">
+            <p className="inline-flex items-center gap-2">
               <Phone
                 className="w-4 h-4 text-primary shrink-0"
                 strokeWidth={2}
@@ -106,7 +106,7 @@ function HistoryTaskCard({ task }) {
         </div>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm font-medium">
-          <span className="inline-flex items-center gap-2 font-semibold text-on-surface min-w-0">
+          <span className="inline-flex items-center gap-2 min-w-0">
             <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
             <span className="truncate">{locationText || "-"}</span>
           </span>
@@ -114,7 +114,7 @@ function HistoryTaskCard({ task }) {
             <span className="inline-flex items-center gap-2 text-on-surface-variant shrink-0">
               <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
               Ngày tạo:{" "}
-              <time dateTime={created} className="text-on-surface tabular-nums font-semibold">
+              <time dateTime={created} className="tabular-nums">
                 {formatDateDdMmYyyy(created)}
               </time>
             </span>
@@ -185,9 +185,7 @@ export default function HistoryTasks() {
         >
           {loadError}
         </div>
-      ) : null}
-
-      {loading ? (
+      ) : loading ? (
         <div className="rounded-2xl border border-surface-container-highest bg-surface-container-low/40 px-6 py-14 text-center text-on-surface-variant font-medium">
           Đang tải danh sách...
         </div>
