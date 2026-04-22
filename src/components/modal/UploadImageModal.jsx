@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { completeCollectorJob } from "../../api/collectorJobApi";
+import { getWasteReportCategories } from "../../api/WasteReportapi";
 
 const TOAST_AUTO_HIDE_MS = 2600;
 const TOAST_SUCCESS_CLOSE_MS = 2200;
@@ -58,7 +59,6 @@ function rowsFromWasteItems(items) {
           : undefined;
       return {
         categoryName: name,
-        itemId: item?.wasteReportItemId ?? "",
         weight: weightStr,
         rowKey: item?.wasteReportItemId ?? name,
         pointsPerKg,
@@ -74,7 +74,6 @@ export default function UploadImageModal({
   taskId,
   reportId: reportIdProp,
   wasteItems,
-  taskTitle,
   onSuccess,
 }) {
   const modalId = useId();
@@ -84,18 +83,15 @@ export default function UploadImageModal({
   const [completionNote, setCompletionNote] = useState("");
   const [completedAtUtc, setCompletedAtUtc] = useState("");
   const [weightRows, setWeightRows] = useState([
-    { categoryName: "", itemId: "", weight: "", lockedCategory: false },
+    { categoryName: "", weight: "" },
   ]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitToast, setSubmitToast] = useState(null);
   const [dragOverProof, setDragOverProof] = useState(false);
-
-  const presetRows = useMemo(
-    () => rowsFromWasteItems(wasteItems),
-    [wasteItems],
-  );
-  const fixedCategoriesFromApi = Boolean(presetRows?.length);
 
   const previewUrls = useMemo(
     () => proofFiles.map((file) => URL.createObjectURL(file)),
@@ -108,6 +104,74 @@ export default function UploadImageModal({
     };
   }, [previewUrls]);
 
+  const presetRows = useMemo(
+    () => rowsFromWasteItems(wasteItems),
+    [wasteItems],
+  );
+  const fixedCategoriesFromApi = Boolean(presetRows?.length);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let isMounted = true;
+
+    (async () => {
+      setLoadingCategories(true);
+      setCategoryError("");
+      try {
+        const data = await getWasteReportCategories();
+        if (!isMounted) return;
+        const rows = (Array.isArray(data) ? data : [])
+          .map((item) => ({
+            name: String(item?.name ?? "").trim(),
+            pointsPerKg: Number(item?.pointsPerKg) || 0,
+          }))
+          .filter((item) => item.name);
+        const uniqueByName = new Map();
+        for (const item of rows) {
+          if (!uniqueByName.has(item.name)) uniqueByName.set(item.name, item);
+        }
+        const normalized = Array.from(uniqueByName.values());
+        normalized.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+        setCategoryOptions(normalized);
+      } catch (err) {
+        if (!isMounted) return;
+        setCategoryOptions([]);
+        setCategoryError(
+          err?.message || "Không thể tải danh sách danh mục. Vui lòng thử lại.",
+        );
+      } finally {
+        if (isMounted) setLoadingCategories(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open]);
+
+  const categoryPointsByName = useMemo(() => {
+    const map = new Map();
+    for (const option of categoryOptions) {
+      map.set(option.name, Number(option.pointsPerKg) || 0);
+    }
+    return map;
+  }, [categoryOptions]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (categoryPointsByName.size === 0) return;
+    setWeightRows((prev) =>
+      prev.map((row) => {
+        const name = String(row?.categoryName ?? "").trim();
+        if (!name) return row;
+        const nextRate = categoryPointsByName.get(name);
+        if (nextRate === undefined) return row;
+        if (row.pointsPerKg === nextRate) return row;
+        return { ...row, pointsPerKg: nextRate };
+      }),
+    );
+  }, [open, categoryPointsByName]);
+
   const weightSummary = useMemo(() => {
     let totalKg = 0;
     let pointsSum = 0;
@@ -118,33 +182,33 @@ export default function UploadImageModal({
       const kg = Number.parseFloat(raw.replace(",", "."));
       if (!Number.isFinite(kg) || kg <= 0) continue;
       totalKg += kg;
-      const rate = row.pointsPerKg;
-      if (Number.isFinite(rate) && rate > 0) {
-        pointsSum += kg * rate;
-        const rateRounded = Math.round(rate * 100) / 100;
-        formulaParts.push(`${Math.round(kg * 10) / 10} kg × ${rateRounded}`);
-      }
+      const name = String(row?.categoryName ?? "").trim();
+      const rate =
+        name && categoryPointsByName.has(name)
+          ? categoryPointsByName.get(name)
+          : Number.isFinite(row.pointsPerKg)
+            ? row.pointsPerKg
+            : 0;
+      const safeRate = Math.max(0, Number(rate) || 0);
+      pointsSum += kg * safeRate;
+      const rateRounded = Math.round(safeRate * 100) / 100;
+      formulaParts.push(`${Math.round(kg * 10) / 10} kg × ${rateRounded}`);
     }
     const hasKg = totalKg > 0;
     const roundedPts = Math.max(0, Math.round(pointsSum));
     return {
       totalKgDisplay: hasKg ? String(Math.round(totalKg * 10) / 10) : "",
-      pointsDisplay:
-        hasKg && formulaParts.length > 0
-          ? new Intl.NumberFormat("vi-VN").format(roundedPts)
-          : "",
+      pointsDisplay: hasKg ? new Intl.NumberFormat("vi-VN").format(roundedPts) : "",
       formulaDisplay: formulaParts.join(" + "),
     };
-  }, [weightRows]);
+  }, [weightRows, categoryPointsByName]);
 
   useEffect(() => {
     if (!open) return;
     setProofFiles([]);
     setCompletionNote("");
     setCompletedAtUtc(nowForDatetimeLocal());
-    setWeightRows(
-      presetRows ?? [{ categoryName: "", itemId: "", weight: "", lockedCategory: false }],
-    );
+    setWeightRows(presetRows ?? [{ categoryName: "", weight: "" }]);
     setSubmitting(false);
     setSubmitToast(null);
     setDragOverProof(false);
@@ -231,11 +295,19 @@ export default function UploadImageModal({
 
     const pairs = [];
     for (const row of weightRows) {
-      const idRaw = String(row.itemId ?? "").trim();
-      const wRaw = String(row.weight ?? "").trim();
-      if (!idRaw && !wRaw) continue;
+      const nameRaw = row.categoryName.trim();
+      const wRaw = row.weight.trim();
+      if (!nameRaw && !wRaw) continue;
       const weight = Number(wRaw.replace(",", "."));
-      
+      if (!nameRaw) {
+        setSubmitToast({
+          type: "error",
+          title: "Thiếu danh mục",
+          message:
+            "Mỗi dòng đã nhập cần có tên danh mục (không được để trống).",
+        });
+        return;
+      }
       if (!Number.isFinite(weight) || weight < 0) {
         setSubmitToast({
           type: "error",
@@ -244,23 +316,20 @@ export default function UploadImageModal({
         });
         return;
       }
-      pairs.push({ 
-        wasteReportItemId: idRaw || null, 
-        categoryName: (row.categoryName ?? "").trim() || null, 
-        actualWeightKg: weight 
-      });
+      pairs.push({ categoryName: nameRaw, actualWeightKg: weight });
     }
 
     if (pairs.length === 0) {
       setSubmitToast({
         type: "error",
-        title: "Thiếu khối lượng theo dòng",
-        message: "Vui lòng nhập ít nhất một dòng khối lượng thực tế.",
+        title: "Thiếu danh mục và khối lượng",
+        message:
+          "Vui lòng nhập ít nhất một cặp danh mục và khối lượng thực tế.",
       });
       return;
     }
 
-    const wasteReportItemIds = pairs.map((p) => p.wasteReportItemId);
+    const categoryNames = pairs.map((p) => p.categoryName);
     const actualWeightKgs = pairs.map((p) => p.actualWeightKg);
 
     let completedIso;
@@ -288,7 +357,7 @@ export default function UploadImageModal({
         proofImages: proofFiles,
         completionNote: completionNotePayload,
         completedAtUtc: completedIso,
-        wasteReportItemIds,
+        categoryNames,
         actualWeightKgs,
       });
       setSubmitToast({
@@ -316,7 +385,6 @@ export default function UploadImageModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={modalId + "-desc"}
     >
       {submitToast ? (
         <div
@@ -360,18 +428,6 @@ export default function UploadImageModal({
               <PackageCheck className="w-5 h-5 shrink-0" />
               Xác nhận thu gom
             </p>
-            {taskId ? (
-              <p className="text-xs font-semibold text-on-surface-variant pt-1">
-                Mã:{" "}
-                <span className="font-mono text-on-surface">{taskId}</span>
-                {taskTitle ? (
-                  <>
-                    {" "}
-                    • <span className="text-on-surface">{taskTitle}</span>
-                  </>
-                ) : null}
-              </p>
-            ) : null}
           </div>
 
           <button
@@ -458,7 +514,7 @@ export default function UploadImageModal({
               htmlFor={`${modalId}-completion-note`}
               className="text-sm font-bold text-on-surface"
             >
-              Ghi chú hoàn tất
+              Ghi chú hoàn tất{" "}
             </label>
             <textarea
               id={`${modalId}-completion-note`}
@@ -476,13 +532,14 @@ export default function UploadImageModal({
               htmlFor={`${modalId}-completed-at`}
               className="text-sm font-bold text-on-surface"
             >
-              Thời điểm hoàn tất
+              Thời điểm hoàn tất{" "}
             </label>
             <input
               id={`${modalId}-completed-at`}
               type="datetime-local"
               value={completedAtUtc}
               onChange={(e) => setCompletedAtUtc(e.target.value)}
+              disabled
               className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>
@@ -527,20 +584,47 @@ export default function UploadImageModal({
                       <X className="w-4 h-4" />
                     </button>
                   ) : null}
-                  <input
-                    type="text"
-                    value={row.categoryName}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setWeightRows((prev) =>
-                        prev.map((r, i) =>
-                          i === index ? { ...r, categoryName: v } : r,
-                        ),
-                      );
-                    }}
-                    placeholder="Tên danh mục"
-                    className="flex-1 min-w-0 rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary"
-                  />
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <select
+                      value={row.categoryName}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setWeightRows((prev) =>
+                          prev.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  categoryName: v,
+                                  pointsPerKg: categoryPointsByName.get(v) ?? 0,
+                                }
+                              : r,
+                          ),
+                        );
+                      }}
+                      disabled={loadingCategories}
+                      className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary disabled:opacity-60"
+                    >
+                      <option value="">
+                        {loadingCategories ? "Đang tải danh mục…" : "Chọn danh mục"}
+                      </option>
+                      {categoryOptions
+                        .map((o) => o.name)
+                        .filter((name) => {
+                          if (name === row.categoryName) return true;
+                          return !weightRows.some(
+                            (r, i) => i !== index && r?.categoryName === name,
+                          );
+                        })
+                        .map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                    </select>
+                    {categoryError ? (
+                      <p className="text-xs text-error">{categoryError}</p>
+                    ) : null}
+                  </div>
                   <input
                     type="number"
                     min="0"

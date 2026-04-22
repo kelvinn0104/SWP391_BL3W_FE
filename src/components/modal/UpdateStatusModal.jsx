@@ -2,22 +2,23 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import { acceptCollectorJob } from "../../api/collectorJobApi";
 
+/** Đồng bộ với UploadImageModal.jsx */
 const TOAST_AUTO_HIDE_MS = 2600;
 const TOAST_SUCCESS_CLOSE_MS = 2200;
 
 /**
+ * PATCH /api/collector/jobs/{reportId}/accepted — body JSON: { note }
+ *
  * Props:
  * - open: boolean
  * - onClose: () => void
  * - reportId: number | string — mã báo cáo (path)
- * - reportTitle?: string — tiêu đề phụ
  * - onUpdated?: (jobDetail) => void — sau khi PATCH thành công
  */
 export default function UpdateStatusModal({
   open,
   onClose,
   reportId,
-  reportTitle,
   onUpdated,
 }) {
   const modalId = useId();
@@ -47,12 +48,14 @@ export default function UpdateStatusModal({
   useEffect(() => {
     if (!submitToast || submitToast.type !== "success") return undefined;
 
+    const detail = submitToast.jobDetail;
     const timer = window.setTimeout(() => {
+      onUpdated?.(detail);
       onClose?.();
     }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [submitToast, onClose]);
+  }, [submitToast, onUpdated, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -88,30 +91,27 @@ export default function UpdateStatusModal({
       const jobDetail = await acceptCollectorJob(numericReportId, {
         note: trimmed ? trimmed : undefined,
       });
-      onUpdated?.(jobDetail);
       setSubmitToast({
         type: "success",
         title: "Xác nhận nhận việc thành công",
         message: "Bạn đã xác nhận nhận công việc thu gom.",
+        jobDetail,
       });
     } catch (error) {
       setSubmitToast({
         type: "error",
         title: "Xác nhận thất bại",
         message:
-          error?.message ||
-          "Không thể xác nhận nhận việc. Vui lòng thử lại.",
+          error?.message || "Không thể xác nhận nhận việc. Vui lòng thử lại.",
       });
     } finally {
       setSubmitting(false);
     }
   }
 
-  const heading = reportTitle?.trim() || "Công việc thu gom";
-
   return (
     <div
-      className="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[1px] px-4 py-6 sm:py-10 flex justify-center items-start overflow-y-auto"
+      className="fixed inset-0 z-90 bg-black/45 backdrop-blur-[1px] px-4 py-6 sm:py-10 flex justify-center items-start overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -122,7 +122,7 @@ export default function UpdateStatusModal({
         <div
           role="status"
           onClick={(e) => e.stopPropagation()}
-          className={`fixed right-4 top-24 z-[100] w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${
+          className={`fixed right-4 top-24 z-100 w-[min(92vw,24rem)] rounded-2xl border px-4 py-3 shadow-xl ${
             submitToast.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-900"
               : "border-red-200 bg-red-50 text-red-900"
@@ -149,10 +149,13 @@ export default function UpdateStatusModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 min-w-0">
-            <h3 id={titleId} className="text-xl font-extrabold text-on-surface">
+            <p
+              id={titleId}
+              className="inline-flex items-center gap-2 text-lg font-extrabold text-primary"
+            >
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
               Xác nhận nhận việc
-            </h3>
-            <p className="text-sm text-on-surface-variant font-bold">{heading}</p>
+            </p>
           </div>
           <button
             type="button"
@@ -171,7 +174,7 @@ export default function UpdateStatusModal({
               htmlFor={noteId}
               className="text-sm font-bold text-on-surface"
             >
-              Ghi chú
+              Note
             </label>
             <textarea
               id={noteId}
@@ -180,8 +183,8 @@ export default function UpdateStatusModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              placeholder="Nhập ghi chú kèm khi xác nhận (tuỳ chọn)…"
-              className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
+              placeholder="Nhập ghi chú khi xác nhận (tuỳ chọn)…"
+              className="w-full resize-y min-h-27.5 rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>
 

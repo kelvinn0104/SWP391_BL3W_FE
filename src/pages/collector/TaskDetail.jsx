@@ -241,7 +241,6 @@ export default function TaskDetail() {
   const showConfirmPickup = isOnTheWayForActions(task.status);
   const showActualTotalWeight =
     task.status === "Collected" || task.status === "Đã thu gom";
-  const reportDisplayId = task.reportId ?? task.id;
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -272,12 +271,6 @@ export default function TaskDetail() {
                   {collectorStatusLabel(task.status)}
                 </span>
               </div>
-              <p className="text-sm font-semibold text-on-surface-variant">
-                Mã report:{" "}
-                <span className="text-on-surface font-mono">
-                  {reportDisplayId}
-                </span>
-              </p>
 
               <div
                 className={`flex text-sm pt-1 min-w-0 gap-x-4 sm:gap-x-6 ${
@@ -371,7 +364,7 @@ export default function TaskDetail() {
                   {activeSrc ? (
                     <img
                       src={activeSrc}
-                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${reportDisplayId}`}
+                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${task.id}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -383,10 +376,10 @@ export default function TaskDetail() {
                       const isActive = index === activeImageIndex;
                       return (
                         <button
-                          key={`${reportDisplayId}-img-${index}`}
+                          key={`${task.id}-img-${index}`}
                           type="button"
                           onClick={() => setActiveImageIndex(index)}
-                          className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                          className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                             isActive
                               ? "border-primary ring-2 ring-primary/25 shadow-md"
                               : "border-transparent opacity-90 hover:opacity-100 hover:border-surface-container-high"
@@ -420,7 +413,7 @@ export default function TaskDetail() {
                   {activeProofSrc ? (
                     <img
                       src={activeProofSrc}
-                      alt={`Ảnh bằng chứng ${activeProofImageIndex + 1} của công việc ${reportDisplayId}`}
+                      alt={`Ảnh bằng chứng ${activeProofImageIndex + 1} của công việc ${task.id}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -432,7 +425,7 @@ export default function TaskDetail() {
                       const isActive = index === activeProofImageIndex;
                       return (
                         <button
-                          key={`${reportDisplayId}-proof-img-${index}`}
+                          key={`${task.id}-proof-img-${index}`}
                           type="button"
                           onClick={() => setActiveProofImageIndex(index)}
                           className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${

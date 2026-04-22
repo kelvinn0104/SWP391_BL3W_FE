@@ -1,10 +1,10 @@
-import { getApiBaseUrl, getToken } from '../lib/auth';
+import { getApiBaseUrl, getToken } from "../lib/auth";
 
 function keysToCamel(obj) {
   if (Array.isArray(obj)) {
     return obj.map((value) => keysToCamel(value));
   }
-  if (obj !== null && typeof obj === 'object') {
+  if (obj !== null && typeof obj === "object") {
     const result = {};
     Object.keys(obj).forEach((key) => {
       const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
@@ -19,7 +19,7 @@ async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const isFormDataBody = options.body instanceof FormData;
   const headers = {
-    ...(isFormDataBody ? {} : { 'Content-Type': 'application/json' }),
+    ...(isFormDataBody ? {} : { "Content-Type": "application/json" }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -33,14 +33,16 @@ async function apiFetch(endpoint, options = {}) {
     return null;
   }
 
-  const contentType = response.headers.get('content-type');
+  const contentType = response.headers.get("content-type");
   let data = null;
-  if (contentType && contentType.includes('application/json')) {
+  if (contentType && contentType.includes("application/json")) {
     data = await response.json();
   }
 
   if (!response.ok) {
-    throw new Error(data?.message || `Lỗi ${response.status}: ${response.statusText}`);
+    throw new Error(
+      data?.message || `Lỗi ${response.status}: ${response.statusText}`,
+    );
   }
 
   return keysToCamel(data);
@@ -51,7 +53,7 @@ async function apiFetch(endpoint, options = {}) {
  * Danh sách báo cáo được giao cho collector đăng nhập.
  */
 export async function getCollectorAssignedReports() {
-  const data = await apiFetch('/api/collector/jobs/collector-report-assigned');
+  const data = await apiFetch("/api/collector/jobs/collector-report-assigned");
   return Array.isArray(data) ? data : [];
 }
 
@@ -71,7 +73,7 @@ export async function getCollectorJobDetail(reportId) {
 export async function acceptCollectorJob(reportId, { note } = {}) {
   const safe = encodeURIComponent(String(reportId));
   return apiFetch(`/api/collector/jobs/${safe}/accepted`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ note }),
   });
 }
@@ -83,7 +85,7 @@ export async function acceptCollectorJob(reportId, { note } = {}) {
 export async function cancelCollectorJob(reportId, { note }) {
   const safe = encodeURIComponent(String(reportId));
   return apiFetch(`/api/collector/jobs/${safe}/cancelled`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ note }),
   });
 }
@@ -94,14 +96,15 @@ export async function cancelCollectorJob(reportId, { note }) {
  * - ProofImages: lặp key cho từng file
  * - CompletionNote (string)
  * - CompletedAtUtc (date-time, ISO 8601)
- * - WasteReportItemIds, ActualWeightKgs: hai mảng song song cùng độ dài
+ * - CategoryNames (array)
+ * - ActualWeightKgs (array)
  */
 export async function completeCollectorJob(reportId, payload = {}) {
   const {
     proofImages = [],
     completionNote,
     completedAtUtc,
-    wasteReportItemIds = [],
+    categoryNames = [],
     actualWeightKgs = [],
   } = payload;
 
@@ -110,26 +113,27 @@ export async function completeCollectorJob(reportId, payload = {}) {
 
   (proofImages ?? []).forEach((file) => {
     if (file && file.size > 0) {
-      formData.append('ProofImages', file);
+      formData.append("ProofImages", file);
     }
   });
 
-  if (completionNote != null && completionNote !== '') {
-    formData.append('CompletionNote', completionNote);
+  if (completionNote != null && completionNote !== "") {
+    formData.append("CompletionNote", completionNote);
   }
-  if (completedAtUtc != null && completedAtUtc !== '') {
-    formData.append('CompletedAtUtc', completedAtUtc);
+  if (completedAtUtc != null && completedAtUtc !== "") {
+    formData.append("CompletedAtUtc", completedAtUtc);
   }
 
-  (wasteReportItemIds ?? []).forEach((id) => {
-    formData.append('WasteReportItemIds', String(id));
+  (categoryNames ?? []).forEach((name) => {
+    const s = String(name ?? "").trim();
+    if (s) formData.append("CategoryNames", s);
   });
   (actualWeightKgs ?? []).forEach((w) => {
-    formData.append('ActualWeightKgs', String(w));
+    formData.append("ActualWeightKgs", String(w));
   });
 
   return apiFetch(`/api/collector/jobs/${safe}/complete`, {
-    method: 'POST',
+    method: "POST",
     body: formData,
   });
 }

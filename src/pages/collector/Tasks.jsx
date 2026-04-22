@@ -71,77 +71,75 @@ function formatDateDdMmYyyy(value) {
 }
 
 function TaskCard({ task }) {
-  const reportKey = task.reportId ?? task.id;
   const locationText = task.location ?? task.locationText ?? "";
   const phone = task.citizen?.phoneNumber?.trim();
   const created = resolveCreatedDate(task);
 
   return (
     <Link
-      to={`/collector/tasks/${encodeURIComponent(String(reportKey))}`}
+      to={`/collector/tasks/${encodeURIComponent(String(task.id))}`}
       state={{ from: "tasks" }}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
       <article className="w-full bg-surface-container-lowest rounded-2xl border border-surface-container-highest botanical-shadow p-5 md:p-6 hover:shadow-md transition-shadow">
         <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
           <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
-            <h2 className="text-lg md:text-xl font-extrabold text-on-surface leading-snug">
+            <h2 className="text-lg md:text-xl font-black text-on-surface leading-snug tracking-tight">
               {task.title || "-"}
             </h2>
             <span
-              className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(
+              className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-black tracking-wide ${statusBadgeClass(
                 task.status,
               )}`}
             >
               {collectorStatusLabel(task.status)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-xs font-extrabold shrink-0">
             <Package className="w-4 h-4" strokeWidth={2.25} />
             {formatWeightKg(task.weightKg)}
           </span>
         </div>
 
-        <div className="space-y-2.5 text-sm text-on-surface-variant">
-          <p className="flex items-start gap-2 font-medium text-on-surface">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-on-surface-variant">
+          <p className="inline-flex items-center gap-2 font-semibold text-on-surface">
             <Leaf
-              className="w-4 h-4 text-primary mt-0.5 shrink-0"
+              className="w-4 h-4 text-primary shrink-0"
               strokeWidth={2}
             />
             <span>{task.category || "-"}</span>
           </p>
-          <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
-            Mã report:{" "}
-            <span className="text-on-surface font-mono">{reportKey}</span>
-          </p>
           {phone ? (
-            <p className="flex items-start gap-2 pl-6 text-on-surface">
+            <p className="inline-flex items-center gap-2 text-on-surface font-semibold">
               <Phone
-                className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                className="w-4 h-4 text-primary shrink-0"
                 strokeWidth={2}
               />
-              <span className="font-medium tabular-nums">{phone}</span>
+              <span className="tabular-nums">{phone}</span>
             </p>
           ) : null}
-          <p className="flex items-start gap-2">
+          <p
+            className="inline-flex min-w-0 max-w-full items-center gap-2"
+            title={task.description || undefined}
+          >
             <FileText
-              className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
+              className="w-4 h-4 text-on-surface-variant shrink-0"
               strokeWidth={2}
             />
-            <span className="leading-relaxed">{task.description || "-"}</span>
+            <span className="min-w-0 truncate">{task.description || "-"}</span>
           </p>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm font-medium">
           <span className="inline-flex items-center gap-2 font-semibold text-on-surface min-w-0">
             <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
             <span className="truncate">{locationText || "-"}</span>
           </span>
           {created ? (
-            <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium shrink-0">
+            <span className="inline-flex items-center gap-2 text-on-surface-variant shrink-0">
               <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
               Ngày tạo:{" "}
-              <time dateTime={created} className="text-on-surface tabular-nums">
+              <time dateTime={created} className="text-on-surface tabular-nums font-semibold">
                 {formatDateDdMmYyyy(created)}
               </time>
             </span>
