@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Award, Medal, TrendingUp, Trophy, UserRound } from 'lucide-react';
 import { getWeeklyLeaderboardUsers } from '../api/LeaderboardApi';
-import { getApiBaseUrl, resolveImageUrl } from '../lib/auth';
+import { resolveImageUrl } from '../lib/auth';
 
 const USERS_PER_PAGE = 5;
 
@@ -174,11 +174,10 @@ export default function Leaderboard() {
                     key={page}
                     type="button"
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${
-                      currentPage === page
+                    className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${currentPage === page
                         ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
                         : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
@@ -211,18 +210,26 @@ function PodiumCard({ rank, name, points, actions, avatar }) {
       <Award className="w-5 h-5 text-amber-700" fill="currentColor" />
     );
 
+  const avatarSrc = resolveImageUrl(avatar);
+
   return (
     <div className="rounded-[2rem] border border-surface-container-high bg-surface p-5 flex items-center gap-4">
       <div className="relative">
-        <img
-          src={resolveImageUrl(avatar)}
-          alt={name}
-          className="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/10"
-          referrerPolicy="no-referrer"
-          onError={(e) => {
-            e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-          }}
-        />
+        {avatarSrc ? (
+          <img
+            src={avatarSrc}
+            alt={name}
+            className="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/10"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+            }}
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-2xl bg-surface-container-low flex items-center justify-center text-on-surface-variant ring-2 ring-primary/10">
+            <UserRound className="w-6 h-6" />
+          </div>
+        )}
         <div className="absolute -right-2 -bottom-2 w-8 h-8 rounded-2xl bg-surface-container-lowest border border-surface-container-high flex items-center justify-center">
           {icon}
         </div>
@@ -242,6 +249,8 @@ function PodiumCard({ rank, name, points, actions, avatar }) {
 }
 
 function LeaderboardRow({ rank, name, points, actions, avatar }) {
+  const avatarSrc = resolveImageUrl(avatar);
+
   const getRankIcon = (r) => {
     if (r === 1) return <Trophy className="w-5 h-5 text-yellow-500" fill="currentColor" />;
     if (r === 2) return <Medal className="w-5 h-5 text-slate-400" fill="currentColor" />;
@@ -263,9 +272,9 @@ function LeaderboardRow({ rank, name, points, actions, avatar }) {
       </td>
       <td className="px-6 sm:px-10 py-5">
         <div className="flex items-center gap-4">
-          {avatar ? (
+          {avatarSrc ? (
             <img
-              src={resolveImageUrl(avatar)}
+              src={avatarSrc}
               alt={name}
               className="w-10 h-10 rounded-2xl object-cover"
               referrerPolicy="no-referrer"

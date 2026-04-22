@@ -6,6 +6,7 @@ import {
     CalendarDays,
     FilePenLine,
     FileText,
+    Image as ImageIcon,
     Loader2,
     Map as MapIcon,
     MapPin,
@@ -56,30 +57,41 @@ function mapReportDetail(apiData) {
     if (!apiData || typeof apiData !== 'object') return null;
 
     const wasteItems = Array.isArray(apiData.wasteItems) ? apiData.wasteItems : [];
+    const normalizedStatus = String(apiData.status ?? 'Pending');
     const categories = wasteItems
         .map((item) => item?.wasteCategoryName)
         .filter((name) => typeof name === 'string' && name.trim() !== '');
-    const totalWeight = wasteItems.reduce((sum, item) => {
+    const estimatedTotalWeightKg = wasteItems.reduce((sum, item) => {
         const weight = Number(item?.estimatedWeightKg);
         return sum + (Number.isFinite(weight) ? weight : 0);
     }, 0);
+    const actualTotalWeightKg = Number(apiData.actualTotalWeightKg);
+    const usesActualWeight =
+        normalizedStatus.toLowerCase() === 'collected' && Number.isFinite(actualTotalWeightKg);
+    const displayWeightKg = usesActualWeight ? actualTotalWeightKg : estimatedTotalWeightKg;
 
     const topLevelImages = normalizeImageUrls(apiData.imageUrls);
     const itemImages = wasteItems.flatMap((item) => normalizeImageUrls(item?.imageUrls));
     const uniqueImages = Array.from(new Set([...topLevelImages, ...itemImages])).map(resolveReportImageUrl);
 
+    const isCollected = normalizedStatus.toLowerCase() === 'collected';
+    const proofImagePaths = isCollected ? normalizeImageUrls(apiData.proofImageUrls) : [];
+    const proofImages = Array.from(new Set(proofImagePaths)).map(resolveReportImageUrl);
+
     return {
         id: String(apiData.reportId ?? ''),
         title: apiData.title ?? 'Báo cáo không có tiêu đề',
-        status: apiData.status ?? 'Pending',
+        status: normalizedStatus,
         category: categories.length > 0 ? categories.join(', ') : '---',
         location: apiData.locationText ?? '---',
         createdAt: formatDateTime(apiData.createdAtUtc),
         description: apiData.description ?? '---',
-        weight: formatKg(totalWeight),
+        weightText: formatKg(displayWeightKg),
+        weightLabel: usesActualWeight ? 'Khối lượng thực tế:' : 'Khối lượng ước tính:',
         estimatedTotalPoints: Number(apiData.estimatedTotalPoints ?? 0),
         finalRewardPoints: Number(apiData.finalRewardPoints ?? 0),
         images: uniqueImages,
+        proofImages,
         coordinates: null,
     };
 }
@@ -93,6 +105,7 @@ export default function ReportDetail() {
     const [loadingReport, setLoadingReport] = useState(true);
     const [loadError, setLoadError] = useState('');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [activeProofImageIndex, setActiveProofImageIndex] = useState(0);
     const [complaintOpen, setComplaintOpen] = useState(false);
     const [updateModalOpen, setUpdateModalOpen] = useState(false);
 
@@ -103,7 +116,19 @@ export default function ReportDetail() {
 
     useEffect(() => {
         setActiveImageIndex(0);
+        setActiveProofImageIndex(0);
     }, [id]);
+
+    const proofImages = useMemo(() => {
+        if (!report || !Array.isArray(report.proofImages)) return [];
+        return report.proofImages;
+    }, [report]);
+
+    useEffect(() => {
+        setActiveProofImageIndex((idx) =>
+            proofImages.length === 0 ? 0 : Math.min(idx, proofImages.length - 1),
+        );
+    }, [proofImages]);
 
     useEffect(() => {
         let isMounted = true;
@@ -144,6 +169,7 @@ export default function ReportDetail() {
 
     const images = report?.images ?? [];
     const activeSrc = images[activeImageIndex] ?? images[0];
+    const activeProofSrc = proofImages[activeProofImageIndex] ?? proofImages[0];
 
     const embedSrc = useMemo(() => {
         return mapEmbedSrcFromAddress(report?.location);
@@ -308,7 +334,9 @@ export default function ReportDetail() {
                         <div className="self-start shrink-0 w-full lg:w-auto lg:min-w-[14rem] space-y-3">
                             <div className="inline-flex w-full lg:w-auto items-center justify-center gap-2 bg-primary/5 text-primary rounded-xl px-4 py-2.5 text-sm font-bold">
                                 <PackageCheck className="w-4 h-4" />
-                                {report.weight}
+                                <span>
+                                    {report.weightLabel} {report.weightText}
+                                </span>
                             </div>
                             {showEditButton && (
                                 <button
@@ -361,6 +389,49 @@ export default function ReportDetail() {
                                                         : 'border-transparent opacity-90 hover:opacity-100 hover:border-surface-container-high'
                                                         }`}
                                                     aria-label={`Xem ảnh ${index + 1}`}
+                                                    aria-pressed={isActive}
+                                                >
+                                                    <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {String(report.status).toLowerCase() === 'collected' && proofImages.length > 0 && (
+                        <div className="space-y-4 border-t border-surface-container-high/60 pt-8">
+                            <h2 className="text-lg font-extrabold text-on-surface inline-flex items-center gap-2">
+                                <ImageIcon className="w-5 h-5 text-primary" />
+                                Hình ảnh bằng chứng thu gom
+                            </h2>
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
+                                <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-surface-container-high/60 bg-surface-container-low aspect-[4/3] sm:aspect-video lg:max-w-[min(100%,42rem)]">
+                                    {activeProofSrc ? (
+                                        <img
+                                            src={activeProofSrc}
+                                            alt={`Ảnh bằng chứng ${activeProofImageIndex + 1} của báo cáo ${report.id}`}
+                                            className="h-full w-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    ) : null}
+                                </div>
+                                {proofImages.length > 1 && (
+                                    <div className="flex gap-2 lg:flex-col lg:w-28 shrink-0 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 -mx-1 px-1 lg:mx-0 lg:px-0">
+                                        {proofImages.map((src, index) => {
+                                            const isActive = index === activeProofImageIndex;
+                                            return (
+                                                <button
+                                                    key={`${report.id}-proof-${index}`}
+                                                    type="button"
+                                                    onClick={() => setActiveProofImageIndex(index)}
+                                                    className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${isActive
+                                                        ? 'border-primary ring-2 ring-primary/25 shadow-md'
+                                                        : 'border-transparent opacity-90 hover:opacity-100 hover:border-surface-container-high'
+                                                        }`}
+                                                    aria-label={`Xem ảnh bằng chứng ${index + 1}`}
                                                     aria-pressed={isActive}
                                                 >
                                                     <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />

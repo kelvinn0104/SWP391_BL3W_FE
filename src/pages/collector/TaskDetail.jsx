@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarDays,
@@ -92,7 +92,13 @@ function isOnTheWayForActions(status) {
 
 export default function TaskDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: rawId } = useParams();
+  /** Danh sách gốc: lịch sử (`/collector/history`) hoặc công việc hiện tại (`/collector/tasks`). */
+  const collectorListPath =
+    location.state?.from === "history"
+      ? "/collector/history"
+      : "/collector/tasks";
   const id = rawId ? decodeURIComponent(rawId) : "";
   const [apiDetail, setApiDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -187,7 +193,7 @@ export default function TaskDetail() {
       <div className="relative min-h-full overflow-x-hidden">
         <div className="relative z-0 px-4 sm:px-6 md:px-0 py-10 sm:py-14 space-y-6">
           <Link
-            to="/collector/tasks"
+            to={collectorListPath}
             className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -206,7 +212,7 @@ export default function TaskDetail() {
       <div className="relative min-h-full overflow-x-hidden">
         <div className="relative z-0 px-4 sm:px-6 md:px-0 py-10 sm:py-14 space-y-6">
           <Link
-            to="/collector/tasks"
+            to={collectorListPath}
             className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -241,7 +247,7 @@ export default function TaskDetail() {
     <div className="relative min-h-full overflow-x-hidden">
       <div className="relative z-0 px-4 sm:px-6 md:px-0 py-10 sm:py-14 space-y-8">
         <Link
-          to="/collector/tasks"
+          to={collectorListPath}
           className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -530,7 +536,7 @@ export default function TaskDetail() {
         open={updateStatusOpen}
         onClose={() => setUpdateStatusOpen(false)}
         reportId={resolveReportIdForApi(task)}
-        onUpdated={() => navigate("/collector/tasks")}
+        onUpdated={() => navigate(collectorListPath)}
       />
 
       <CancelTaskModal
@@ -538,7 +544,7 @@ export default function TaskDetail() {
         onClose={() => setCancelTaskOpen(false)}
         reportId={resolveReportIdForApi(task)}
         reportTitle={task.title}
-        onRejected={() => navigate("/collector/tasks")}
+        onRejected={() => navigate(collectorListPath)}
       />
     </div>
   );
