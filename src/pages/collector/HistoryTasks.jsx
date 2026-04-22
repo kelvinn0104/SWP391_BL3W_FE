@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, FileText, Leaf, MapPin, Package, Phone } from "lucide-react";
-import Pagination from "../../components/ui/Pagination.jsx";
+import Pagination from "../../components/ui/Pagination";
 import { getCollectorAssignedReports } from "../../api/collectorJobApi";
 import { collectorStatusLabel, statusBadgeClass } from "./Tasks";
 
@@ -10,9 +10,14 @@ const PAGE_SIZE = 5;
 /** Công việc đã hoàn tất thu gom — mã WasteReportStatus từ backend */
 const HISTORY_STATUS = "Collected";
 
+export const MOCK_HISTORY_TASKS = [];
+
 function formatWeightKg(weightKg) {
-  if (weightKg == null || weightKg === "") return "—";
-  if (typeof weightKg === "number") return `${weightKg}kg`;
+  if (weightKg == null || weightKg === "") return "-";
+  const n = Number(weightKg);
+  if (Number.isFinite(n)) {
+    return `${Number.isInteger(n) ? n : n.toFixed(2)}kg`;
+  }
   return String(weightKg);
 }
 
@@ -41,13 +46,14 @@ function formatDateDdMmYyyy(value) {
 }
 
 function HistoryTaskCard({ task }) {
+  const reportKey = task.reportId ?? task.id;
   const locationText = task.location ?? task.locationText ?? "";
   const phone = task.citizen?.phoneNumber?.trim();
   const created = resolveCreatedDate(task);
 
   return (
     <Link
-      to={`/collector/tasks/${encodeURIComponent(String(task.id))}`}
+      to={`/collector/tasks/${encodeURIComponent(String(reportKey))}`}
       state={{ from: "history" }}
       className="block w-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
@@ -55,7 +61,7 @@ function HistoryTaskCard({ task }) {
         <div className="flex flex-wrap items-start justify-between gap-3 gap-y-2 mb-4">
           <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
             <h2 className="text-lg md:text-xl font-extrabold text-on-surface leading-snug">
-              {task.title ?? "—"}
+              {task.title || "-"}
             </h2>
             <span
               className={`inline-flex items-center shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(
@@ -65,39 +71,46 @@ function HistoryTaskCard({ task }) {
               {collectorStatusLabel(task.status)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-xl bg-primary/5 text-primary px-4 py-2.5 text-sm font-bold shrink-0">
-            <Package className="w-4 h-4" />
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 text-primary px-3 py-1.5 text-sm font-bold shrink-0">
+            <Package className="w-4 h-4" strokeWidth={2.25} />
             {formatWeightKg(task.weightKg)}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-          <p className="flex items-center gap-2 font-medium text-on-surface">
-            <Leaf className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
-            <span>{task.category ?? "—"}</span>
-          </p>
-          {phone ? (
-            <p className="flex items-center gap-2 text-on-surface font-medium tabular-nums">
-              <Phone
-                className="w-4 h-4 text-primary shrink-0"
-                strokeWidth={2}
-              />
-              <span>{phone}</span>
-            </p>
-          ) : null}
-          <p className="flex items-center gap-2 text-on-surface-variant min-w-0 flex-1">
-            <FileText
-              className="w-4 h-4 text-on-surface-variant shrink-0"
+        <div className="space-y-2.5 text-sm text-on-surface-variant">
+          <p className="flex items-start gap-2 font-medium text-on-surface">
+            <Leaf
+              className="w-4 h-4 text-primary mt-0.5 shrink-0"
               strokeWidth={2}
             />
-            <span className="truncate">{task.description ?? "—"}</span>
+            <span>{task.category || "-"}</span>
+          </p>
+          <p className="pl-6 text-xs font-semibold tracking-wide text-on-surface-variant/90">
+            Mã report:{" "}
+            <span className="text-on-surface font-mono">{reportKey}</span>
+          </p>
+          {phone ? (
+            <p className="flex items-start gap-2 pl-6 text-on-surface">
+              <Phone
+                className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                strokeWidth={2}
+              />
+              <span className="font-medium tabular-nums">{phone}</span>
+            </p>
+          ) : null}
+          <p className="flex items-start gap-2">
+            <FileText
+              className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"
+              strokeWidth={2}
+            />
+            <span className="leading-relaxed">{task.description || "-"}</span>
           </p>
         </div>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-surface-container-highest text-sm">
           <span className="inline-flex items-center gap-2 font-semibold text-on-surface min-w-0">
             <MapPin className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
-            <span className="truncate">{locationText || "—"}</span>
+            <span className="truncate">{locationText || "-"}</span>
           </span>
           {created ? (
             <span className="inline-flex items-center gap-2 text-on-surface-variant font-medium shrink-0">
@@ -163,7 +176,7 @@ export default function HistoryTasks() {
           Lịch sử công việc
         </h1>
         <p className="text-sm md:text-base text-on-surface-variant font-bold mt-1 opacity-60">
-          Tasks that have been successfully collected.
+          Các công việc đã hoàn tất thu gom
         </p>
       </header>
 
@@ -178,12 +191,12 @@ export default function HistoryTasks() {
 
       {loading ? (
         <div className="rounded-2xl border border-surface-container-highest bg-surface-container-low/40 px-6 py-14 text-center text-on-surface-variant font-medium">
-          Đang tải danh sách…
+          Đang tải danh sách...
         </div>
       ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
-            No tasks in "Collected" status yet.
+            Chưa có công việc nào ở trạng thái "Đã thu gom".
           </p>
         </div>
       ) : (

@@ -94,15 +94,14 @@ export async function cancelCollectorJob(reportId, { note }) {
  * - ProofImages: lặp key cho từng file
  * - CompletionNote (string)
  * - CompletedAtUtc (date-time, ISO 8601)
- * - CategoryNames (array)
- * - ActualWeightKgs (array)
+ * - WasteReportItemIds, ActualWeightKgs: hai mảng song song cùng độ dài
  */
 export async function completeCollectorJob(reportId, payload = {}) {
   const {
     proofImages = [],
     completionNote,
     completedAtUtc,
-    categoryNames = [],
+    wasteReportItemIds = [],
     actualWeightKgs = [],
   } = payload;
 
@@ -122,9 +121,8 @@ export async function completeCollectorJob(reportId, payload = {}) {
     formData.append('CompletedAtUtc', completedAtUtc);
   }
 
-  (categoryNames ?? []).forEach((name) => {
-    const s = String(name ?? '').trim();
-    if (s) formData.append('CategoryNames', s);
+  (wasteReportItemIds ?? []).forEach((id) => {
+    formData.append('WasteReportItemIds', String(id));
   });
   (actualWeightKgs ?? []).forEach((w) => {
     formData.append('ActualWeightKgs', String(w));

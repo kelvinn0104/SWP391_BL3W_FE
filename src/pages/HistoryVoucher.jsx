@@ -42,7 +42,7 @@ export default function HistoryVoucher() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface px-3 py-1 text-[11px] font-black tracking-wider text-primary shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              REDEEM HISTORY
+              LỊCH SỬ ĐỔI QUÀ
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-on-surface tracking-tight">Lịch sử đổi quà</h1>
             <p className="text-sm md:text-[15px] text-on-surface-variant max-w-2xl">
@@ -170,7 +170,7 @@ export default function HistoryVoucher() {
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
                           <BadgeCheck className="w-3.5 h-3.5" />
-                          {(item.status || 'approved').toString()}
+                          Thành công
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-on-surface-variant">{item.date}</td>

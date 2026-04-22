@@ -54,7 +54,7 @@ function resolveCoordinates(task) {
 }
 
 function formatDateDdMmYyyy(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) {
     const s = String(value);
@@ -68,7 +68,7 @@ function formatDateDdMmYyyy(value) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-/** Id báo cáo số cho API — ưu tiên reportId từ backend; mock dạng RP-2401 → 2401 */
+/** Id báo cáo số cho API - ưu tiên reportId từ backend; mock dạng RP-2401 → 2401 */
 function resolveReportIdForApi(task) {
   if (task?.reportId != null) {
     const n = Number(task.reportId);
@@ -220,7 +220,7 @@ export default function TaskDetail() {
           </Link>
           <div className="bg-surface-container-lowest rounded-3xl p-8 border border-surface-container-high/60 text-on-surface-variant">
             Không tìm thấy công việc với mã{" "}
-            <span className="font-bold text-on-surface">{id || "—"}</span>.
+            <span className="font-bold text-on-surface">{id || "-"}</span>.
           </div>
         </div>
       </div>
@@ -232,7 +232,7 @@ export default function TaskDetail() {
 
   const actualTotalWeightLabel =
     task.actualTotalWeightKg == null || task.actualTotalWeightKg === ""
-      ? "—"
+      ? "-"
       : typeof task.actualTotalWeightKg === "number"
         ? `${task.actualTotalWeightKg}kg`
         : String(task.actualTotalWeightKg);
@@ -241,6 +241,7 @@ export default function TaskDetail() {
   const showConfirmPickup = isOnTheWayForActions(task.status);
   const showActualTotalWeight =
     task.status === "Collected" || task.status === "Đã thu gom";
+  const reportDisplayId = task.reportId ?? task.id;
 
   return (
     <div className="relative min-h-full overflow-x-hidden">
@@ -271,6 +272,12 @@ export default function TaskDetail() {
                   {collectorStatusLabel(task.status)}
                 </span>
               </div>
+              <p className="text-sm font-semibold text-on-surface-variant">
+                Mã report:{" "}
+                <span className="text-on-surface font-mono">
+                  {reportDisplayId}
+                </span>
+              </p>
 
               <div
                 className={`flex text-sm pt-1 min-w-0 gap-x-4 sm:gap-x-6 ${
@@ -285,7 +292,7 @@ export default function TaskDetail() {
                   }`}
                 >
                   <Leaf className="w-4 h-4 shrink-0 text-primary" />
-                  <span>{task.category ?? "—"}</span>
+                  <span>{task.category ?? "-"}</span>
                 </p>
                 <p
                   className={`flex gap-2 text-on-surface-variant shrink-0 ${
@@ -306,7 +313,7 @@ export default function TaskDetail() {
                         : "truncate"
                     }
                   >
-                    {task.location ?? task.locationText ?? "—"}
+                    {task.location ?? task.locationText ?? "-"}
                   </span>
                 </p>
                 <p
@@ -353,7 +360,6 @@ export default function TaskDetail() {
               <span>{task.description}</span>
             </p>
           </div>
-
           {images.length > 0 && (
             <div className="space-y-4 border-t border-surface-container-high/60 pt-8">
               <h2 className="text-lg font-extrabold text-on-surface inline-flex items-center gap-2">
@@ -365,7 +371,7 @@ export default function TaskDetail() {
                   {activeSrc ? (
                     <img
                       src={activeSrc}
-                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${task.id}`}
+                      alt={`Ảnh ${activeImageIndex + 1} của công việc ${reportDisplayId}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -377,10 +383,10 @@ export default function TaskDetail() {
                       const isActive = index === activeImageIndex;
                       return (
                         <button
-                          key={`${task.id}-img-${index}`}
+                          key={`${reportDisplayId}-img-${index}`}
                           type="button"
                           onClick={() => setActiveImageIndex(index)}
-                          className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                          className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                             isActive
                               ? "border-primary ring-2 ring-primary/25 shadow-md"
                               : "border-transparent opacity-90 hover:opacity-100 hover:border-surface-container-high"
@@ -414,7 +420,7 @@ export default function TaskDetail() {
                   {activeProofSrc ? (
                     <img
                       src={activeProofSrc}
-                      alt={`Ảnh bằng chứng ${activeProofImageIndex + 1} của công việc ${task.id}`}
+                      alt={`Ảnh bằng chứng ${activeProofImageIndex + 1} của công việc ${reportDisplayId}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
@@ -426,7 +432,7 @@ export default function TaskDetail() {
                       const isActive = index === activeProofImageIndex;
                       return (
                         <button
-                          key={`${task.id}-proof-img-${index}`}
+                          key={`${reportDisplayId}-proof-img-${index}`}
                           type="button"
                           onClick={() => setActiveProofImageIndex(index)}
                           className={`relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:aspect-square rounded-xl overflow-hidden border-2 transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
@@ -484,7 +490,7 @@ export default function TaskDetail() {
                     className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-600 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <X className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                    Reject
+                    Từ chối
                   </button>
                   <button
                     type="button"
@@ -492,7 +498,7 @@ export default function TaskDetail() {
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white px-5 py-3 text-sm font-extrabold shadow-md shadow-primary/25 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest"
                   >
                     <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-                    Accept
+                    Đồng ý
                   </button>
                 </div>
               )}
@@ -508,7 +514,7 @@ export default function TaskDetail() {
                       className="w-4 h-4 shrink-0"
                       strokeWidth={2.5}
                     />
-                    Confirm Collection
+                    Xác nhận thu gom
                   </button>
                 </div>
               )}

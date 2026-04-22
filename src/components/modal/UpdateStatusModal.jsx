@@ -2,23 +2,22 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import { acceptCollectorJob } from "../../api/collectorJobApi";
 
-/** Đồng bộ với UploadImageModal.jsx */
 const TOAST_AUTO_HIDE_MS = 2600;
 const TOAST_SUCCESS_CLOSE_MS = 2200;
 
 /**
- * PATCH /api/collector/jobs/{reportId}/accepted — body JSON: { note }
- *
  * Props:
  * - open: boolean
  * - onClose: () => void
  * - reportId: number | string — mã báo cáo (path)
+ * - reportTitle?: string — tiêu đề phụ
  * - onUpdated?: (jobDetail) => void — sau khi PATCH thành công
  */
 export default function UpdateStatusModal({
   open,
   onClose,
   reportId,
+  reportTitle,
   onUpdated,
 }) {
   const modalId = useId();
@@ -48,14 +47,12 @@ export default function UpdateStatusModal({
   useEffect(() => {
     if (!submitToast || submitToast.type !== "success") return undefined;
 
-    const detail = submitToast.jobDetail;
     const timer = window.setTimeout(() => {
-      onUpdated?.(detail);
       onClose?.();
     }, TOAST_SUCCESS_CLOSE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [submitToast, onUpdated, onClose]);
+  }, [submitToast, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,8 +76,8 @@ export default function UpdateStatusModal({
     if (!numericReportId) {
       setSubmitToast({
         type: "error",
-        title: "Missing Report ID",
-        message: "Unable to identify the report ID to submit the request.",
+        title: "Thiếu mã báo cáo",
+        message: "Không xác định được mã báo cáo để gửi yêu cầu.",
       });
       return;
     }
@@ -91,24 +88,26 @@ export default function UpdateStatusModal({
       const jobDetail = await acceptCollectorJob(numericReportId, {
         note: trimmed ? trimmed : undefined,
       });
+      onUpdated?.(jobDetail);
       setSubmitToast({
         type: "success",
-        title: "Acceptance Confirmed",
-        message: "You have successfully accepted the collection task.",
-        jobDetail,
+        title: "Xác nhận nhận việc thành công",
+        message: "Bạn đã xác nhận nhận công việc thu gom.",
       });
     } catch (error) {
       setSubmitToast({
         type: "error",
-        title: "Confirmation Failed",
+        title: "Xác nhận thất bại",
         message:
           error?.message ||
-          "Unable to confirm the task. Please try again.",
+          "Không thể xác nhận nhận việc. Vui lòng thử lại.",
       });
     } finally {
       setSubmitting(false);
     }
   }
+
+  const heading = reportTitle?.trim() || "Công việc thu gom";
 
   return (
     <div
@@ -150,13 +149,10 @@ export default function UpdateStatusModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 min-w-0">
-            <p
-              id={titleId}
-              className="inline-flex items-center gap-2 text-lg font-extrabold text-primary"
-            >
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
-              Accept Task
-            </p>
+            <h3 id={titleId} className="text-xl font-extrabold text-on-surface">
+              Xác nhận nhận việc
+            </h3>
+            <p className="text-sm text-on-surface-variant font-bold">{heading}</p>
           </div>
           <button
             type="button"
@@ -175,7 +171,7 @@ export default function UpdateStatusModal({
               htmlFor={noteId}
               className="text-sm font-bold text-on-surface"
             >
-              Note
+              Ghi chú
             </label>
             <textarea
               id={noteId}
@@ -184,7 +180,7 @@ export default function UpdateStatusModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              placeholder="Enter a note when confirming (optional)..."
+              placeholder="Nhập ghi chú kèm khi xác nhận (tuỳ chọn)…"
               className="w-full resize-y min-h-[110px] rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>
@@ -196,7 +192,7 @@ export default function UpdateStatusModal({
               disabled={submitting}
               className="rounded-2xl border border-surface-container-high py-3 text-sm font-bold text-on-surface hover:bg-surface-container-high/40 transition-colors disabled:opacity-50"
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
@@ -206,10 +202,10 @@ export default function UpdateStatusModal({
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Sending...
+                  Đang gửi…
                 </>
               ) : (
-                "Confirm"
+                "Xác nhận"
               )}
             </button>
           </div>

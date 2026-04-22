@@ -202,7 +202,6 @@ export default function CreateReport() {
             });
             return;
         }
-
         const selectedItems = getReportLineItems(categories, categoryDetails);
 
         if (selectedItems.length === 0) {

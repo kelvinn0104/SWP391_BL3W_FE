@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Pagination from '../../components/ui/Pagination';
 import AlertModal from '../../components/ui/AlertModal';
-import { getUser, getApiBaseUrl } from '../../lib/auth';
+import { getUser, getApiBaseUrl, resolveImageUrl } from '../../lib/auth';
 import { 
   getVouchers, 
   getVoucherCategories, 
@@ -131,6 +131,16 @@ export default function VoucherManagement() {
 
     if (isDuplicate) {
       showAlert("Trùng tên Voucher", "Tên Voucher này đã tồn tại! Vui lòng chọn tên khác.", "error");
+      return;
+    }
+
+    if (voucherForm.points <= 0) {
+      showAlert("Giá trị không hợp lệ", "Điểm đổi Voucher phải lớn hơn 0.", "error");
+      return;
+    }
+
+    if (voucherForm.stock <= 0) {
+      showAlert("Số lượng không hợp lệ", "Số lượng mã Voucher nhập kho phải lớn hơn 0.", "error");
       return;
     }
 
@@ -272,7 +282,7 @@ export default function VoucherManagement() {
                       className="hover:bg-primary/[0.02] transition-colors cursor-pointer group"
                     >
                       <td className="px-8 py-4 text-center opacity-40 font-mono text-xs">#{v.id}</td>
-                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={v.image?.startsWith('http') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
+                      <td className="px-8 py-4"><div className="flex items-center gap-3"><img src={resolveImageUrl(v.image)} className="w-10 h-10 rounded-lg object-cover shadow-sm bg-surface-container-low" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} /><span className="text-on-surface font-black group-hover:text-primary transition-colors">{v.title}</span></div></td>
                       <td className="px-8 py-4"><span className="px-2.5 py-1 bg-surface-container-high rounded-full text-[10px] text-on-surface-variant uppercase">{v.category}</span></td>
                       <td className="px-8 py-4 text-primary font-black"><div className="flex items-center gap-1.5"><Star className="w-4 h-4" fill="currentColor" />{v.points}</div></td>
                       <td className="px-8 py-4 text-on-surface-variant">{v.stock}</td>
@@ -305,7 +315,7 @@ export default function VoucherManagement() {
                   className="bg-surface-container-lowest p-4 rounded-3xl border border-surface-container-high botanical-shadow relative group active:scale-[0.98] transition-all"
                 >
                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 shadow-sm bg-surface-container-low">
-                      <img src={v.image?.startsWith('http') || v.image?.startsWith('/src/assets') ? v.image : `${getApiBaseUrl()}${v.image?.startsWith('/') ? '' : '/'}${v.image}`} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} />
+                      <img src={resolveImageUrl(v.image)} className="w-full h-full object-cover" alt="" onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=400&auto=format&fit=crop'} />
                       <div className="absolute top-2 right-2 px-3 py-1 bg-primary text-white text-xs font-black rounded-full shadow-lg flex items-center gap-1">
                         <Star className="w-3 h-3" fill="currentColor" /> {v.points}
                       </div>
@@ -535,7 +545,7 @@ export default function VoucherManagement() {
                   <div className="lg:w-2/5 space-y-6 md:space-y-8">
                     <div className="relative group overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border-4 border-white shadow-2xl aspect-video">
                       <img 
-                        src={detailModal.data.image?.startsWith('http') || detailModal.data.image?.startsWith('/src/assets') ? detailModal.data.image : `${getApiBaseUrl()}${detailModal.data.image?.startsWith('/') ? '' : '/'}${detailModal.data.image}`}
+                        src={resolveImageUrl(detailModal.data.image)}
                         alt="" 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                         onError={e => e.target.src = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=800&auto=format&fit=crop'}
@@ -676,10 +686,7 @@ export default function VoucherManagement() {
                            }
                          }} />
                          {voucherForm.imagePreview ? (
-                           <img src={voucherForm.imagePreview?.startsWith('blob') || voucherForm.imagePreview?.startsWith('http') || voucherForm.imagePreview?.startsWith('/src/assets') 
-                              ? voucherForm.imagePreview 
-                              : `${getApiBaseUrl()}${voucherForm.imagePreview?.startsWith('/') ? '' : '/'}${voucherForm.imagePreview}`} 
-                              className="absolute inset-0 w-full h-full object-cover" alt="" />
+                           <img src={resolveImageUrl(voucherForm.imagePreview)} className="absolute inset-0 w-full h-full object-cover" alt="" />
                          ) : (
                            <>
                             <div className="p-3 md:p-4 bg-primary/10 rounded-2xl text-primary transform group-hover:scale-110 transition-transform">
@@ -706,7 +713,7 @@ export default function VoucherManagement() {
                         <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 tracking-widest opacity-70">Điểm đổi</label>
                         <div className="relative">
                           <Star className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-primary" fill="currentColor" />
-                          <input type="number" required value={voucherForm.points} onChange={e => setVoucherForm({...voucherForm, points: parseInt(e.target.value)})} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border-primary/20 font-black text-primary text-lg md:text-xl outline-none" />
+                          <input type="number" min="1" required value={voucherForm.points} onChange={e => setVoucherForm({...voucherForm, points: parseInt(e.target.value) || 0})} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border-primary/20 font-black text-primary text-lg md:text-xl outline-none" />
                         </div>
                       </div>
                     </div>
@@ -715,7 +722,7 @@ export default function VoucherManagement() {
                        <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 tracking-widest opacity-70">Số lượng nhập kho (Mã code)</label>
                        <div className="relative">
                          <Layers className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-on-surface-variant/40" />
-                         <input type="number" required value={voucherForm.stock} onChange={e => handleStockChange(e.target.value)} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border border-surface-container-high font-black text-lg md:text-xl outline-none" />
+                         <input type="number" min="1" required value={voucherForm.stock} onChange={e => handleStockChange(e.target.value)} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border border-surface-container-high font-black text-lg md:text-xl outline-none" />
                        </div>
                     </div>
 

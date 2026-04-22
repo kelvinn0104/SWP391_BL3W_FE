@@ -221,6 +221,9 @@ function PodiumCard({ rank, name, points, actions, avatar }) {
             alt={name}
             className="w-14 h-14 rounded-2xl object-cover ring-2 ring-primary/10"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+            }}
           />
         ) : (
           <div className="w-14 h-14 rounded-2xl bg-surface-container-low flex items-center justify-center text-on-surface-variant ring-2 ring-primary/10">
@@ -275,6 +278,9 @@ function LeaderboardRow({ rank, name, points, actions, avatar }) {
               alt={name}
               className="w-10 h-10 rounded-2xl object-cover"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+              }}
             />
           ) : (
             <div className="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center text-on-surface-variant">

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import AlertModal from '../components/ui/AlertModal';
 import { getVouchers, getVoucherCategories, redeemVoucher } from '../api/voucherApi';
-import { getApiBaseUrl } from '../lib/auth';
+import { getApiBaseUrl, resolveImageUrl } from '../lib/auth';
 import { getUserPointNow } from '../api/UserpointApi';
 
 // Small inner component for Copyable Code
@@ -279,12 +279,7 @@ export default function Rewards() {
               >
                 <div className="relative h-48 overflow-hidden bg-surface-container">
                   <img
-                    src={
-                      reward.image?.startsWith('http') ||
-                      reward.image?.startsWith('/src/assets')
-                        ? reward.image
-                        : `${getApiBaseUrl()}${reward.image?.startsWith('/') ? '' : '/'}${reward.image}`
-                    }
+                    src={resolveImageUrl(reward.image)}
                     alt={reward.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     referrerPolicy="no-referrer"
@@ -426,12 +421,7 @@ export default function Rewards() {
               <div className="p-6 md:p-8 text-center space-y-7">
                 <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-surface-container">
                   <img
-                    src={
-                      selectedReward.image?.startsWith('http') ||
-                      selectedReward.image?.startsWith('/src/assets')
-                        ? selectedReward.image
-                        : `${getApiBaseUrl()}${selectedReward.image?.startsWith('/') ? '' : '/'}${selectedReward.image}`
-                    }
+                    src={resolveImageUrl(selectedReward.image)}
                     alt={selectedReward.title}
                     className="w-full h-full object-cover"
                     onError={(e) =>

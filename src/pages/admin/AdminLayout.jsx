@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  Settings,
   MessageSquare,
   Ticket,
   ShieldCheck,
@@ -12,17 +13,21 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { clearAuth, getUser, resolveImageUrl } from "../../lib/auth";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const accountsActive = location.pathname.startsWith("/admin/accounts");
   const accountsMenuId = "admin-accounts-menu";
   const [accountsOpen, setAccountsOpen] = useState(accountsActive);
+  
+
 
   useEffect(() => {
     const usr = getUser();
@@ -30,7 +35,6 @@ export default function AdminLayout() {
       navigate("/login?returnTo=/admin");
       return;
     }
-    // "Administrator" or "3"
     if (usr.role !== "Administrator" && usr.role !== "3") {
       navigate("/");
       return;
@@ -42,6 +46,7 @@ export default function AdminLayout() {
     if (accountsActive) setAccountsOpen(true);
   }, [accountsActive]);
 
+
   if (!user) return null;
 
   function onLogout() {
@@ -51,7 +56,7 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-dvh w-full min-w-0 overflow-hidden bg-surface-container-low relative">
-      {/* Mobile Toggle Button */}
+      {/* Nút Toggle Mobile */}
       <button
         onClick={() => setIsSidebarOpen(true)}
         className="lg:hidden fixed bottom-6 right-6 z-40 bg-primary text-white p-4 rounded-2xl shadow-2xl shadow-primary/40 active:scale-95 transition-all"
@@ -59,7 +64,7 @@ export default function AdminLayout() {
         <Menu className="w-6 h-6" />
       </button>
 
-      {/* Backdrop for Mobile */}
+      {/* Lớp phủ cho Mobile */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
@@ -75,10 +80,10 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         className={`
-        fixed lg:relative top-0 bottom-0 left-0 w-[min(20rem,100vw)] lg:w-72 shrink-0 bg-surface-container-lowest border-r border-surface-container-highest 
-        flex flex-col min-h-0 h-dvh lg:h-auto lg:min-h-0 eco-glass z-50 transition-all duration-300 ease-in-out
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}
+          fixed lg:relative top-0 bottom-0 left-0 w-[min(20rem,100vw)] lg:w-72 shrink-0 bg-surface-container-lowest border-r border-surface-container-highest 
+          flex flex-col min-h-0 h-dvh lg:h-auto lg:min-h-0 eco-glass z-50 transition-all duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
       >
         <div className="p-6 flex items-center justify-between">
           <div>
@@ -117,44 +122,27 @@ export default function AdminLayout() {
             <span className="text-sm">Tổng quan</span>
           </NavLink>
 
-          <div className="space-y-1.5">
+
+          {/* Nhóm Tài khoản */}
+          <div className="space-y-1">
             <div
               className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
                 accountsActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+                  ? "bg-primary/5 text-primary border border-primary/20"
+                  : "text-on-surface-variant hover:bg-surface-container-high"
               }`}
             >
-              <NavLink
-                to="/admin/accounts/citizens"
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                  setAccountsOpen(true);
-                }}
-                className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none"
-              >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Users className="w-5 h-5 shrink-0" />
-                <span className="text-sm truncate whitespace-nowrap">
-                  Quản lý tài khoản
-                </span>
-              </NavLink>
-
+                <span className="text-sm truncate">Quản lý tài khoản</span>
+              </div>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setAccountsOpen((v) => !v);
-                }}
-                className="p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                aria-expanded={accountsOpen}
-                aria-controls={accountsMenuId}
-                aria-label={accountsOpen ? "Thu gọn" : "Mở rộng"}
+                onClick={() => setAccountsOpen((v) => !v)}
+                className="p-1 rounded-xl hover:bg-black/5 transition-colors"
               >
                 <ChevronDown
-                  className={`w-5 h-5 transition-transform ${
-                    accountsOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-5 h-5 transition-transform ${accountsOpen ? "rotate-180" : ""}`}
                 />
               </button>
             </div>
@@ -162,11 +150,9 @@ export default function AdminLayout() {
             <AnimatePresence initial={false}>
               {accountsOpen && (
                 <motion.div
-                  id={accountsMenuId}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
                   <div className="pl-8 pr-2 py-1 space-y-1">
@@ -177,13 +163,12 @@ export default function AdminLayout() {
                         `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
                           isActive
                             ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
                         }`
                       }
                     >
                       <span className="text-sm">Dân cư</span>
                     </NavLink>
-
                     <NavLink
                       to="/admin/accounts/collectors"
                       onClick={() => setIsSidebarOpen(false)}
@@ -191,7 +176,7 @@ export default function AdminLayout() {
                         `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
                           isActive
                             ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
                         }`
                       }
                     >
@@ -220,7 +205,7 @@ export default function AdminLayout() {
 
           <div className="pt-6 pb-2 px-4">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">
-              Mở rộng
+              Tiện ích
             </p>
           </div>
 
@@ -236,7 +221,7 @@ export default function AdminLayout() {
             }
           >
             <Star className="w-5 h-5" />
-            <span className="text-sm">Quản lí điểm thưởng</span>
+            <span className="text-sm">Quản lý điểm thưởng</span>
           </NavLink>
 
           <NavLink
@@ -251,26 +236,25 @@ export default function AdminLayout() {
             }
           >
             <Ticket className="w-5 h-5" />
-            <span className="text-sm">Quản lí Voucher</span>
+            <span className="text-sm">Quản lý Voucher</span>
           </NavLink>
         </nav>
 
-        {/* Bottom user card + logout */}
+        {/* Bottom User Card */}
         <div className="mt-auto border-t border-surface-container-highest p-4">
           <div className="flex items-center gap-3">
             <img
-              src={(user?.avatarUrl || user?.AvatarUrl || user?.avatar) ? `${resolveImageUrl(user?.avatarUrl || user?.AvatarUrl || user?.avatar)}${ (user?.avatarUrl || user?.AvatarUrl || user?.avatar).includes('?') ? '&' : '?' }t=${new Date().getTime()}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
-              alt="User profile"
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-primary-container/30"
+              src={(user?.avatarUrl || user?.AvatarUrl || user?.avatar) ? `${resolveImageUrl(user?.avatarUrl || user?.AvatarUrl || user?.avatar)}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
               referrerPolicy="no-referrer"
-              key={user?.avatarUrl || user?.AvatarUrl}
             />
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-on-surface truncate">
                 {user.displayName || user.email || "Admin"}
               </p>
               <p className="text-[10px] font-black tracking-widest uppercase text-on-surface-variant/60">
-                {user.role}
+                Administrator
               </p>
             </div>
           </div>
@@ -286,20 +270,16 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden bg-surface relative">
-        {/* Decorative Grid Background */}
         <div
           className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 2px 2px, black 1px, transparent 0)",
+            backgroundImage: "radial-gradient(circle at 2px 2px, black 1px, transparent 0)",
             backgroundSize: "24px 24px",
           }}
         ></div>
-
-        {/* Content Container */}
-        <div className="p-4 md:p-8 lg:p-12 relative w-full min-w-0 max-w-full box-border">
+        <div className="p-4 md:p-8 lg:p-12 w-full">
           <Outlet context={{ user }} />
         </div>
       </main>
