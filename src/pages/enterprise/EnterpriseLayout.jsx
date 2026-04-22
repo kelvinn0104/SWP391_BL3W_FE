@@ -136,19 +136,7 @@ export default function EnterpriseLayout() {
             <span className="text-sm">Năng lực & Khu vực</span>
           </NavLink>
 
-          <NavLink
-            to="/enterprise/system"
-            onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive
-                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
-              }`
-            }
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-sm">Quản lí hệ thống</span>
-          </NavLink>
+
 
           <NavLink
             to="/enterprise/tasks"
@@ -335,7 +323,7 @@ export default function EnterpriseLayout() {
           backgroundSize: '24px 24px'
         }}></div>
 
-        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
+        <div className="p-4 md:p-8 lg:p-12 w-full">
           <Outlet />
         </div>
       </main>

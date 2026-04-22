@@ -187,7 +187,7 @@ export default function CollectorLayout() {
         ></div>
 
         {/* Content Container */}
-        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
+        <div className="p-4 md:p-8 lg:p-12 w-full">
           <Outlet context={{ user }} />
         </div>
       </main>

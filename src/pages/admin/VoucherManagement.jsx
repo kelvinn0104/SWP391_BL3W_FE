@@ -134,6 +134,16 @@ export default function VoucherManagement() {
       return;
     }
 
+    if (voucherForm.points <= 0) {
+      showAlert("Giá trị không hợp lệ", "Điểm đổi Voucher phải lớn hơn 0.", "error");
+      return;
+    }
+
+    if (voucherForm.stock <= 0) {
+      showAlert("Số lượng không hợp lệ", "Số lượng mã Voucher nhập kho phải lớn hơn 0.", "error");
+      return;
+    }
+
     const formData = new FormData();
     formData.append('Title', voucherForm.title);
     formData.append('Points', voucherForm.points);
@@ -703,7 +713,7 @@ export default function VoucherManagement() {
                         <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 tracking-widest opacity-70">Điểm đổi</label>
                         <div className="relative">
                           <Star className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-primary" fill="currentColor" />
-                          <input type="number" required value={voucherForm.points} onChange={e => setVoucherForm({...voucherForm, points: parseInt(e.target.value)})} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border-primary/20 font-black text-primary text-lg md:text-xl outline-none" />
+                          <input type="number" min="1" required value={voucherForm.points} onChange={e => setVoucherForm({...voucherForm, points: parseInt(e.target.value) || 0})} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border-primary/20 font-black text-primary text-lg md:text-xl outline-none" />
                         </div>
                       </div>
                     </div>
@@ -712,7 +722,7 @@ export default function VoucherManagement() {
                        <label className="text-[10px] font-black uppercase text-on-surface-variant/40 ml-2 tracking-widest opacity-70">Số lượng nhập kho (Mã code)</label>
                        <div className="relative">
                          <Layers className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-on-surface-variant/40" />
-                         <input type="number" required value={voucherForm.stock} onChange={e => handleStockChange(e.target.value)} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border border-surface-container-high font-black text-lg md:text-xl outline-none" />
+                         <input type="number" min="1" required value={voucherForm.stock} onChange={e => handleStockChange(e.target.value)} className="w-full pl-12 md:pl-14 pr-4 md:pr-6 py-3.5 md:py-4 rounded-xl md:rounded-2xl bg-surface-container-low border border-surface-container-high font-black text-lg md:text-xl outline-none" />
                        </div>
                     </div>
 

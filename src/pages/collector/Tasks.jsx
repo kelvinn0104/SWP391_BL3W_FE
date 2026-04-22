@@ -14,11 +14,11 @@ export const COLLECTOR_ACTIVE_STATUSES = ["Assigned", "Accepted"];
 export function collectorStatusLabel(status) {
   if (!status) return "-";
   const map = {
-    Assigned: "Đã phân công",
-    Accepted: "Đang trên đường",
-    Pending: "Chờ xử lý",
-    Collected: "Đã thu gom",
-    Cancelled: "Đã hủy",
+    Assigned: "Assigned",
+    Accepted: "Accepted",
+    Pending: "Pending",
+    Collected: "Collected",
+    Cancelled: "Cancelled",
   };
   return map[status] ?? status;
 }

@@ -27,9 +27,7 @@ export default function AdminLayout() {
   const accountsMenuId = "admin-accounts-menu";
   const [accountsOpen, setAccountsOpen] = useState(accountsActive);
   
-  const systemActive = location.pathname.startsWith("/admin/system");
-  const systemMenuId = "admin-system-menu";
-  const [systemOpen, setSystemOpen] = useState(systemActive);
+
 
   useEffect(() => {
     const usr = getUser();
@@ -48,9 +46,6 @@ export default function AdminLayout() {
     if (accountsActive) setAccountsOpen(true);
   }, [accountsActive]);
 
-  useEffect(() => {
-    if (systemActive) setSystemOpen(true);
-  }, [systemActive]);
 
   if (!user) return null;
 
@@ -127,70 +122,6 @@ export default function AdminLayout() {
             <span className="text-sm">Tổng quan</span>
           </NavLink>
 
-          {/* Nhóm Hệ thống */}
-          <div className="space-y-1">
-            <div
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
-                systemActive
-                  ? "bg-primary/5 text-primary border border-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high"
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <Settings className="w-5 h-5 shrink-0" />
-                <span className="text-sm truncate">Hệ thống</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSystemOpen((v) => !v)}
-                className="p-1 rounded-xl hover:bg-black/5 transition-colors"
-              >
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform ${systemOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-            </div>
-
-            <AnimatePresence initial={false}>
-              {systemOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pl-8 pr-2 py-1 space-y-1">
-                    <NavLink
-                      to="/admin/system/waste-categories"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
-                          isActive
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
-                        }`
-                      }
-                    >
-                      <span className="text-sm">Loại rác</span>
-                    </NavLink>
-                    <NavLink
-                      to="/admin/system/areas"
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-4 py-2.5 rounded-2xl font-semibold transition-all ${
-                          isActive
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
-                        }`
-                      }
-                    >
-                      <span className="text-sm">Khu vực</span>
-                    </NavLink>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
           {/* Nhóm Tài khoản */}
           <div className="space-y-1">
@@ -203,7 +134,7 @@ export default function AdminLayout() {
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Users className="w-5 h-5 shrink-0" />
-                <span className="text-sm truncate">Tài khoản</span>
+                <span className="text-sm truncate">Quản lý tài khoản</span>
               </div>
               <button
                 type="button"
@@ -269,7 +200,7 @@ export default function AdminLayout() {
             }
           >
             <MessageSquare className="w-5 h-5" />
-            <span className="text-sm">Khiếu nại</span>
+            <span className="text-sm">Quản lý khiếu nại</span>
           </NavLink>
 
           <div className="pt-6 pb-2 px-4">
@@ -290,7 +221,7 @@ export default function AdminLayout() {
             }
           >
             <Star className="w-5 h-5" />
-            <span className="text-sm">Điểm thưởng</span>
+            <span className="text-sm">Quản lý điểm thưởng</span>
           </NavLink>
 
           <NavLink
@@ -305,7 +236,7 @@ export default function AdminLayout() {
             }
           >
             <Ticket className="w-5 h-5" />
-            <span className="text-sm">Voucher</span>
+            <span className="text-sm">Quản lý Voucher</span>
           </NavLink>
         </nav>
 
@@ -348,7 +279,7 @@ export default function AdminLayout() {
             backgroundSize: "24px 24px",
           }}
         ></div>
-        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
+        <div className="p-4 md:p-8 lg:p-12 w-full">
           <Outlet context={{ user }} />
         </div>
       </main>
