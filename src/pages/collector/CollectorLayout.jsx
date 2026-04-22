@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
@@ -15,6 +15,7 @@ import NotificationBell from "../../components/NotificationBell";
 
 export default function CollectorLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -37,6 +38,24 @@ export default function CollectorLayout() {
   function onLogout() {
     clearAuth();
     navigate("/login", { replace: true });
+  }
+
+  const fromList = location.state?.from;
+  const pathname = location.pathname;
+  const isTaskDetail = pathname.startsWith("/collector/tasks/");
+  const isHistoryActive =
+    pathname.startsWith("/collector/history") ||
+    (isTaskDetail && fromList === "history");
+  const isTasksActive =
+    (pathname === "/collector/tasks" || pathname.startsWith("/collector/tasks")) &&
+    !isHistoryActive;
+
+  function sideItemClass(isActive) {
+    return `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
+      isActive
+        ? "bg-primary text-white shadow-lg shadow-primary/20"
+        : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
+    }`;
   }
 
   return (
@@ -96,46 +115,30 @@ export default function CollectorLayout() {
             end
             onClick={() => setIsSidebarOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
-                isActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-              }`
+              sideItemClass(isActive)
             }
           >
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-sm">Tổng quan</span>
           </NavLink>
 
-          <NavLink
+          <Link
             to="/collector/tasks"
             onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
-                isActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-              }`
-            }
+            className={sideItemClass(isTasksActive)}
           >
             <Briefcase className="w-5 h-5" />
             <span className="text-sm">Quản lí công việc</span>
-          </NavLink>
+          </Link>
 
-          <NavLink
+          <Link
             to="/collector/history"
             onClick={() => setIsSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
-                isActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
-              }`
-            }
+            className={sideItemClass(isHistoryActive)}
           >
             <History className="w-5 h-5" />
             <span className="text-sm">Lịch sử công việc</span>
-          </NavLink>
+          </Link>
         </nav>
 
         {/* Bottom user card + logout */}
