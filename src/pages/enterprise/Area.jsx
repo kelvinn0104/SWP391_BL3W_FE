@@ -447,8 +447,7 @@ export default function Area() {
                       </button>
                     </div>
 
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors shadow-sm ${isActive ? 'bg-primary text-white shadow-primary/20' : 'bg-surface-container-high text-on-surface-variant'
-                      }`}>
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors shadow-sm ${isActive ? 'bg-primary text-white shadow-primary/20' : 'bg-surface-container-high text-on-surface-variant'}`}>
                       <MapPin className="w-5 h-5" />
                     </div>
 

@@ -13,10 +13,12 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clearAuth, getUser, resolveImageUrl } from '../../lib/auth';
+import NotificationBell from '../../components/NotificationBell';
 
 export default function EnterpriseLayout() {
   const navigate = useNavigate();
@@ -37,7 +39,6 @@ export default function EnterpriseLayout() {
       navigate('/login?returnTo=/enterprise');
       return;
     }
-    // "RecyclingEnterprise" or "4" depending on how backend returns role
     if (usr.role !== 'RecyclingEnterprise' && usr.role !== '4') {
       navigate('/');
       return;
@@ -54,7 +55,6 @@ export default function EnterpriseLayout() {
 
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-surface-container-low relative min-h-0">
-      {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsSidebarOpen(true)}
         className="lg:hidden fixed bottom-6 right-6 z-40 bg-primary text-white p-4 rounded-2xl shadow-2xl shadow-primary/40 active:scale-95 transition-all"
@@ -62,7 +62,6 @@ export default function EnterpriseLayout() {
         <Menu className="w-6 h-6" />
       </button>
 
-      {/* Backdrop for Mobile */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div 
@@ -75,7 +74,6 @@ export default function EnterpriseLayout() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <aside className={`
         fixed lg:relative top-[73px] lg:top-0 bottom-0 left-0 w-72 lg:w-64 bg-surface-container-lowest border-r border-surface-container-highest 
         flex flex-col eco-glass z-40 transition-all duration-300 ease-in-out
@@ -138,6 +136,19 @@ export default function EnterpriseLayout() {
             <span className="text-sm">Năng lực & Khu vực</span>
           </NavLink>
 
+          <NavLink
+            to="/enterprise/system"
+            onClick={() => setIsSidebarOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
+              }`
+            }
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-sm">Quản lí hệ thống</span>
+          </NavLink>
 
           <NavLink
             to="/enterprise/tasks"
@@ -182,7 +193,7 @@ export default function EnterpriseLayout() {
                   e.stopPropagation();
                   setAccountsOpen((v) => !v);
                 }}
-                className="p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                className="p-1 rounded-xl hover:bg-black/5 transition-colors"
                 aria-expanded={accountsOpen}
                 aria-controls={accountsMenuId}
                 aria-label={accountsOpen ? "Thu gọn" : "Mở rộng"}
@@ -242,7 +253,7 @@ export default function EnterpriseLayout() {
             to="/enterprise/feedback"
             onClick={() => setIsSidebarOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive || window.location.pathname.startsWith('/enterprise/feedback')
+              `flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${isActive || (location.pathname && location.pathname.startsWith('/enterprise/feedback'))
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
                 : 'text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]'
               }`
@@ -285,7 +296,6 @@ export default function EnterpriseLayout() {
           </NavLink>
         </nav>
 
-        {/* Bottom user card + logout */}
         <div className="mt-auto border-t border-surface-container-highest p-4">
           <div className="flex items-center gap-3">
             <img
@@ -316,16 +326,16 @@ export default function EnterpriseLayout() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-surface relative min-h-0">
-        {/* Decorative Grid Background */}
+        <div className="absolute top-6 right-6 lg:right-12 z-50">
+          <NotificationBell />
+        </div>
         <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{
           backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)',
           backgroundSize: '24px 24px'
         }}></div>
 
-        {/* Content Container */}
-        <div className="p-4 md:p-8 lg:p-12 relative w-full">
+        <div className="p-4 md:p-8 lg:p-12 relative z-10 w-full">
           <Outlet />
         </div>
       </main>

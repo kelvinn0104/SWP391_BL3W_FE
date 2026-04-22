@@ -8,11 +8,11 @@ const FILTER_ALL = 'All';
 const REPORTS_PER_PAGE = 5;
 
 const REPORT_STATUS_OPTIONS = [
-  { value: 'Pending', label: 'Pending' },
-  // { value: 'Accepted', label: 'Accepted' },
-  { value: 'Assigned', label: 'Assigned' },
-  { value: 'Collected', label: 'Collected' },
-  { value: 'Cancelled', label: 'Cancelled' },
+  { value: 'Pending', label: 'Chờ duyệt' },
+  // { value: 'Accepted', label: 'Đã chấp nhận' },
+  { value: 'Assigned', label: 'Đã phân công' },
+  { value: 'Collected', label: 'Đã thu gom' },
+  { value: 'Cancelled', label: 'Đã hủy' },
 ];
 
 const REPORT_FILTER_OPTIONS = [{ value: FILTER_ALL, label: 'Tất cả' }, ...REPORT_STATUS_OPTIONS];

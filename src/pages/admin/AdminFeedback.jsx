@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -7,63 +7,65 @@ import {
   Search,
   User,
 } from "lucide-react";
-
-export const FEEDBACK_ITEMS = [];
+import { getAllComplaints } from "../../api/complaintApi";
 
 const STATUS_TABS = [
   { id: "all", label: "Tất cả" },
-  { id: "open", label: "Chờ xử lý" },
-  { id: "in_progress", label: "Đang xử lý" },
-  { id: "resolved", label: "Đã giải quyết" },
+  { id: "Submitted", label: "Chờ xử lý" },
+  { id: "InReview", label: "Đang xử lý" },
+  { id: "Resolved", label: "Đã giải quyết" },
+  { id: "Rejected", label: "Bị từ chối" },
 ];
 
 function statusBadge(status) {
-  if (status === "open") return "bg-rose-100 text-rose-700";
-  if (status === "in_progress") return "bg-amber-100 text-amber-700";
-  return "bg-emerald-100 text-emerald-700";
+  if (status === "Submitted") return "bg-rose-100 text-rose-700";
+  if (status === "InReview") return "bg-amber-100 text-amber-700";
+  if (status === "Resolved") return "bg-emerald-100 text-emerald-700";
+  return "bg-zinc-100 text-zinc-700";
 }
 
-function statusText(status) {
-  if (status === "open") return "Chờ xử lý";
-  if (status === "in_progress") return "Đang xử lý";
-  return "Đã giải quyết";
-}
-
-function priorityBadge(priority) {
-  if (priority === "high") return "bg-red-50 text-red-700 border-red-200";
-  if (priority === "medium")
-    return "bg-orange-50 text-orange-700 border-orange-200";
-  return "bg-blue-50 text-blue-700 border-blue-200";
-}
-
-function priorityText(priority) {
-  if (priority === "high") return "Khẩn cấp";
-  if (priority === "medium") return "Trung bình";
-  return "Thấp";
+export function statusText(status) {
+  if (status === "Submitted") return "Chờ xử lý";
+  if (status === "InReview") return "Đang xử lý";
+  if (status === "Resolved") return "Đã giải quyết";
+  if (status === "Rejected") return "Bị từ chối";
+  return status;
 }
 
 export default function AdminFeedback() {
-  const location = useLocation();
-  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/enterprise";
-
   const [activeStatus, setActiveStatus] = useState("all");
   const [query, setQuery] = useState("");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const data = await getAllComplaints(activeStatus === "all" ? "" : activeStatus);
+        setItems(data);
+      } catch (err) {
+        console.error("Failed to load complaints", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [activeStatus]);
 
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return FEEDBACK_ITEMS.filter((item) => {
-      const matchStatus =
-        activeStatus === "all" || item.status === activeStatus;
-      const matchQuery =
-        !q ||
-        item.subject.toLowerCase().includes(q) ||
-        item.sender.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q);
-      return matchStatus && matchQuery;
+    if (!q) return items;
+    return items.filter((item) => {
+      return (
+        (item.reason && item.reason.toLowerCase().includes(q)) ||
+        (item.citizenName && item.citizenName.toLowerCase().includes(q)) ||
+        item.id.toString().includes(q)
+      );
     });
-  }, [activeStatus, query]);
+  }, [items, query]);
 
-  const openCount = FEEDBACK_ITEMS.filter((x) => x.status === "open").length;
+  const openCount = items.filter((x) => x.status === "Submitted").length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -79,10 +81,10 @@ export default function AdminFeedback() {
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <article className="bg-surface-container-lowest rounded-2xl border border-surface-container-highest p-5">
           <p className="text-xs uppercase tracking-widest font-black text-on-surface-variant">
-            Tổng phản hồi
+            Tổng tiếp nhận
           </p>
           <p className="mt-2 text-3xl font-extrabold text-on-surface">
-            {FEEDBACK_ITEMS.length}
+            {items.length}
           </p>
         </article>
         <article className="bg-surface-container-lowest rounded-2xl border border-surface-container-highest p-5">
@@ -98,7 +100,7 @@ export default function AdminFeedback() {
             Đã giải quyết
           </p>
           <p className="mt-2 text-3xl font-extrabold text-emerald-600">
-            {FEEDBACK_ITEMS.filter((x) => x.status === "resolved").length}
+            {items.filter((x) => x.status === "Resolved").length}
           </p>
         </article>
       </section>
@@ -135,27 +137,35 @@ export default function AdminFeedback() {
         </div>
 
         <div className="space-y-3">
-          {filteredItems.length === 0 ? (
+          {loading ? (
+             <div className="py-12 text-center text-on-surface-variant font-semibold animate-pulse">
+               Đang tải dữ liệu khiếu nại...
+             </div>
+          ) : filteredItems.length === 0 ? (
             <div className="py-12 text-center text-on-surface-variant font-semibold">
               Không có khiếu nại phù hợp bộ lọc.
             </div>
           ) : (
-            filteredItems.map((item) => (
+            filteredItems.map((item) => {
+              const basePath = window.location.pathname.startsWith('/enterprise') 
+                ? '/enterprise/feedback' 
+                : '/admin/feedback';
+              return (
               <Link
                 key={item.id}
-                to={`${basePath}/feedback/${encodeURIComponent(item.id)}`}
+                to={`${basePath}/${item.id}`}
                 className="block rounded-2xl border border-surface-container-high bg-surface p-5 space-y-3 hover:border-primary/40 hover:shadow-md transition-all"
               >
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-xs font-black uppercase tracking-widest text-primary">
-                      {item.id}
+                      #{item.id}
                     </p>
                     <h3 className="text-lg font-bold text-on-surface">
-                      {item.subject}
+                      {item.reason}
                     </h3>
-                    <p className="text-sm text-on-surface-variant leading-relaxed">
-                      {item.message}
+                    <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-2">
+                      {item.description}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -164,11 +174,6 @@ export default function AdminFeedback() {
                     >
                       {statusText(item.status)}
                     </span>
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-bold border ${priorityBadge(item.priority)}`}
-                    >
-                      {priorityText(item.priority)}
-                    </span>
                   </div>
                 </div>
 
@@ -176,18 +181,18 @@ export default function AdminFeedback() {
                   <div className="flex items-center gap-4 text-sm text-on-surface-variant">
                     <span className="inline-flex items-center gap-1.5">
                       <User className="w-4 h-4 text-primary" />
-                      {item.sender} - {item.email}
+                      {item.citizenName || "Khách"} - {item.citizenEmail || "Không có Email"}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock3 className="w-4 h-4 text-primary" />
-                      {item.createdAt}
+                      {new Date(item.createdAtUtc).toLocaleString('vi-VN')}
                     </span>
                   </div>
                   <div className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                    {item.status === "resolved" ? (
+                    {item.status === "Resolved" || item.status === "Rejected" ? (
                       <span className="inline-flex items-center gap-1 text-emerald-700">
                         <CheckCircle2 className="w-4 h-4" />
-                        Đã hoàn tất
+                        Đã xử lý xong
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-amber-700">
@@ -198,7 +203,8 @@ export default function AdminFeedback() {
                   </div>
                 </div>
               </Link>
-            ))
+              );
+            })
           )}
         </div>
       </section>

@@ -58,6 +58,7 @@ function rowsFromWasteItems(items) {
           : undefined;
       return {
         categoryName: name,
+        itemId: item?.wasteReportItemId ?? "",
         weight: weightStr,
         lockedCategory: true,
         rowKey: item?.wasteReportItemId ?? name,
@@ -74,6 +75,7 @@ export default function UploadImageModal({
   taskId,
   reportId: reportIdProp,
   wasteItems,
+  taskTitle,
   onSuccess,
 }) {
   const modalId = useId();
@@ -83,12 +85,18 @@ export default function UploadImageModal({
   const [completionNote, setCompletionNote] = useState("");
   const [completedAtUtc, setCompletedAtUtc] = useState("");
   const [weightRows, setWeightRows] = useState([
-    { categoryName: "", weight: "", lockedCategory: false },
+    { categoryName: "", itemId: "", weight: "", lockedCategory: false },
   ]);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitToast, setSubmitToast] = useState(null);
   const [dragOverProof, setDragOverProof] = useState(false);
+
+  const presetRows = useMemo(
+    () => rowsFromWasteItems(wasteItems),
+    [wasteItems],
+  );
+  const fixedCategoriesFromApi = Boolean(presetRows?.length);
 
   const previewUrls = useMemo(
     () => proofFiles.map((file) => URL.createObjectURL(file)),
@@ -100,12 +108,6 @@ export default function UploadImageModal({
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previewUrls]);
-
-  const presetRows = useMemo(
-    () => rowsFromWasteItems(wasteItems),
-    [wasteItems],
-  );
-  const fixedCategoriesFromApi = Boolean(presetRows?.length);
 
   const weightSummary = useMemo(() => {
     let totalKg = 0;
@@ -142,7 +144,7 @@ export default function UploadImageModal({
     setCompletionNote("");
     setCompletedAtUtc(nowForDatetimeLocal());
     setWeightRows(
-      presetRows ?? [{ categoryName: "", weight: "", lockedCategory: false }],
+      presetRows ?? [{ categoryName: "", itemId: "", weight: "", lockedCategory: false }],
     );
     setSubmitting(false);
     setSubmitToast(null);
@@ -230,19 +232,11 @@ export default function UploadImageModal({
 
     const pairs = [];
     for (const row of weightRows) {
-      const nameRaw = row.categoryName.trim();
-      const wRaw = row.weight.trim();
-      if (!nameRaw && !wRaw) continue;
+      const idRaw = String(row.itemId ?? "").trim();
+      const wRaw = String(row.weight ?? "").trim();
+      if (!idRaw && !wRaw) continue;
       const weight = Number(wRaw.replace(",", "."));
-      if (!nameRaw) {
-        setSubmitToast({
-          type: "error",
-          title: "Thiếu danh mục",
-          message:
-            "Mỗi dòng đã nhập cần có tên danh mục (không được để trống).",
-        });
-        return;
-      }
+      
       if (!Number.isFinite(weight) || weight < 0) {
         setSubmitToast({
           type: "error",
@@ -251,20 +245,23 @@ export default function UploadImageModal({
         });
         return;
       }
-      pairs.push({ categoryName: nameRaw, actualWeightKg: weight });
+      pairs.push({ 
+        wasteReportItemId: idRaw || null, 
+        categoryName: (row.categoryName ?? "").trim() || null, 
+        actualWeightKg: weight 
+      });
     }
 
     if (pairs.length === 0) {
       setSubmitToast({
         type: "error",
-        title: "Thiếu danh mục và khối lượng",
-        message:
-          "Vui lòng nhập ít nhất một cặp danh mục và khối lượng thực tế.",
+        title: "Thiếu khối lượng theo dòng",
+        message: "Vui lòng nhập ít nhất một dòng khối lượng thực tế.",
       });
       return;
     }
 
-    const categoryNames = pairs.map((p) => p.categoryName);
+    const wasteReportItemIds = pairs.map((p) => p.wasteReportItemId);
     const actualWeightKgs = pairs.map((p) => p.actualWeightKg);
 
     let completedIso;
@@ -292,7 +289,7 @@ export default function UploadImageModal({
         proofImages: proofFiles,
         completionNote: completionNotePayload,
         completedAtUtc: completedIso,
-        categoryNames,
+        wasteReportItemIds,
         actualWeightKgs,
       });
       setSubmitToast({
@@ -320,6 +317,7 @@ export default function UploadImageModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      aria-describedby={modalId + "-desc"}
     >
       {submitToast ? (
         <div
@@ -363,6 +361,18 @@ export default function UploadImageModal({
               <PackageCheck className="w-5 h-5 shrink-0" />
               Xác nhận thu gom
             </p>
+            {taskId ? (
+              <p className="text-xs font-semibold text-on-surface-variant pt-1">
+                Mã:{" "}
+                <span className="font-mono text-on-surface">{taskId}</span>
+                {taskTitle ? (
+                  <>
+                    {" "}
+                    • <span className="text-on-surface">{taskTitle}</span>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
           </div>
 
           <button
@@ -449,7 +459,7 @@ export default function UploadImageModal({
               htmlFor={`${modalId}-completion-note`}
               className="text-sm font-bold text-on-surface"
             >
-              Ghi chú hoàn tất{" "}
+              Ghi chú hoàn tất
             </label>
             <textarea
               id={`${modalId}-completion-note`}
@@ -467,14 +477,13 @@ export default function UploadImageModal({
               htmlFor={`${modalId}-completed-at`}
               className="text-sm font-bold text-on-surface"
             >
-              Thời điểm hoàn tất{" "}
+              Thời điểm hoàn tất
             </label>
             <input
               id={`${modalId}-completed-at`}
               type="datetime-local"
               value={completedAtUtc}
               onChange={(e) => setCompletedAtUtc(e.target.value)}
-              disabled
               className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
             />
           </div>

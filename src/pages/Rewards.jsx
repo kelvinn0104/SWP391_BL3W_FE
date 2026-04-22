@@ -281,6 +281,7 @@ export default function Rewards() {
                   <img
                     src={
                       reward.image?.startsWith('http') ||
+                      reward.image?.startsWith('/voucher') ||
                       reward.image?.startsWith('/src/assets')
                         ? reward.image
                         : `${getApiBaseUrl()}${reward.image?.startsWith('/') ? '' : '/'}${reward.image}`
@@ -428,6 +429,7 @@ export default function Rewards() {
                   <img
                     src={
                       selectedReward.image?.startsWith('http') ||
+                      selectedReward.image?.startsWith('/voucher') ||
                       selectedReward.image?.startsWith('/src/assets')
                         ? selectedReward.image
                         : `${getApiBaseUrl()}${selectedReward.image?.startsWith('/') ? '' : '/'}${selectedReward.image}`
