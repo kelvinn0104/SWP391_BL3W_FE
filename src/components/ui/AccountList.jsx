@@ -289,7 +289,7 @@ export default function AccountList({
     if (confirmAction.type === "delete") {
       return {
         title: "Xác nhận xóa",
-        message: `Xóa tài khoản "${it.name}" (${it.email})? Hành động không thể hoàn tác.`,
+        message: `Xóa tài khoản ${it.email}? Hành động không thể hoàn tác.`,
         confirmText: "Xóa",
         variant: "danger",
       };
@@ -297,14 +297,14 @@ export default function AccountList({
     if (it.status === "active") {
       return {
         title: "Khóa tài khoản?",
-        message: `Khóa tài khoản "${it.name}" (${it.email})? Người dùng sẽ không thể đăng nhập.`,
+        message: `Khóa tài khoản ${it.email}? Người dùng sẽ không thể đăng nhập.`,
         confirmText: "Khóa",
         variant: "danger",
       };
     }
     return {
       title: "Mở khóa tài khoản?",
-      message: `Mở khóa tài khoản "${it.name}" (${it.email})?`,
+      message: `Mở khóa tài khoản ${it.email}?`,
       confirmText: "Mở khóa",
       variant: "success",
     };

@@ -68,12 +68,20 @@ const ConfirmModal = ({
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row justify-center gap-2.5 sm:gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            type="button"
+            className="px-12 py-2.5 font-bold text-on-surface transition-all rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed bg-surface-container-low hover:bg-surface-container-high"
+          >
+            Hủy
+          </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
             type="button"
-            className={`px-12 py-2.5 font-bold text-white transition-all rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${confirmBtnClass}`}
+            className={`px-12 py-2.5 font-bold text-white transition-all rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed ${confirmBtnClass}`}
           >
             {isLoading ? "Đang xác nhận..." : confirmText}
           </button>
