@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import AlertModal from '../components/ui/AlertModal';
 import { getVouchers, getVoucherCategories, redeemVoucher } from '../api/voucherApi';
-import { getApiBaseUrl, resolveImageUrl } from '../lib/auth';
+import { getApiBaseUrl, resolveImageUrl, fetchMe } from '../lib/auth';
 import { getUserPointNow } from '../api/UserpointApi';
 
 // Small inner component for Copyable Code
@@ -136,6 +136,14 @@ export default function Rewards() {
 
       // Update local points
       setUserPoints(prev => prev - selectedReward.points);
+      
+      // Sync global points in Navbar/Profile
+      try {
+        await fetchMe();
+      } catch (syncErr) {
+        console.error("Failed to sync user data:", syncErr);
+      }
+      
       setSelectedReward(null);
     } catch (err) {
       setAlertConfig({
