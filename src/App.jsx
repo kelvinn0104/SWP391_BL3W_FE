@@ -40,6 +40,7 @@ import EnterpriseLayout from "./pages/enterprise/EnterpriseLayout";
 import EnterpriseDashboard from "./pages/enterprise/Dashboard";
 import EnterpriseArea from "./pages/enterprise/Area";
 import EnterpriseRequests from "./pages/enterprise/Requests";
+import EnterpriseTasks from "./pages/enterprise/CompletedTasks";
 import CollectorLayout from "./pages/collector/CollectorLayout";
 import CollectorDashboard from "./pages/collector/CollectorDashboard";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -417,11 +418,7 @@ export default function App() {
           <Route path="requests" element={<EnterpriseRequests />} />
           <Route
             path="tasks"
-            element={
-              <div className="p-10 text-center font-bold opacity-50">
-                Quản lí công việc đang được phát triển...
-              </div>
-            }
+            element={<EnterpriseTasks />}
           />
           <Route path="accounts" element={<Outlet />}>
             <Route index element={<Navigate to="citizens" replace />} />
