@@ -157,3 +157,15 @@ export async function updateWasteReport(id, payload) {
     body: formData,
   });
 }
+
+export async function getWasteReportsByStatus(status) {
+  const data = await apiFetch(`/api/waste-reports/search-report-status?status=${encodeURIComponent(status)}`);
+  return Array.isArray(data) ? data : [];
+}
+
+export async function getWasteReportStatusHistory(id) {
+  if (id === undefined || id === null || String(id).trim() === '') {
+    throw new Error('Thiếu mã báo cáo.');
+  }
+  return apiFetch(`/api/waste-reports/${encodeURIComponent(String(id).trim())}/status-history`);
+}
