@@ -8,9 +8,8 @@ import {
 } from "lucide-react";
 import { cancelCollectorJob } from "../../api/collectorJobApi";
 
-/** Đồng bộ với UploadImageModal.jsx */
 const TOAST_AUTO_HIDE_MS = 2600;
-const TOAST_SUCCESS_CLOSE_MS = 2200;
+const TOAST_SUCCESS_CLOSE_MS = 700;
 
 /**
  * Props:

@@ -16,6 +16,7 @@ import {
   getCollectors,
   lockAccount,
 } from "../../api/userApi";
+import ConfirmModal from "../modal/ConfirmModal";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 5;
@@ -201,6 +202,7 @@ export default function AccountList({
   const [page, setPage] = useState(1);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [busy, setBusy] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const query = queryProp ?? internalQuery;
   const setQuery = onQueryChange ?? setInternalQuery;
@@ -231,39 +233,71 @@ export default function AccountList({
     };
   }, [accountKind, wardId, refreshNonce]);
 
-  async function handleToggleLock(it) {
+  function openLockConfirm(it) {
     if (busy != null || it.id == null) return;
-    const nextLocked = it.status === "active";
-    setBusy({ id: it.id, kind: "lock" });
-    try {
-      await lockAccount(it.id, nextLocked);
-      setRefreshNonce((n) => n + 1);
-    } catch (e) {
-      setError(e?.message || "Không cập nhật được trạng thái khóa.");
-    } finally {
-      setBusy(null);
+    setConfirmAction({ type: "lock", row: it });
+  }
+
+  function openDeleteConfirm(it) {
+    if (busy != null || it.id == null) return;
+    setConfirmAction({ type: "delete", row: it });
+  }
+
+  async function handleConfirmModal() {
+    if (confirmAction?.row?.id == null) return;
+    const it = confirmAction.row;
+    if (confirmAction.type === "lock") {
+      const nextLocked = it.status === "active";
+      setBusy({ id: it.id, kind: "lock" });
+      try {
+        await lockAccount(it.id, nextLocked);
+        setRefreshNonce((n) => n + 1);
+      } catch (e) {
+        setError(e?.message || "Không cập nhật được trạng thái khóa.");
+      } finally {
+        setBusy(null);
+        setConfirmAction(null);
+      }
+    } else {
+      setBusy({ id: it.id, kind: "delete" });
+      try {
+        await deleteAccount(it.id);
+        setRefreshNonce((n) => n + 1);
+      } catch (e) {
+        setError(e?.message || "Không xóa được tài khoản.");
+      } finally {
+        setBusy(null);
+        setConfirmAction(null);
+      }
     }
   }
 
-  async function handleDelete(it) {
-    if (busy != null || it.id == null) return;
-    if (
-      !window.confirm(
-        `Xóa tài khoản "${it.name}" (${it.email})? Hành động không thể hoàn tác.`,
-      )
-    ) {
-      return;
+  const confirmModalCopy = useMemo(() => {
+    if (!confirmAction?.row) return null;
+    const it = confirmAction.row;
+    if (confirmAction.type === "delete") {
+      return {
+        title: "Xác nhận xóa",
+        message: `Xóa tài khoản "${it.name}" (${it.email})? Hành động không thể hoàn tác.`,
+        confirmText: "Xóa",
+        variant: "danger",
+      };
     }
-    setBusy({ id: it.id, kind: "delete" });
-    try {
-      await deleteAccount(it.id);
-      setRefreshNonce((n) => n + 1);
-    } catch (e) {
-      setError(e?.message || "Không xóa được tài khoản.");
-    } finally {
-      setBusy(null);
+    if (it.status === "active") {
+      return {
+        title: "Khóa tài khoản?",
+        message: `Khóa tài khoản "${it.name}" (${it.email})? Người dùng sẽ không thể đăng nhập.`,
+        confirmText: "Khóa",
+        variant: "danger",
+      };
     }
-  }
+    return {
+      title: "Mở khóa tài khoản?",
+      message: `Mở khóa tài khoản "${it.name}" (${it.email})?`,
+      confirmText: "Mở khóa",
+      variant: "success",
+    };
+  }, [confirmAction]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -403,8 +437,8 @@ export default function AccountList({
                         it={it}
                         busy={busy}
                         onEditAccount={onEditAccount}
-                        onToggleLock={handleToggleLock}
-                        onDelete={handleDelete}
+                        onToggleLock={openLockConfirm}
+                        onDelete={openDeleteConfirm}
                       />
                     </div>
                   </div>
@@ -469,8 +503,8 @@ export default function AccountList({
                       it={it}
                       busy={busy}
                       onEditAccount={onEditAccount}
-                      onToggleLock={handleToggleLock}
-                      onDelete={handleDelete}
+                      onToggleLock={openLockConfirm}
+                      onDelete={openDeleteConfirm}
                     />
                   </div>
                 </div>
@@ -485,6 +519,17 @@ export default function AccountList({
         totalPages={totalPages}
         onPageChange={setPage}
         className="pt-2"
+      />
+
+      <ConfirmModal
+        isOpen={confirmAction != null && confirmModalCopy != null}
+        onClose={() => (busy == null ? setConfirmAction(null) : undefined)}
+        onConfirm={handleConfirmModal}
+        title={confirmModalCopy?.title}
+        message={confirmModalCopy?.message}
+        confirmText={confirmModalCopy?.confirmText}
+        variant={confirmModalCopy?.variant ?? "danger"}
+        isLoading={busy != null}
       />
     </div>
   );

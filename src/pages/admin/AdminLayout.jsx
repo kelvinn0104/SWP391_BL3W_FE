@@ -128,18 +128,34 @@ export default function AdminLayout() {
             <div
               className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl font-bold transition-all ${
                 accountsActive
-                  ? "bg-primary/5 text-primary border border-primary/20"
-                  : "text-on-surface-variant hover:bg-surface-container-high"
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-[0.98]"
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              <NavLink
+                to="/admin/accounts/citizens"
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  setAccountsOpen(true);
+                }}
+                className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none"
+              >
                 <Users className="w-5 h-5 shrink-0" />
-                <span className="text-sm truncate">Quản lý tài khoản</span>
-              </div>
+                <span className="text-sm truncate whitespace-nowrap">
+                  Quản lý tài khoản
+                </span>
+              </NavLink>
               <button
                 type="button"
-                onClick={() => setAccountsOpen((v) => !v)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setAccountsOpen((v) => !v);
+                }}
                 className="p-1 rounded-xl hover:bg-black/5 transition-colors"
+                aria-expanded={accountsOpen}
+                aria-controls={accountsMenuId}
+                aria-label={accountsOpen ? "Thu gọn" : "Mở rộng"}
               >
                 <ChevronDown
                   className={`w-5 h-5 transition-transform ${accountsOpen ? "rotate-180" : ""}`}
@@ -150,9 +166,11 @@ export default function AdminLayout() {
             <AnimatePresence initial={false}>
               {accountsOpen && (
                 <motion.div
+                  id={accountsMenuId}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
                   <div className="pl-8 pr-2 py-1 space-y-1">

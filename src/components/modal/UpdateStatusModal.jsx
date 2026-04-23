@@ -2,9 +2,8 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import { acceptCollectorJob } from "../../api/collectorJobApi";
 
-/** Đồng bộ với UploadImageModal.jsx */
 const TOAST_AUTO_HIDE_MS = 2600;
-const TOAST_SUCCESS_CLOSE_MS = 2200;
+const TOAST_SUCCESS_CLOSE_MS = 700;
 
 /**
  * PATCH /api/collector/jobs/{reportId}/accepted — body JSON: { note }

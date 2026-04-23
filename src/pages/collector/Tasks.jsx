@@ -136,10 +136,7 @@ function TaskCard({ task }) {
             <span className="inline-flex items-center gap-2 text-on-surface-variant shrink-0">
               <Calendar className="w-4 h-4 shrink-0" strokeWidth={2} />
               Ngày tạo:{" "}
-              <time
-                dateTime={created}
-                className="tabular-nums"
-              >
+              <time dateTime={created} className="tabular-nums">
                 {formatDateDdMmYyyy(created)}
               </time>
             </span>
@@ -217,8 +214,7 @@ export default function Tasks() {
       ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
-            Hiện không có công việc nào ở trạng thái "Đã phân công" hoặc "Đang
-            trên đường".
+            Hiện chưa có công việc nào ở trạng thái "Assigned" hoặc "Accepted".
           </p>
         </div>
       ) : (
