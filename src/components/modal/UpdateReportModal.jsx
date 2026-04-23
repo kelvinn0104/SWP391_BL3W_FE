@@ -11,16 +11,80 @@ import {
   X,
 } from 'lucide-react';
 import { getWasteReportCategories, updateWasteReport } from '../../api/WasteReportapi';
+import { getCapacity } from '../../api/areaApi';
+import { resolveImageUrl } from '../../lib/auth';
 
 const MAX_REPORT_TOTAL_KG = 10;
 const MAX_REPORT_IMAGES = 3;
+
+function findWardInDistricts(districts, wardId) {
+  if (wardId === undefined || wardId === null) return null;
+  const wid = String(wardId);
+  for (const d of districts) {
+    const w = d.wards?.find((x) => String(x.id) === wid);
+    if (w) {
+      return {
+        districtId: String(d.id),
+        districtName: d.district ?? '',
+        wardId: String(w.id),
+        wardName: w.name ?? '',
+      };
+    }
+  }
+  return null;
+}
+
+/** Đồng bộ format tạo báo cáo: số nhà, Phường, Quận */
+function parseLocationFromText(locationText, districts) {
+  const loc = String(locationText ?? '').trim();
+  if (!loc || !Array.isArray(districts) || districts.length === 0) {
+    return { street: loc, districtId: '', wardId: '' };
+  }
+  const parts = loc.split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length < 2) {
+    return { street: loc, districtId: '', wardId: '' };
+  }
+  const last = parts[parts.length - 1];
+  const secondLast = parts.length >= 2 ? parts[parts.length - 2] : '';
+  const district = districts.find((d) => String(d.district ?? '').trim() === last);
+  if (!district) {
+    return { street: loc, districtId: '', wardId: '' };
+  }
+  const ward = district.wards?.find((w) => String(w.name ?? '').trim() === secondLast);
+  if (!ward) {
+    return { street: loc, districtId: '', wardId: '' };
+  }
+  return {
+    street: parts.slice(0, -2).join(', '),
+    districtId: String(district.id),
+    wardId: String(ward.id),
+  };
+}
+
+function extractStreetFromLocationText(loc, wardName, districtName) {
+  const w = String(wardName ?? '').trim();
+  const d = String(districtName ?? '').trim();
+  if (!d) return String(loc ?? '').trim();
+  const parts = String(loc ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length >= 2 && parts[parts.length - 1] === d && parts[parts.length - 2] === w) {
+    return parts.slice(0, -2).join(', ').trim();
+  }
+  if (parts.length >= 1 && parts[parts.length - 1] === d) {
+    return parts.slice(0, -1).join(', ').trim();
+  }
+  return String(loc ?? '').trim();
+}
 
 function toKey(id) {
   return String(id ?? '').trim();
 }
 
 function formatPreviewItem(url) {
-  return typeof url === 'string' && url.trim() !== '' ? url.trim() : null;
+  if (typeof url !== 'string' || url.trim() === '') return null;
+  return resolveImageUrl(url.trim());
 }
 
 function getReportLineItems(categories, categoryDetails) {
@@ -37,11 +101,30 @@ function getReportLineItems(categories, categoryDetails) {
     .filter(Boolean);
 }
 
+async function galleryItemToFile(item, index) {
+  if (item?.kind === 'new' && item?.file) return item.file;
+  const sourceUrl = String(item?.preview ?? '').trim();
+  if (!sourceUrl) {
+    throw new Error('Ảnh hiện có không hợp lệ.');
+  }
+  const res = await fetch(sourceUrl);
+  if (!res.ok) {
+    throw new Error('Không thể tải lại ảnh hiện có để lưu cập nhật.');
+  }
+  const blob = await res.blob();
+  const contentType = blob.type || 'image/jpeg';
+  const ext = contentType.split('/')[1] || 'jpg';
+  return new File([blob], `existing-${index + 1}.${ext}`, { type: contentType });
+}
+
 export default function UpdateReportModal({ open, onClose, initialDetail, onUpdated }) {
   const formId = useId();
   const [title, setTitle] = useState('');
-  const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
+  const [districts, setDistricts] = useState([]);
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+  const [selectedWardId, setSelectedWardId] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
   const [categories, setCategories] = useState([]);
   const [categoryDetails, setCategoryDetails] = useState({});
   const [reportGallery, setReportGallery] = useState([]);
@@ -56,11 +139,11 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     if (!open) return;
     let isMounted = true;
 
-    async function loadCategories() {
+    async function loadCategoriesAndAreas() {
       setLoadingCategories(true);
       setCategoryError('');
       try {
-        const data = await getWasteReportCategories();
+        const [data, areaData] = await Promise.all([getWasteReportCategories(), getCapacity()]);
         if (!isMounted) return;
         const normalized = data
           .map((item) => ({
@@ -70,16 +153,18 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
           }))
           .filter((item) => item.id && item.name);
         setCategoryOptions(normalized);
+        setDistricts(areaData?.areas || []);
       } catch (error) {
         if (!isMounted) return;
         setCategoryOptions([]);
+        setDistricts([]);
         setCategoryError(error?.message || 'Không thể tải thể loại rác.');
       } finally {
         if (isMounted) setLoadingCategories(false);
       }
     }
 
-    loadCategories();
+    loadCategoriesAndAreas();
     return () => {
       isMounted = false;
     };
@@ -106,6 +191,12 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     });
 
     const seenUrls = [];
+    (Array.isArray(initialDetail?.imageUrls) ? initialDetail.imageUrls : []).forEach((u) => {
+      const formatted = formatPreviewItem(u);
+      if (formatted && !seenUrls.includes(formatted)) {
+        seenUrls.push(formatted);
+      }
+    });
     wasteItems.forEach((item) => {
       (Array.isArray(item?.imageUrls) ? item.imageUrls : []).forEach((u) => {
         const formatted = formatPreviewItem(u);
@@ -121,15 +212,36 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
     }));
 
     setTitle(initialDetail?.title ?? '');
-    setAddress(initialDetail?.locationText ?? '');
     setDescription(initialDetail?.description ?? '');
     setCategories(uniqueCategories);
     setCategoryDetails(details);
     setReportGallery(initialGallery);
+    setSelectedDistrictId('');
+    setSelectedWardId('');
+    setStreetAddress(initialDetail?.locationText ?? '');
     setSubmitError('');
     setSubmitSuccess('');
     setSubmitting(false);
   }, [initialDetail, open]);
+
+  useEffect(() => {
+    if (!open || !initialDetail) return;
+    if (districts.length === 0) return;
+
+    const loc = initialDetail?.locationText ?? '';
+    const wid = initialDetail?.wardId;
+    const byWard = wid != null ? findWardInDistricts(districts, wid) : null;
+    if (byWard) {
+      setSelectedDistrictId(byWard.districtId);
+      setSelectedWardId(byWard.wardId);
+      setStreetAddress(extractStreetFromLocationText(loc, byWard.wardName, byWard.districtName));
+    } else {
+      const parsed = parseLocationFromText(loc, districts);
+      setSelectedDistrictId(parsed.districtId);
+      setSelectedWardId(parsed.wardId);
+      setStreetAddress(parsed.districtId ? parsed.street : loc);
+    }
+  }, [open, initialDetail, districts]);
 
   useEffect(() => {
     return () => {
@@ -258,6 +370,7 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
   const canSubmit =
     Boolean(title.trim()) &&
     Boolean(description.trim()) &&
+    Boolean(selectedWardId) &&
     !submitting &&
     !isOverWeightLimit &&
     Boolean(initialDetail?.reportId);
@@ -287,15 +400,31 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
       return;
     }
 
+    if (!selectedWardId) {
+      setSubmitError('Vui lòng chọn Phường/Xã nơi thu gom rác.');
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError('');
     setSubmitSuccess('');
     try {
-      const images = reportGallery.filter((g) => g.kind === 'new').map((g) => g.file);
+      const images = await Promise.all(reportGallery.map((item, index) => galleryItemToFile(item, index)));
+      const selectedDistrict = districts.find((district) => String(district.id) === String(selectedDistrictId));
+      const selectedWard = selectedDistrict?.wards?.find((ward) => String(ward.id) === String(selectedWardId));
+      const locationText = [
+        streetAddress.trim(),
+        String(selectedWard?.name ?? '').trim(),
+        String(selectedDistrict?.district ?? '').trim(),
+      ]
+        .filter(Boolean)
+        .join(', ');
+
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        locationText: address.trim(),
+        locationText,
+        wardId: selectedWardId ? Number(selectedWardId) : null,
         wasteCategoryIds: selectedItems.map((item) => item.categoryId),
         estimatedWeightKgs: selectedItems.map((item) => item.quantityKg),
         images,
@@ -497,23 +626,64 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label
-                  htmlFor={`${formId}-address`}
-                  className="flex items-center gap-2 text-sm font-bold text-on-surface"
-                >
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
                   <MapPin className="w-4 h-4 text-primary" />
-                  Địa chỉ
-                </label>
-                <input
-                  id={`${formId}-address`}
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  disabled={submitting}
-                  placeholder="VD: Quận 3, TP.HCM — gần địa danh / hẻm"
-                  className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"
-                />
+                  Địa chỉ thu gom <span className="text-error">*</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-on-surface-variant">Quận / Huyện *</label>
+                    <select
+                      value={selectedDistrictId}
+                      onChange={(e) => {
+                        setSelectedDistrictId(e.target.value);
+                        setSelectedWardId('');
+                      }}
+                      disabled={submitting}
+                      className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary disabled:opacity-60"
+                    >
+                      <option value="">Chọn Quận/Huyện</option>
+                      {districts.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.district}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-on-surface-variant">Phường / Xã *</label>
+                    <select
+                      value={selectedWardId}
+                      onChange={(e) => setSelectedWardId(e.target.value)}
+                      disabled={!selectedDistrictId || submitting}
+                      className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary disabled:opacity-60"
+                    >
+                      <option value="">Chọn Phường/Xã</option>
+                      {districts
+                        .find((d) => String(d.id) === String(selectedDistrictId))
+                        ?.wards?.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-on-surface-variant">Số nhà, tên đường, hẻm...</label>
+                  <input
+                    type="text"
+                    value={streetAddress}
+                    onChange={(e) => setStreetAddress(e.target.value)}
+                    disabled={submitting}
+                    placeholder="VD: 123 Nguyễn Huệ, hẻm 4..."
+                    className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-3 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow disabled:opacity-60"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
