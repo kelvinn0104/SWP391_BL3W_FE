@@ -501,10 +501,14 @@ function CoordinationDrawer({ req, onAssign, onClose }) {
                     <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 ${selectedCol && selectedCol === c.userId ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-surface-container-highest text-on-surface-variant/40'}`}><User className="w-7 h-7" /></div>
                     <div className="text-center">
                        <p className={`text-xs font-black tracking-tight mb-1 ${selectedCol === c.userId ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name}</p>
-                       <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.userId ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
-                         {c.phoneNumber || c.phone || "Chưa có SĐT"}
-                       </p>
-                    </div>
+                        <p className={`text-[11px] font-black uppercase tracking-tighter font-mono ${selectedCol === c.userId ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
+                          {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                        </p>
+                        <p className={`text-[9px] mt-1 font-black flex items-center justify-center gap-1 ${c.hasActiveReport ? 'text-red-500' : 'text-emerald-500'}`}>
+                           <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                           {c.hasActiveReport ? 'Đang xử lý đơn' : 'Đang không có đơn'}
+                        </p>
+                     </div>
                   </button>
                 ))}
              </div>
@@ -802,6 +806,10 @@ function RequestDetailModal({ req, onClose, collectors: allCollectors, onAssign,
                           <p className={`text-[10px] font-black truncate leading-none mb-1.5 ${isSelected ? 'text-indigo-700' : 'text-on-surface'}`}>{c.name || c.displayName || "N/A"}</p>
                           <p className={`text-[11px] font-black font-mono tracking-tighter truncate ${isSelected ? 'text-indigo-500' : 'text-on-surface-variant/50'}`}>
                             {c.phoneNumber || c.phone || "Chưa có SĐT"}
+                          </p>
+                          <p className={`text-[9px] mt-1 font-black flex items-center gap-1 ${c.hasActiveReport ? 'text-red-500' : 'text-emerald-500'}`}>
+                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                             {c.hasActiveReport ? 'Đang xử lý đơn' : 'Đang không có đơn'}
                           </p>
                         </div>
                       </button>
