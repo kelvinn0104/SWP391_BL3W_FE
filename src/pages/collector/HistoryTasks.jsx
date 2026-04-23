@@ -78,10 +78,7 @@ function HistoryTaskCard({ task }) {
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-on-surface-variant">
           <p className="inline-flex items-center gap-2">
-            <Leaf
-              className="w-4 h-4 text-primary shrink-0"
-              strokeWidth={2}
-            />
+            <Leaf className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
             <span>{task.category || "-"}</span>
           </p>
           {phone ? (
@@ -192,7 +189,7 @@ export default function HistoryTasks() {
       ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-surface-container-highest bg-surface-container-low/50 px-6 py-14 text-center">
           <p className="text-on-surface-variant font-medium">
-            Chưa có công việc nào ở trạng thái "Đã thu gom".
+            Hiện chưa có công việc nào ở trạng thái "Collected".
           </p>
         </div>
       ) : (

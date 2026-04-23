@@ -14,7 +14,7 @@ import { completeCollectorJob } from "../../api/collectorJobApi";
 import { getWasteReportCategories } from "../../api/WasteReportapi";
 
 const TOAST_AUTO_HIDE_MS = 2600;
-const TOAST_SUCCESS_CLOSE_MS = 2200;
+const TOAST_SUCCESS_CLOSE_MS = 700;
 
 function resolveReportId(taskId, reportIdProp) {
   if (reportIdProp != null) {
@@ -198,7 +198,9 @@ export default function UploadImageModal({
     const roundedPts = Math.max(0, Math.round(pointsSum));
     return {
       totalKgDisplay: hasKg ? String(Math.round(totalKg * 10) / 10) : "",
-      pointsDisplay: hasKg ? new Intl.NumberFormat("vi-VN").format(roundedPts) : "",
+      pointsDisplay: hasKg
+        ? new Intl.NumberFormat("vi-VN").format(roundedPts)
+        : "",
       formulaDisplay: formulaParts.join(" + "),
     };
   }, [weightRows, categoryPointsByName]);
@@ -605,7 +607,9 @@ export default function UploadImageModal({
                       className="w-full rounded-2xl border border-surface-container-high bg-surface px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary disabled:opacity-60"
                     >
                       <option value="">
-                        {loadingCategories ? "Đang tải danh mục…" : "Chọn danh mục"}
+                        {loadingCategories
+                          ? "Đang tải danh mục…"
+                          : "Chọn danh mục"}
                       </option>
                       {categoryOptions
                         .map((o) => o.name)
