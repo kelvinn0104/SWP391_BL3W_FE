@@ -17,13 +17,14 @@ import {
   lockAccount,
 } from "../../api/userApi";
 import ConfirmModal from "../modal/ConfirmModal";
+import UpdateCollectorProfileModal from "../modal/UpdateCollectorProfileModal";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 5;
 
 /** Chỉ định nghĩa cột — dùng chung header & body; 5 cột giữa chia đều 1fr */
 const ACCOUNT_TABLE_COLS =
-  "[grid-template-columns:2.75rem_repeat(5,minmax(0,1fr))_minmax(10.5rem,max-content)]";
+  "[grid-template-columns:2.75rem_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(9.5rem,max-content)]";
 
 /** @param {number} colIndex 0..6 */
 function accountTableColAlign(colIndex) {
@@ -56,6 +57,7 @@ function mapProfileToRow(p) {
     role: formatRoleLabel(roleRaw),
     roleKey: getRoleKey(roleRaw),
     status: isLocked ? "blocked" : "active",
+    raw: p,
   };
 }
 
@@ -203,6 +205,8 @@ export default function AccountList({
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [busy, setBusy] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
 
   const query = queryProp ?? internalQuery;
   const setQuery = onQueryChange ?? setInternalQuery;
@@ -241,6 +245,13 @@ export default function AccountList({
   function openDeleteConfirm(it) {
     if (busy != null || it.id == null) return;
     setConfirmAction({ type: "delete", row: it });
+  }
+
+  function handleEdit(it) {
+    onEditAccount?.(it);
+    if (busy != null || it?.id == null) return;
+    setEditTarget(it);
+    setEditOpen(true);
   }
 
   async function handleConfirmModal() {
@@ -436,7 +447,7 @@ export default function AccountList({
                       <AccountActions
                         it={it}
                         busy={busy}
-                        onEditAccount={onEditAccount}
+                        onEditAccount={handleEdit}
                         onToggleLock={openLockConfirm}
                         onDelete={openDeleteConfirm}
                       />
@@ -502,7 +513,7 @@ export default function AccountList({
                     <AccountActions
                       it={it}
                       busy={busy}
-                      onEditAccount={onEditAccount}
+                      onEditAccount={handleEdit}
                       onToggleLock={openLockConfirm}
                       onDelete={openDeleteConfirm}
                     />
@@ -530,6 +541,13 @@ export default function AccountList({
         confirmText={confirmModalCopy?.confirmText}
         variant={confirmModalCopy?.variant ?? "danger"}
         isLoading={busy != null}
+      />
+
+      <UpdateCollectorProfileModal
+        open={editOpen}
+        onClose={() => (busy == null ? setEditOpen(false) : undefined)}
+        collector={editTarget?.raw ?? editTarget}
+        onUpdated={() => setRefreshNonce((n) => n + 1)}
       />
     </div>
   );
