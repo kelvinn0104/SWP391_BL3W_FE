@@ -1,10 +1,14 @@
 import {useMemo, useState} from 'react';
-import {Eye, EyeOff, Leaf, Lock, Mail, User} from 'lucide-react';
+import {Eye, EyeOff, Leaf, Lock, Mail, Phone, User} from 'lucide-react';
 import {Link, useNavigate, useSearchParams} from 'react-router-dom';
 import {getApiBaseUrl, setAuth} from '../lib/auth';
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+function isValidPhone(phone) {
+  return /^[0-9]{10}$/.test(String(phone || '').trim());
 }
 
 export default function Register() {
@@ -15,6 +19,7 @@ export default function Register() {
   const [form, setForm] = useState({
     displayName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -23,6 +28,7 @@ export default function Register() {
   const [touched, setTouched] = useState({
     displayName: false,
     email: false,
+    phone: false,
     password: false,
     confirmPassword: false,
   });
@@ -42,6 +48,13 @@ export default function Register() {
     return null;
   }, [form.email, touched.email]);
 
+  const phoneError = useMemo(() => {
+    if (!touched.phone) return null;
+    if (!form.phone.trim()) return 'Vui lòng nhập số điện thoại.';
+    if (!isValidPhone(form.phone)) return 'Số điện thoại phải gồm đúng 10 chữ số.';
+    return null;
+  }, [form.phone, touched.phone]);
+
   const passwordError = useMemo(() => {
     if (!touched.password) return null;
     if (!form.password) return 'Vui lòng nhập mật khẩu.';
@@ -60,16 +73,18 @@ export default function Register() {
     !submitting &&
     !displayNameError &&
     !emailError &&
+    !phoneError &&
     !passwordError &&
     !confirmPasswordError &&
     form.displayName &&
     form.email &&
+    form.phone &&
     form.password &&
     form.confirmPassword;
 
   async function onSubmit(e) {
     e.preventDefault();
-    setTouched({displayName: true, email: true, password: true, confirmPassword: true});
+    setTouched({displayName: true, email: true, phone: true, password: true, confirmPassword: true});
     setError(null);
     if (!canSubmit) return;
 
@@ -82,6 +97,7 @@ export default function Register() {
           email: form.email,
           password: form.password,
           displayName: form.displayName,
+          phoneNumber: form.phone.trim(),
         }),
       });
 
@@ -100,6 +116,7 @@ export default function Register() {
           displayName: data.displayName,
           role: data.role,
           points: data.points,
+          phoneNumber: data.phoneNumber,
         },
       });
       navigate(returnTo, {replace: true});
@@ -213,6 +230,26 @@ export default function Register() {
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant/70">
+                  Số điện thoại
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/60" />
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm((s) => ({...s, phone: e.target.value}))}
+                    onBlur={() => setTouched((t) => ({...t, phone: true}))}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="0901234567"
+                    maxLength={10}
+                    className="w-full rounded-2xl bg-surface px-12 py-4 border border-surface-container-highest focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary/40 transition"
+                  />
+                </div>
+                {phoneError && <p className="text-xs font-semibold text-error">{phoneError}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant/70">
                   Mật khẩu
                 </label>
                 <div className="relative">
@@ -289,4 +326,3 @@ export default function Register() {
     </div>
   );
 }
-
