@@ -169,19 +169,31 @@ export default function Leaderboard() {
                 >
                   Trước
                 </button>
-                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${currentPage === page
-                        ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
-                        : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
-                      }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {/* Hiển thị cửa sổ trang (max 5 trang) để tránh tràn UI */}
+                {(() => {
+                  const windowSize = 5;
+                  let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+                  let end = Math.min(totalPages, start + windowSize - 1);
+                  if (end - start + 1 < windowSize) {
+                    start = Math.max(1, end - windowSize + 1);
+                  }
+                  const pages = [];
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  
+                  return pages.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-xl border text-sm font-bold transition-all ${currentPage === page
+                          ? 'bg-primary text-white border-primary shadow-md shadow-primary/25'
+                          : 'bg-surface text-on-surface-variant border-surface-container-high hover:border-primary/40 hover:text-primary'
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  ));
+                })()}
                 <button
                   type="button"
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}

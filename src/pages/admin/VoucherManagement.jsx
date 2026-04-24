@@ -288,8 +288,8 @@ export default function VoucherManagement() {
                       <td className="px-8 py-4 text-on-surface-variant">{v.stock}</td>
                       <td className="px-8 py-4 text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setVoucherForm({ ...v, imagePreview: v.image, codes: v.codes || [] }); setVoucherModal({ open: true, mode: 'edit', data: v }); }} className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => { showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, async () => {
+                          <button onClick={(e) => { e.stopPropagation(); setVoucherForm({ ...v, imagePreview: v.image, codes: v.codes || [] }); setVoucherModal({ open: true, mode: 'edit', data: v }); }} className="p-2.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-xl transition-all"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); showConfirm("Xác nhận xóa", `Bạn có chắc chắn muốn xóa Voucher "${v.title}" không?`, async () => {
                             try {
                               await deleteVoucher(v.id);
                               fetchData();
