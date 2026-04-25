@@ -91,8 +91,8 @@ function getReportLineItems(categories, categoryDetails) {
   return categories
     .map((categoryId) => {
       const numericCategoryId = Number(categoryId);
-      const rawQuantity = categoryDetails[categoryId]?.quantityKg;
-      const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+      const rawQuantity = String(categoryDetails[categoryId]?.quantityKg ?? '').trim().replace(',', '.');
+      const quantityKg = Number.parseFloat(rawQuantity);
       if (!Number.isInteger(numericCategoryId) || !Number.isFinite(quantityKg) || quantityKg <= 0) {
         return null;
       }
@@ -326,8 +326,8 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
   });
 
   const totalQuantityKg = categories.reduce((sum, category) => {
-    const raw = categoryDetails[category]?.quantityKg;
-    const value = Number.parseFloat(String(raw ?? '').trim());
+    const raw = String(categoryDetails[category]?.quantityKg ?? '').trim().replace(',', '.');
+    const value = Number.parseFloat(raw);
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
 
@@ -338,8 +338,8 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
         0,
         Math.round(
           categories.reduce((sum, categoryId) => {
-            const rawQuantity = categoryDetails[categoryId]?.quantityKg;
-            const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+            const rawQuantity = String(categoryDetails[categoryId]?.quantityKg ?? '').trim().replace(',', '.');
+            const quantityKg = Number.parseFloat(rawQuantity);
             if (!Number.isFinite(quantityKg) || quantityKg <= 0) {
               return sum;
             }
@@ -355,8 +355,8 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
   const estimatedPointsFormulaDisplay = hasAnyQuantity
     ? categories
         .map((categoryId) => {
-          const rawQuantity = categoryDetails[categoryId]?.quantityKg;
-          const quantityKg = Number.parseFloat(String(rawQuantity ?? '').trim());
+          const rawQuantity = String(categoryDetails[categoryId]?.quantityKg ?? '').trim().replace(',', '.');
+          const quantityKg = Number.parseFloat(rawQuantity);
           if (!Number.isFinite(quantityKg) || quantityKg <= 0) {
             return null;
           }
@@ -608,12 +608,16 @@ export default function UpdateReportModal({ open, onClose, initialDetail, onUpda
                             </label>
                             <input
                               id={`${formId}-qty-${categoryId}`}
-                              type="number"
+                              type="text"
                               inputMode="decimal"
-                              min="0"
-                              step="0.1"
                               value={detail.quantityKg}
-                              onChange={(e) => setCategoryQuantity(categoryId, e.target.value)}
+                              onChange={(e) => {
+                                const rawV = e.target.value;
+                                const sanitized = rawV
+                                  .replace(/[^0-9.,]/g, "")
+                                  .replace(/([.,])(?=.*[.,])/g, "");
+                                setCategoryQuantity(categoryId, sanitized);
+                              }}
                               disabled={submitting}
                               placeholder="VD: 3.2"
                               className="w-full rounded-2xl border border-surface-container-high bg-surface px-3 py-2.5 text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary transition-shadow"

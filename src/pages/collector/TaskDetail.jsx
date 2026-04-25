@@ -17,6 +17,7 @@ import CancelTaskModal from "../../components/modal/CancelTaskModal";
 import UploadImageModal from "../../components/modal/UploadImageModal";
 import UpdateStatusModal from "../../components/modal/UpdateStatusModal";
 import { getCollectorJobDetail } from "../../api/collectorJobApi";
+import { resolveImageUrl } from "../../lib/auth";
 import { collectorStatusLabel, statusBadgeClass } from "./Tasks";
 
 function mapEmbedSrc(lat, lng) {
@@ -38,7 +39,7 @@ function proofUrlSetFromTask(task) {
   const set = new Set();
   for (const src of list) {
     const key = String(src ?? "").trim();
-    if (key) set.add(key);
+    if (key) set.add(resolveImageUrl(key));
   }
   return set;
 }
@@ -142,10 +143,17 @@ export default function TaskDetail() {
   const images = useMemo(() => {
     const a = task?.images;
     const b = task?.imageUrls;
+    const items = task?.wasteItems;
+    const itemImages = Array.isArray(items)
+      ? items.flatMap((it) => (Array.isArray(it.imageUrls) ? it.imageUrls : []))
+      : [];
+
     const list = [
       ...(Array.isArray(a) ? a : []),
       ...(Array.isArray(b) ? b : []),
+      ...itemImages,
     ];
+
     const seen = new Set();
     const deduped = list.filter(Boolean).filter((src) => {
       const key = String(src).trim();
@@ -153,8 +161,11 @@ export default function TaskDetail() {
       seen.add(key);
       return true;
     });
+
     const proofUrls = proofUrlSetFromTask(task);
-    return deduped.filter((src) => !proofUrls.has(String(src).trim()));
+    return deduped
+      .map((src) => resolveImageUrl(String(src).trim()))
+      .filter((url) => !proofUrls.has(url));
   }, [task]);
 
   useEffect(() => {
@@ -173,12 +184,14 @@ export default function TaskDetail() {
       ...(Array.isArray(b) ? b : []),
     ];
     const seen = new Set();
-    return list.filter(Boolean).filter((src) => {
-      const key = String(src).trim();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    return list
+      .filter(Boolean)
+      .map((src) => resolveImageUrl(String(src).trim()))
+      .filter((url) => {
+        if (!url || seen.has(url)) return false;
+        seen.add(url);
+        return true;
+      });
   }, [task]);
   const activeProofSrc = proofImages[activeProofImageIndex] ?? proofImages[0];
 
