@@ -18,7 +18,6 @@ export async function getRequests() {
       ],
       note: 'Rác đã được phân loại và rửa sạch.',
       images: ['https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?auto=format&fit=crop&q=80&w=400'],
-      priority: 'High'
     },
     {
       id: 'REQ-002',
@@ -33,7 +32,6 @@ export async function getRequests() {
         { type: 'Chai thủy tinh', amount: 2, unit: 'kg' }
       ],
       note: 'Có nhiều carton to cần xe tải nhỏ.',
-      priority: 'Medium'
     },
     {
       id: 'REQ-003',
@@ -43,12 +41,8 @@ export async function getRequests() {
       weightKg: 2.5,
       status: 'Assigned',
       collectorId: 'col-1',
-      createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-      materials: [
-        { type: 'Pin cũ', amount: 0.5, unit: 'kg' },
-        { type: 'Bàn phím hỏng', amount: 2, unit: 'kg' }
-      ],
-      priority: 'High'
+      note: 'Rác đã được phân loại và rửa sạch.',
+      images: ['https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?auto=format&fit=crop&q=80&w=400'],
     },
     {
       id: 'REQ-004',
@@ -62,7 +56,6 @@ export async function getRequests() {
       materials: [
         { type: 'Nhựa HDPE', amount: 15.2, unit: 'kg' }
       ],
-      priority: 'Low'
     }
   ];
 
@@ -90,7 +83,6 @@ export async function getRequests() {
         materials: [
           { type: 'Rác tổng hợp', amount: 10, unit: 'kg' }
         ],
-        priority: i % 3 === 0 ? 'High' : 'Medium'
       });
     }
   }

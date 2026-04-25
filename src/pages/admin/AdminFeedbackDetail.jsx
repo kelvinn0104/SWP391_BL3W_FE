@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getComplaintDetail, updateComplaintStatus } from "../../api/complaintApi";
+import { resolveImageUrl } from "../../lib/auth";
 import { statusText } from "./AdminFeedback";
 
 const STATUS_OPTIONS = [
@@ -186,17 +187,18 @@ export default function AdminFeedbackDetail() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {feedback.evidenceFiles.map((ev, index) => {
+                const resolvedUrl = resolveImageUrl(ev.fileUrl);
                 const isImage = ev.contentType?.startsWith("image/") || ev.fileUrl.match(/\.(jpg|jpeg|png|webp)$/i);
                 return (
                   <a
                     key={ev.id || index}
-                    href={ev.fileUrl}
+                    href={resolvedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative block aspect-[4/3] rounded-xl overflow-hidden border border-surface-container-highest hover:ring-2 hover:ring-primary/50 transition-all bg-surface-container-lowest"
                   >
                     {isImage ? (
-                      <img src={ev.fileUrl} alt={ev.originalFileName} className="w-full h-full object-cover" />
+                      <img src={resolvedUrl} alt={ev.originalFileName} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-on-surface-variant p-4">
                         <Paperclip className="w-8 h-8 mb-2 opacity-50" />

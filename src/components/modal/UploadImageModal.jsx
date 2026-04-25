@@ -630,15 +630,19 @@ export default function UploadImageModal({
                     ) : null}
                   </div>
                   <input
-                    type="number"
-                    min="0"
-                    step="0.1"
+                    type="text"
+                    inputMode="decimal"
                     value={row.weight}
                     onChange={(e) => {
-                      const v = e.target.value;
+                      const rawV = e.target.value;
+                      // Chỉ cho phép số, tối đa 1 dấu chấm hoặc 1 dấu phẩy
+                      const sanitized = rawV
+                        .replace(/[^0-9.,]/g, "")
+                        .replace(/([.,])(?=.*[.,])/g, "");
+
                       setWeightRows((prev) =>
                         prev.map((r, i) =>
-                          i === index ? { ...r, weight: v } : r,
+                          i === index ? { ...r, weight: sanitized } : r,
                         ),
                       );
                     }}

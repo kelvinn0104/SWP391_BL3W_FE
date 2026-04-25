@@ -36,7 +36,6 @@ export default function Requests() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [modalMode, setModalMode] = useState('view'); // 'view' or 'edit'
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('All');
   const [coordinatingRequest, setCoordinatingRequest] = useState(null);
@@ -256,8 +255,7 @@ export default function Requests() {
                 collectors={collectors}
                   onStatus={handleStatus}
                   onAssign={handleAssign}
-                  onView={() => { setSelectedRequest(req); setModalMode('view'); }}
-                  onEdit={() => { setSelectedRequest(req); setModalMode('edit'); }}
+                  onView={() => { setSelectedRequest(req); }}
                   onOpenCoordination={() => handleOpenCoordination(req)}
                   onCancel={() => setCancellingRequest(req)}
                 />
@@ -289,8 +287,8 @@ export default function Requests() {
         {selectedRequest && (
           <RequestDetailModal 
             req={requests.find(r => r.id == selectedRequest.id) || selectedRequest} 
-            readOnly={modalMode === 'view'}
-            onClose={() => { setSelectedRequest(null); setModalMode('view'); }} 
+            readOnly={true}
+            onClose={() => { setSelectedRequest(null); }} 
             collectors={collectors}
             onAssign={handleAssign}
             onStatus={handleStatus}
@@ -326,7 +324,7 @@ export default function Requests() {
   );
 }
 
-function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpenCoordination, onCancel, index }) {
+function RequestRow({ req, collectors, onStatus, onAssign, onView, onOpenCoordination, onCancel, index }) {
   const getStatusBadge = () => {
     switch(req.status) {
       case 'Pending': return { color: 'text-orange-500 bg-orange-50', icon: Clock, label: 'Pending' };
@@ -424,7 +422,10 @@ function RequestRow({ req, collectors, onStatus, onAssign, onView, onEdit, onOpe
           </div>
         )}
         {(req.status === 'Assigned' || req.status === 'Accepted' || req.status === 'Collected') && (
-          <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="px-5 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-amber-500/20"><Edit className="w-3.5 h-3.5" /> Sửa</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onView(); }} className="px-5 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20">
+            <Info className="w-3.5 h-3.5" /> 
+            Chi tiết
+          </button>
         )}
         {req.status === 'Cancelled' && (
           <div className="flex items-center gap-2 px-5 py-2 bg-on-surface/5 text-on-surface-variant/20 rounded-xl border border-dashed border-on-surface/10 grayscale">
@@ -643,20 +644,6 @@ function RequestDetailModal({ req, onClose, collectors: allCollectors, onAssign,
                <currentStatus.icon className="w-4 h-4" />
                <span className="text-xs font-black uppercase tracking-widest">{currentStatus.label}</span>
             </div>
-
-            {req.priority && (
-              <div className={`px-4 py-2 rounded-2xl border-2 flex items-center gap-2 shrink-0 ${
-                req.priority === 'High' ? 'bg-rose-50 border-rose-100 text-rose-600' :
-                req.priority === 'Medium' ? 'bg-amber-50 border-amber-100 text-amber-600' :
-                'bg-emerald-50 border-emerald-100 text-emerald-600'
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                  req.priority === 'High' ? 'bg-rose-500 animate-pulse' :
-                  req.priority === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'
-                }`} />
-                <span className="text-[10px] font-black uppercase tracking-[0.1em]">{req.priority === 'High' ? 'Ưu tiên cao' : req.priority === 'Medium' ? 'Trung bình' : 'Tiêu chuẩn'}</span>
-              </div>
-            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-10 pt-8 no-scrollbar space-y-8">
