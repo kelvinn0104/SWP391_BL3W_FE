@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, Loader2, ReceiptText, Star } from 'lucide-react';
 import { getRedemptionHistory } from '../api/voucherApi';
 import { getUserPointNow } from '../api/UserpointApi';
+import { getUser } from '../lib/auth';
 
 export default function HistoryVoucher() {
   const [rows, setRows] = useState([]);
@@ -10,13 +11,47 @@ export default function HistoryVoucher() {
   const [error, setError] = useState('');
   const [userPoints, setUserPoints] = useState(null);
 
+  function normalizeText(v) {
+    return String(v ?? '').trim().toLowerCase();
+  }
+
+  function filterHistoryByCurrentUser(data, currentUser) {
+    if (!Array.isArray(data)) return [];
+    if (!currentUser) return [];
+
+    const myUserId = currentUser?.userId ?? currentUser?.id ?? currentUser?.accountId;
+    const myEmail = normalizeText(currentUser?.email);
+    const myName = normalizeText(currentUser?.displayName ?? currentUser?.name ?? currentUser?.fullName);
+
+    return data.filter((item) => {
+      const itemUserId = item?.userId ?? item?.user?.userId ?? item?.user?.id ?? item?.accountId;
+      if (myUserId != null && itemUserId != null) return String(itemUserId) === String(myUserId);
+
+      const itemEmail = normalizeText(item?.email ?? item?.userEmail ?? item?.user?.email);
+      if (myEmail && itemEmail) return itemEmail === myEmail;
+
+      const itemUserText = normalizeText(item?.user ?? item?.userName ?? item?.username ?? item?.user?.displayName);
+      if (myName && itemUserText) return itemUserText === myName;
+
+      return false;
+    });
+  }
+
   useEffect(() => {
     async function loadHistory() {
       setLoading(true);
       setError('');
       try {
+        const currentUser = getUser();
+        if (!currentUser) {
+          setRows([]);
+          setUserPoints(null);
+          setError('Bạn cần đăng nhập để xem lịch sử đổi quà.');
+          return;
+        }
+
         const [data, pointData] = await Promise.all([getRedemptionHistory(), getUserPointNow()]);
-        setRows(Array.isArray(data) ? data : []);
+        setRows(filterHistoryByCurrentUser(data, currentUser));
         setUserPoints(Number(pointData?.currentBalance ?? pointData?.points ?? 0));
       } catch (err) {
         setError(err?.message || 'Không tải được lịch sử đổi quà.');
